@@ -170,3 +170,5 @@ impl rowan::Language for C0 {
     kind.into()
   }
 }
+
+pub type SyntaxNode = rowan::SyntaxNode<C0>;

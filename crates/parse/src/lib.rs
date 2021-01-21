@@ -3,8 +3,8 @@
 
 use std::ops::Range;
 use syntax::event_parse::{Exited, Parser, Sink, Token};
-use syntax::rowan::{GreenNodeBuilder, SyntaxNode};
-use syntax::{SyntaxKind as SK, C0};
+use syntax::rowan::GreenNodeBuilder;
+use syntax::{SyntaxKind as SK, SyntaxNode};
 
 mod expr;
 mod root;
@@ -13,7 +13,7 @@ mod ty;
 
 #[derive(Debug)]
 pub struct Parse {
-  pub tree: SyntaxNode<C0>,
+  pub tree: SyntaxNode,
   pub errors: Vec<Error>,
 }
 
