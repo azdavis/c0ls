@@ -136,6 +136,8 @@ pub enum SyntaxKind {
   SubscriptExpr,
   AllocExpr,
   AllocArrayExpr,
+  // support
+  Param,
   /// root. MUST be last
   Root,
 }
