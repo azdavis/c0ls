@@ -1,6 +1,6 @@
 use crate::expr::{expr, expr_opt};
 use crate::ty::ty_opt;
-use crate::{must, TypeDefs};
+use crate::util::{must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 

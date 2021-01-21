@@ -1,6 +1,6 @@
 use crate::stmt::stmt_block;
 use crate::ty::{ty, ty_hd_opt, ty_opt, ty_tl};
-use crate::{comma_sep, TypeDefs};
+use crate::util::{comma_sep, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 

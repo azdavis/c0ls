@@ -1,5 +1,5 @@
 use crate::ty::ty;
-use crate::{comma_sep, must, TypeDefs};
+use crate::util::{comma_sep, must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 

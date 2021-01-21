@@ -2,7 +2,7 @@
 #![deny(rust_2018_idioms)]
 
 use std::ops::Range;
-use syntax::event_parse::{Exited, Parser, Sink, Token};
+use syntax::event_parse::{Parser, Sink, Token};
 use syntax::rowan::GreenNodeBuilder;
 use syntax::{SyntaxKind as SK, SyntaxNode};
 
@@ -10,6 +10,7 @@ mod expr;
 mod root;
 mod stmt;
 mod ty;
+mod util;
 
 #[derive(Debug)]
 pub struct Parse {
@@ -61,38 +62,5 @@ impl Sink<SK> for BuilderSink {
       range: self.range.clone().expect("error with no tokens"),
       expected,
     });
-  }
-}
-
-type TypeDefs<'a> = std::collections::HashSet<&'a str>;
-
-fn must<F>(p: &mut Parser<'_, SK>, f: F)
-where
-  F: FnOnce(&mut Parser<'_, SK>) -> Option<Exited>,
-{
-  if f(p).is_none() {
-    p.error();
-  }
-}
-
-fn comma_sep<F>(p: &mut Parser<'_, SK>, end: SK, mut f: F)
-where
-  F: FnMut(&mut Parser<'_, SK>),
-{
-  if p.at(end) {
-    p.bump();
-    return;
-  }
-  loop {
-    f(p);
-    if p.at(SK::Comma) {
-      p.bump();
-    } else if p.at(end) {
-      p.bump();
-      break;
-    } else {
-      p.error();
-      break;
-    }
   }
 }
