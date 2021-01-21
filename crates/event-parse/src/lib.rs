@@ -1,0 +1,262 @@
+//! Event-based parsers. Designed to be paired with libraries like `rowan`.
+//!
+//! To use this library:
+//! 1. Define your own enum, perhaps called `SyntaxKind`, which includes all of
+//!    the kinds of tokens and syntactic constructs found in your language,
+//!    including 'trivia' like comments and whitespace.
+//! 2. Implement [`Eq`], [`Copy`], and [`Triviable`] for this enum.
+//! 3. Define a lexer which transforms an input string into a vector of
+//!    contiguous [`Token`]s using this `SyntaxKind`.
+//! 4. Define your language's grammar with functions operating on a [`Parser`].
+//! 5. Call [`Parser::finish`] when done, and feed it a suitable [`Sink`] for
+//!    the collected parsing events.
+
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
+use drop_bomb::DropBomb;
+
+/// A event-based parser.
+#[derive(Debug)]
+pub struct Parser<'input, K> {
+  tokens: Vec<Token<'input, K>>,
+  idx: usize,
+  expected: Vec<K>,
+  events: Vec<Option<Event<K>>>,
+}
+
+impl<'input, K> Parser<'input, K> {
+  /// Returns a new parser for the given tokens.
+  pub fn new(tokens: Vec<Token<'input, K>>) -> Self {
+    Self {
+      tokens,
+      idx: 0,
+      expected: Vec::new(),
+      events: Vec::new(),
+    }
+  }
+
+  /// Starts parsing a syntax construct.
+  ///
+  /// The returned [`Entered`] must eventually be passed to [`Parser::exit`] or
+  /// [`Parser::abandon`]. If it is not, it will panic when dropped.
+  pub fn enter(&mut self) -> Entered {
+    let idx = self.events.len();
+    self.events.push(None);
+    Entered {
+      bomb: DropBomb::new("Entered markers must be exited"),
+      idx,
+    }
+  }
+
+  /// Abandons parsing a syntax construct.
+  ///
+  /// The events recorded since this syntax construct began, if any, will belong
+  /// to the parent.
+  pub fn abandon(&mut self, mut entered: Entered) {
+    entered.bomb.defuse();
+    assert!(self.events[entered.idx].is_none());
+  }
+
+  /// Finishes parsing a syntax construct.
+  pub fn exit(&mut self, mut entered: Entered, kind: K) -> Exited {
+    entered.bomb.defuse();
+    let ev = &mut self.events[entered.idx];
+    assert!(ev.is_none());
+    *ev = Some(Event::Enter(kind, None));
+    self.events.push(Some(Event::Exit));
+    Exited { idx: entered.idx }
+  }
+
+  /// Starts parsing a syntax construct and makes it the parent of the given
+  /// completed node.
+  ///
+  /// Consider an expression grammar `<expr> ::= <int> | <expr> + <expr>`. When
+  /// we see an `<int>`, we enter and exit an `<expr>` node for it. But then
+  /// we see the `+` and realize the completed `<expr>` node for the int should
+  /// be the child of a node for the `+`. That's when this function comes in.
+  pub fn precede(&mut self, exited: Exited) -> Entered {
+    let ret = self.enter();
+    match self.events[exited.idx] {
+      Some(Event::Enter(_, ref mut parent)) => {
+        assert!(parent.is_none());
+        *parent = Some(ret.idx);
+      }
+      _ => unreachable!("did not precede an Enter"),
+    }
+    ret
+  }
+}
+
+impl<'input, K> Parser<'input, K>
+where
+  K: Copy + Triviable,
+{
+  /// Returns the current token, or `None` if the parser is out of tokens.
+  ///
+  /// This skips all token kinds for which [`Triviable::is_trivia`] returns
+  /// `true`; thus, if this returns `Some(tok)`, then `tok.kind.is_trivia()` is
+  /// `false`.
+  ///
+  /// Note that it is not recommended to match on the `K` inside to e.g.
+  /// determine what syntax construct to parse next. Using [`Parser::at`] is
+  /// better for this task since it keeps track of the `K`s that have been tried
+  /// and will report them from [`Parser::error`].
+  pub fn peek(&mut self) -> Option<Token<'input, K>> {
+    while let Some(tok) = self.tokens.get(self.idx) {
+      if !tok.kind.is_trivia() {
+        break;
+      }
+      self.idx += 1;
+    }
+    self.tokens.get(self.idx).copied()
+  }
+
+  /// Consumes and returns the current token, and clears the set of expected
+  /// tokens.
+  ///
+  /// Panics if there are no more tokens, i.e. if [`Parser::peek`] would return
+  /// `None` just prior to calling this.
+  pub fn bump(&mut self) -> Token<'input, K> {
+    let ret = self.peek().expect("bump with no tokens");
+    self.events.push(Some(Event::Token));
+    self.idx += 1;
+    self.expected.clear();
+    ret
+  }
+
+  /// Records an error at the current token.
+  pub fn error(&mut self) {
+    let expected = std::mem::take(&mut self.expected);
+    // TODO is this right?
+    if self.peek().is_some() {
+      self.bump();
+    }
+    self.events.push(Some(Event::Error(expected)));
+  }
+
+  /// Finishes parsing, and writes the parsed tree into the `sink`.
+  pub fn finish(mut self, sink: &mut dyn Sink<K>) {
+    self.idx = 0;
+    let mut kinds = Vec::new();
+    for idx in 0..self.events.len() {
+      let ev = match self.events[idx].take() {
+        Some(ev) => ev,
+        None => continue,
+      };
+      match ev {
+        Event::Enter(kind, mut parent) => {
+          assert!(kinds.is_empty());
+          kinds.push(kind);
+          while let Some(p) = parent {
+            match self.events[p].take() {
+              Some(Event::Enter(kind, new_parent)) => {
+                kinds.push(kind);
+                parent = new_parent;
+              }
+              _ => unreachable!("parent was not an Enter"),
+            }
+          }
+          for kind in kinds.drain(..).rev() {
+            sink.enter(kind);
+          }
+        }
+        Event::Exit => sink.exit(),
+        Event::Token => {
+          sink.token(self.tokens[self.idx]);
+          self.idx += 1;
+        }
+        Event::Error(expected) => sink.error(expected),
+      }
+      while let Some(&tok) = self.tokens.get(self.idx) {
+        if !tok.kind.is_trivia() {
+          break;
+        }
+        sink.token(tok);
+        self.idx += 1;
+      }
+    }
+  }
+}
+
+impl<'input, K> Parser<'input, K>
+where
+  K: Copy + Triviable + Eq,
+{
+  /// Returns whether the current token has the given `kind`.
+  ///
+  /// Also records that `kind` was one of the expected kinds, to be used if
+  /// [`Parser::error`] is called later.
+  pub fn at(&mut self, kind: K) -> bool {
+    self.expected.push(kind);
+    self.peek().map_or(false, |tok| tok.kind == kind)
+  }
+
+  /// If the current token's kind is `kind`, then this consumes it, else this
+  /// errors. Returns the token if it was eaten.
+  pub fn eat(&mut self, kind: K) -> Option<Token<'input, K>> {
+    if self.at(kind) {
+      Some(self.bump())
+    } else {
+      self.error();
+      None
+    }
+  }
+}
+
+/// A marker for a syntax construct that is mid-parse. If this is not consumed
+/// by a [`Parser`], it will panic when dropped.
+#[derive(Debug)]
+pub struct Entered {
+  bomb: DropBomb,
+  idx: usize,
+}
+
+/// A marker for a syntax construct that has been fully parsed.
+#[derive(Debug)]
+pub struct Exited {
+  idx: usize,
+}
+
+/// A token, a pair of kind and text.
+#[derive(Debug, Clone, Copy)]
+pub struct Token<'a, K> {
+  /// The kind of token.
+  pub kind: K,
+  /// The text of the token.
+  pub text: &'a str,
+}
+
+/// Types whose values can report whether they are trivia or not.
+pub trait Triviable {
+  /// Returns whether this is trivia.
+  fn is_trivia(&self) -> bool;
+}
+
+/// Types which can construct a syntax tree.
+pub trait Sink<K> {
+  /// Enters a syntax construct with the given kind.
+  fn enter(&mut self, kind: K);
+  /// Adds a token to the given syntax construct.
+  fn token(&mut self, token: Token<'_, K>);
+  /// Exits a syntax construct.
+  fn exit(&mut self);
+  /// Reports an error.
+  fn error(&mut self, expected: Vec<K>);
+}
+
+#[derive(Debug)]
+enum Event<K> {
+  Enter(K, Option<usize>),
+  Token,
+  Exit,
+  Error(Vec<K>),
+}
+
+#[test]
+fn event_size() {
+  let ev = std::mem::size_of::<Event<()>>();
+  let op_ev = std::mem::size_of::<Option<Event<()>>>();
+  assert_eq!(ev, op_ev)
+}
