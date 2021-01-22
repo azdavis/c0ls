@@ -13,8 +13,8 @@ Item =
 
 StructDeclItem = 'struct' '$Ident' ';'
 StructDefnItem = 'struct' '$Ident' '{' Field* '}' ';'
-FnDeclItem = Ty '$Ident' '(' Param* ')' ';'
-FnDefnItem = Ty '$Ident' '(' Param* ')' BlockStmt
+FnDeclItem = ret_ty:Ty '$Ident' '(' Param* ')' ';'
+FnDefnItem = ret_ty:Ty '$Ident' '(' Param* ')' body:BlockStmt
 TypeDefnItem = 'typedef' Ty '$Ident'
 UseItem = '#use' UseLit
 
@@ -54,7 +54,7 @@ Simp =
 | DefnSimp
 | ExprSimp
 
-AsgnSimp = lhs:Expr AsgnOp rhs:Expr
+AsgnSimp = lhs:Expr op:AsgnOp rhs:Expr
 IncSimp = Expr '++'
 DecSimp = Expr '--'
 DeclSimp = Ty '$Ident'
@@ -111,8 +111,8 @@ FalseExpr = 'false'
 NullExpr = 'NULL'
 IdentExpr = '$Ident'
 ParenExpr = '(' Expr ')'
-BinOpExpr = lhs:Expr BinOp rhs:Expr
-UnOpExpr = UnOp Expr
+BinOpExpr = lhs:Expr op:BinOp rhs:Expr
+UnOpExpr = op:UnOp Expr
 TernaryExpr = cond:Expr '?' if_branch:Expr ':' else_branch:Expr
 CallExpr = '$Ident' '(' Arg* ')'
 DotExpr = Expr '.' '$Ident'
