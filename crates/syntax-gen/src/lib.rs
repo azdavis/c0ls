@@ -107,6 +107,8 @@ pub fn gen() -> String {
     pub type SyntaxToken = rowan::SyntaxToken<C0>;
 
     pub mod ast {
+      #![allow(clippy::iter_nth_zero)]
+
       use super::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
 
       pub trait Cast: Sized {
@@ -117,7 +119,7 @@ pub fn gen() -> String {
         fn syntax(&self) -> &SyntaxNode;
       }
 
-      fn token<P>(parent: &P, kind: SK) -> Option<SyntaxToken>
+      fn token<P>(parent: &P, kind: SK, idx: usize) -> Option<SyntaxToken>
       where
         P: Syntax,
       {
@@ -125,7 +127,8 @@ pub fn gen() -> String {
           .syntax()
           .children_with_tokens()
           .filter_map(rowan::NodeOrToken::into_token)
-          .find(|tok| tok.kind() == kind)
+          .filter(move |tok| tok.kind() == kind)
+          .nth(idx)
       }
 
       fn nodes<P, C>(parent: &P) -> impl Iterator<Item = C>
