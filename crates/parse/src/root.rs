@@ -20,7 +20,7 @@ fn item<'input>(p: &mut Parser<'input, SK>, tds: &mut TypeDefs<'input>) {
     p.eat(SK::Ident);
     if p.at(SK::Semicolon) {
       p.bump();
-      p.exit(entered, SK::StructDecl);
+      p.exit(entered, SK::StructDeclItem);
     } else if p.at(SK::LCurly) {
       p.bump();
       loop {
@@ -35,7 +35,7 @@ fn item<'input>(p: &mut Parser<'input, SK>, tds: &mut TypeDefs<'input>) {
         p.eat(SK::Semicolon);
       }
       p.eat(SK::Semicolon);
-      p.exit(entered, SK::StructDefn);
+      p.exit(entered, SK::StructDefnItem);
     } else {
       let ty_hd_exited = p.exit(entered, SK::StructTy);
       fn_tail(p, tds, ty_hd_exited);
@@ -49,7 +49,7 @@ fn item<'input>(p: &mut Parser<'input, SK>, tds: &mut TypeDefs<'input>) {
       tds.insert(tok.text);
     }
     p.eat(SK::Semicolon);
-    p.exit(entered, SK::TypeDefn);
+    p.exit(entered, SK::TypeDefnItem);
   } else if p.at(SK::UseKw) {
     let entered = p.enter();
     p.bump();
@@ -58,7 +58,7 @@ fn item<'input>(p: &mut Parser<'input, SK>, tds: &mut TypeDefs<'input>) {
     } else {
       p.error();
     }
-    p.exit(entered, SK::UseDecl);
+    p.exit(entered, SK::UseItem);
   } else if let Some(exited) = ty_hd_opt(p, tds) {
     fn_tail(p, tds, exited);
   } else {
@@ -74,11 +74,11 @@ fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
   if p.at(SK::Semicolon) {
     let entered = p.precede(ty_exited);
     p.bump();
-    p.exit(entered, SK::FnDecl);
+    p.exit(entered, SK::FnDeclItem);
   } else if p.at(SK::LCurly) {
     let entered = p.precede(ty_exited);
     stmt_block(p, tds);
-    p.exit(entered, SK::FnDefn);
+    p.exit(entered, SK::FnDefnItem);
   } else {
     p.error();
   }

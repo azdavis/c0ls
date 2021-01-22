@@ -84,7 +84,7 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
   } else if let Some(exited) = stmt_simple_opt(p, tds) {
     let entered = p.precede(exited);
     p.eat(SK::Semicolon);
-    Some(p.exit(entered, SK::SimpleStmt))
+    Some(p.exit(entered, SK::SimpStmt))
   } else {
     None
   }
@@ -100,9 +100,9 @@ fn stmt_simple_opt(
     return Some(if p.at(SK::Eq) {
       p.bump();
       expr(p, tds);
-      p.exit(entered, SK::DefnStmt)
+      p.exit(entered, SK::DefnSimp)
     } else {
-      p.exit(entered, SK::DeclStmt)
+      p.exit(entered, SK::DeclSimp)
     });
   }
   let exited = expr_opt(p, tds)?;
@@ -122,15 +122,15 @@ fn stmt_simple_opt(
   {
     p.bump();
     expr(p, tds);
-    p.exit(entered, SK::AssignStmt)
+    p.exit(entered, SK::AsgnSimp)
   } else if p.at(SK::PlusPlus) {
     p.bump();
-    p.exit(entered, SK::IncStmt)
+    p.exit(entered, SK::IncSimp)
   } else if p.at(SK::MinusMinus) {
     p.bump();
-    p.exit(entered, SK::DecStmt)
+    p.exit(entered, SK::DecSimp)
   } else {
-    p.exit(entered, SK::ExprStmt)
+    p.exit(entered, SK::ExprSimp)
   };
   Some(completed)
 }
