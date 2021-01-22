@@ -34,11 +34,11 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
   let mut ret = Tokens::default();
   for token in grammar.tokens() {
     let name = &grammar[token].name;
-    let mut cs = name.chars();
     if name == "#use" {
       ret.use_token = Some(token);
       continue;
     }
+    let mut cs = name.chars();
     let (map, ins) = if cs.next().unwrap() == CONTENT_SIGIL {
       (&mut ret.content, cs.as_str().to_owned())
     } else if name == "->" {
