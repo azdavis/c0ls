@@ -287,11 +287,9 @@ fn is_esc(b: u8) -> bool {
 
 // sorted in length-lex order (i think that's what it's called?)
 
-const KEYWORDS: [(&[u8], SK); 21] = [
+const KEYWORDS: [(&[u8], SK); 19] = [
   // 11
   (b"alloc_array", SK::AllocArrayKw),
-  // 8
-  (b"continue", SK::ContinueKw),
   // 7
   (b"typedef", SK::TypedefKw),
   // 6
@@ -301,7 +299,6 @@ const KEYWORDS: [(&[u8], SK); 21] = [
   (b"struct", SK::StructKw),
   // 5
   (b"alloc", SK::AllocKw),
-  (b"break", SK::BreakKw),
   (b"error", SK::ErrorKw),
   (b"false", SK::FalseKw),
   (b"while", SK::WhileKw),
