@@ -10,8 +10,8 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     pub enum #name {
       #(#defs ,)*
     }
-    impl #name {
-      pub fn cast(node: SyntaxNode) -> Option<Self> {
+    impl Cast for #name {
+      fn cast(node: SyntaxNode) -> Option<Self> {
         match node.kind() {
           #(#casts ,)*
           _ => None,

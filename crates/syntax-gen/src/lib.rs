@@ -109,6 +109,14 @@ pub fn gen() -> String {
     pub mod ast {
       use super::{SyntaxKind, SyntaxNode, SyntaxToken};
 
+      pub trait Cast: Sized {
+        fn cast(node: SyntaxNode) -> Option<Self>;
+      }
+
+      pub trait Syntax {
+        fn syntax(&self) -> &SyntaxNode;
+      }
+
       #[inline]
       fn child_token(
         parent: &SyntaxNode,

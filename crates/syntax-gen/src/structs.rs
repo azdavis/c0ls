@@ -9,17 +9,21 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   quote! {
     pub struct #name(SyntaxNode);
     impl #name {
-      pub fn cast(node: SyntaxNode) -> Option<Self> {
+      #(#fields)*
+    }
+    impl Cast for #name {
+      fn cast(node: SyntaxNode) -> Option<Self> {
         if node.kind() == SyntaxKind::#name {
           Some(Self(node))
         } else {
           None
         }
       }
-      pub fn syntax(&self) -> &SyntaxNode {
+    }
+    impl Syntax for #name {
+      fn syntax(&self) -> &SyntaxNode {
         &self.0
       }
-      #(#fields)*
     }
   }
 }
