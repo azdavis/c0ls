@@ -140,9 +140,9 @@ dependencies = [
 
 [[package]]
 name = "ungrammar"
-version = "1.9.3"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5901372c0f3a6a1a9d880aef134c8eaf5e54409343637508c0a344270b42d7b"
+checksum = "ce24866975a8858d3a35eba845efc6b42962c5067afd2bc1a07b9ce0108d335c"
 
 [[package]]
 name = "unicode-xid"
