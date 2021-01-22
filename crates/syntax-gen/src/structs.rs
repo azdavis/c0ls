@@ -93,16 +93,12 @@ fn node_field(
     Modifier::Rep => {
       name_ident = format_ident!("{}s", name);
       ret_ty = quote! { impl Iterator<Item = #kind> };
-      body = quote! {
-        nodes(self)
-      };
+      body = quote! { nodes(self) };
     }
     Modifier::Opt | Modifier::Regular => {
       name_ident = ident(name);
       ret_ty = quote! { Option<#kind> };
-      body = quote! {
-        nodes(self).next()
-      };
+      body = quote! { nodes(self).next() };
     }
   }
   quote! {
