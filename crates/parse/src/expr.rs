@@ -14,24 +14,30 @@ pub(crate) fn expr_opt(
   expr_prec(p, tds, 0)
 }
 
+const PRIM: [(SK, SK); 7] = [
+  (SK::DecLit, SK::DecExpr),
+  (SK::HexLit, SK::HexExpr),
+  (SK::StringLit, SK::StringExpr),
+  (SK::CharLit, SK::CharExpr),
+  (SK::TrueKw, SK::TrueExpr),
+  (SK::FalseKw, SK::FalseExpr),
+  (SK::NullKw, SK::NullExpr),
+];
+
 fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
+  for &(tok, node) in PRIM.iter() {
+    if p.at(tok) {
+      let entered = p.enter();
+      p.bump();
+      return Some(p.exit(entered, node));
+    }
+  }
   if p.at(SK::LRound) {
     let entered = p.enter();
     p.bump();
     expr(p, tds);
     p.eat(SK::RRound);
     Some(p.exit(entered, SK::ParenExpr))
-  } else if p.at(SK::DecLit)
-    || p.at(SK::HexLit)
-    || p.at(SK::StringLit)
-    || p.at(SK::CharLit)
-    || p.at(SK::TrueKw)
-    || p.at(SK::FalseKw)
-    || p.at(SK::NullKw)
-  {
-    let entered = p.enter();
-    p.bump();
-    Some(p.exit(entered, SK::PrimExpr))
   } else if p.at(SK::Ident) {
     let entered = p.enter();
     p.bump();

@@ -13,20 +13,26 @@ pub(crate) fn ty_opt(
   ty_hd_opt(p, tds).map(|e| ty_tl(p, e))
 }
 
+const PRIM: [(SK, SK); 5] = [
+  (SK::IntKw, SK::IntTy),
+  (SK::BoolKw, SK::BoolTy),
+  (SK::StringKw, SK::StringTy),
+  (SK::CharKw, SK::CharTy),
+  (SK::VoidKw, SK::VoidTy),
+];
+
 pub(crate) fn ty_hd_opt(
   p: &mut Parser<'_, SK>,
   tds: &TypeDefs<'_>,
 ) -> Option<Exited> {
-  if p.at(SK::IntKw)
-    || p.at(SK::BoolKw)
-    || p.at(SK::StringKw)
-    || p.at(SK::CharKw)
-    || p.at(SK::VoidKw)
-  {
-    let entered = p.enter();
-    p.bump();
-    Some(p.exit(entered, SK::PrimTy))
-  } else if p.at(SK::StructKw) {
+  for &(tok, node) in PRIM.iter() {
+    if p.at(tok) {
+      let entered = p.enter();
+      p.bump();
+      return Some(p.exit(entered, node));
+    }
+  }
+  if p.at(SK::StructKw) {
     let entered = p.enter();
     p.bump();
     p.eat(SK::Ident);
