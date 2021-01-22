@@ -30,14 +30,14 @@ fn variant(cx: &Cx, rule: &Rule) -> (TokenStream, TokenStream) {
       name = ident(&cx.grammar[*node].name);
       def = quote! { #name(#name) };
       cast = quote! {
-        SyntaxKind::#name => Some(Self::#name(#name(node)))
+        SK::#name => Some(Self::#name(#name(node)))
       };
     }
     Rule::Token(tok) => {
       name = ident(cx.tokens.name(*tok));
       def = quote! { #name(SyntaxToken) };
       cast = quote! {
-        SyntaxKind::#name => Some(Self::#name(node.first_token().unwrap()))
+        SK::#name => Some(Self::#name(node.first_token().unwrap()))
       };
     }
     Rule::Labeled { .. }

@@ -13,7 +13,7 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     }
     impl Cast for #name {
       fn cast(node: SyntaxNode) -> Option<Self> {
-        if node.kind() == SyntaxKind::#name {
+        if node.kind() == SK::#name {
           Some(Self(node))
         } else {
           None
@@ -54,7 +54,7 @@ fn token_field(cx: &Cx, name: Option<&str>, token: Token) -> TokenStream {
   let kind = ident(kind);
   quote! {
     pub fn #name(&self) -> Option<SyntaxToken> {
-      child_token(self.syntax(), SyntaxKind::#kind)
+      token(self, SK::#kind)
     }
   }
 }
@@ -94,14 +94,14 @@ fn node_field(
       name_ident = format_ident!("{}s", name);
       ret_ty = quote! { impl Iterator<Item = #kind> };
       body = quote! {
-        self.syntax().children().filter_map(#kind::cast)
+        nodes(self)
       };
     }
     Modifier::Opt | Modifier::Regular => {
       name_ident = ident(name);
       ret_ty = quote! { Option<#kind> };
       body = quote! {
-        self.syntax().children().find_map(#kind::cast)
+        nodes(self).next()
       };
     }
   }

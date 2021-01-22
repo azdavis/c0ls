@@ -107,7 +107,7 @@ pub fn gen() -> String {
     pub type SyntaxToken = rowan::SyntaxToken<C0>;
 
     pub mod ast {
-      use super::{SyntaxKind, SyntaxNode, SyntaxToken};
+      use super::{SyntaxKind as SK, SyntaxNode, SyntaxToken};
 
       pub trait Cast: Sized {
         fn cast(node: SyntaxNode) -> Option<Self>;
@@ -117,15 +117,23 @@ pub fn gen() -> String {
         fn syntax(&self) -> &SyntaxNode;
       }
 
-      #[inline]
-      fn child_token(
-        parent: &SyntaxNode,
-        kind: SyntaxKind,
-      ) -> Option<SyntaxToken> {
+      fn token<P>(parent: &P, kind: SK) -> Option<SyntaxToken>
+      where
+        P: Syntax,
+      {
         parent
+          .syntax()
           .children_with_tokens()
           .filter_map(rowan::NodeOrToken::into_token)
           .find(|tok| tok.kind() == kind)
+      }
+
+      fn nodes<P, C>(parent: &P) -> impl Iterator<Item = C>
+      where
+        P: Syntax,
+        C: Cast,
+      {
+        parent.syntax().children().filter_map(C::cast)
       }
 
       #(#types)*
