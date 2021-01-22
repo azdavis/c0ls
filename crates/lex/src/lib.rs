@@ -116,12 +116,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   if b.is_ascii_alphabetic() || b == b'_' {
     cx.i += 1;
     advance_while(cx, bs, |&b| b.is_ascii_alphanumeric() || b == b'_');
-    let text = &bs[start..cx.i];
-    let kind = KEYWORDS
-      .iter()
-      .find_map(|&(sk_text, sk)| if sk_text == text { Some(sk) } else { None })
-      .unwrap_or(SK::Ident);
-    return kind;
+    return SK::keyword(&bs[start..cx.i]).unwrap_or(SK::Ident);
   }
   // num lit (dec/hex)
   if b.is_ascii_digit() {
@@ -223,7 +218,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     return SK::LibLit;
   }
   // punctuation
-  for &(sk_text, sk) in PUNCTUATION.iter() {
+  for &(sk_text, sk) in SK::PUNCTUATION.iter() {
     if bs.get(cx.i..cx.i + sk_text.len()) == Some(sk_text) {
       cx.i += sk_text.len();
       return sk;
@@ -284,87 +279,5 @@ fn is_esc(b: u8) -> bool {
     b'n' | b't' | b'v' | b'b' | b'r' | b'f' | b'a' | b'\\' | b'\'' | b'"'
   )
 }
-
-// sorted in length-lex order (i think that's what it's called?)
-
-const KEYWORDS: [(&[u8], SK); 19] = [
-  // 11
-  (b"alloc_array", SK::AllocArrayKw),
-  // 7
-  (b"typedef", SK::TypedefKw),
-  // 6
-  (b"assert", SK::AssertKw),
-  (b"return", SK::ReturnKw),
-  (b"string", SK::StringKw),
-  (b"struct", SK::StructKw),
-  // 5
-  (b"alloc", SK::AllocKw),
-  (b"error", SK::ErrorKw),
-  (b"false", SK::FalseKw),
-  (b"while", SK::WhileKw),
-  // 4
-  (b"bool", SK::BoolKw),
-  (b"char", SK::CharKw),
-  (b"else", SK::ElseKw),
-  (b"NULL", SK::NullKw),
-  (b"true", SK::TrueKw),
-  (b"void", SK::VoidKw),
-  // 3
-  (b"for", SK::ForKw),
-  (b"int", SK::IntKw),
-  // 2
-  (b"if", SK::IfKw),
-];
-
-const PUNCTUATION: [(&[u8], SK); 45] = [
-  // 3
-  (b"<<=", SK::LtLtEq),
-  (b">>=", SK::GtGtEq),
-  // 2
-  (b"--", SK::MinusMinus),
-  (b"-=", SK::MinusEq),
-  (b"->", SK::Arrow),
-  (b"!=", SK::BangEq),
-  (b"*=", SK::StarEq),
-  (b"/=", SK::SlashEq),
-  (b"&&", SK::AndAnd),
-  (b"&=", SK::AndEq),
-  (b"%=", SK::PercentEq),
-  (b"^=", SK::CaratEq),
-  (b"++", SK::PlusPlus),
-  (b"+=", SK::PlusEq),
-  (b"<<", SK::LtLt),
-  (b"<=", SK::LtEq),
-  (b"==", SK::EqEq),
-  (b">=", SK::GtEq),
-  (b">>", SK::GtGt),
-  (b"|=", SK::BarEq),
-  (b"||", SK::BarBar),
-  // 1
-  (b"-", SK::Minus),
-  (b",", SK::Comma),
-  (b";", SK::Semicolon),
-  (b":", SK::Colon),
-  (b"!", SK::Bang),
-  (b"?", SK::Question),
-  (b".", SK::Dot),
-  (b"(", SK::LRound),
-  (b")", SK::RRound),
-  (b"[", SK::LSquare),
-  (b"]", SK::RSquare),
-  (b"{", SK::LCurly),
-  (b"}", SK::RCurly),
-  (b"*", SK::Star),
-  (b"/", SK::Slash),
-  (b"&", SK::And),
-  (b"%", SK::Percent),
-  (b"^", SK::Carat),
-  (b"+", SK::Plus),
-  (b"<", SK::Lt),
-  (b"=", SK::Eq),
-  (b">", SK::Gt),
-  (b"|", SK::Bar),
-  (b"~", SK::Tilde),
-];
 
 const USE: &[u8] = b"#use";
