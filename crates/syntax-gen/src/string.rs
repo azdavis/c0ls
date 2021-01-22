@@ -57,7 +57,7 @@ pub(crate) fn char_name(c: char) -> &'static str {
     '>' => "Gt",
     '|' => "Bar",
     '~' => "Tilde",
-    _ => unreachable!("don't know the name for {}", c),
+    _ => panic!("don't know the name for {}", c),
   }
 }
 

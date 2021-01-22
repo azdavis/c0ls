@@ -41,7 +41,7 @@ fn field(cx: &Cx, rule: &Rule) -> TokenStream {
     Rule::Token(tok) => token_field(cx, None, *tok),
     Rule::Opt(r) => node_field(cx, Modifier::Opt, None, unwrap_node(r)),
     Rule::Rep(r) => node_field(cx, Modifier::Rep, None, unwrap_node(r)),
-    Rule::Alt(_) | Rule::Seq(_) => unreachable!(),
+    Rule::Alt(_) | Rule::Seq(_) => panic!("bad field rule {:?}", rule),
   }
 }
 
@@ -65,7 +65,7 @@ fn labeled_field(cx: &Cx, label: &str, rule: &Rule) -> TokenStream {
     Rule::Token(tok) => token_field(cx, Some(label), *tok),
     Rule::Opt(r) => node_field(cx, Modifier::Opt, Some(label), unwrap_node(r)),
     Rule::Labeled { .. } | Rule::Seq(_) | Rule::Alt(_) | Rule::Rep(_) => {
-      unreachable!()
+      panic!("bad labeled field rule {:?}", rule)
     }
   }
 }

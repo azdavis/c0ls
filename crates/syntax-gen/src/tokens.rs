@@ -26,7 +26,7 @@ impl Tokens {
     if Some(token) == self.use_token {
       return "UseKw";
     }
-    unreachable!("{:?} does not have a name", token)
+    panic!("{:?} does not have a name", token)
   }
 }
 

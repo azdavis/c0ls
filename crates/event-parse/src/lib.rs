@@ -83,7 +83,7 @@ impl<'input, K> Parser<'input, K> {
         assert!(parent.is_none());
         *parent = Some(ret.idx);
       }
-      _ => unreachable!("did not precede an Enter"),
+      _ => unreachable!("{:?} did not precede an Enter", exited),
     }
     ret
   }
@@ -155,7 +155,7 @@ where
                 kinds.push(kind);
                 parent = new_parent;
               }
-              _ => unreachable!("parent was not an Enter"),
+              _ => unreachable!("{:?} was not an Enter", parent),
             }
           }
           for kind in kinds.drain(..).rev() {

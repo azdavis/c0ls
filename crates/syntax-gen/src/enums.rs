@@ -44,7 +44,7 @@ fn variant(cx: &Cx, rule: &Rule) -> (TokenStream, TokenStream) {
     | Rule::Seq(_)
     | Rule::Alt(_)
     | Rule::Opt(_)
-    | Rule::Rep(_) => unreachable!(),
+    | Rule::Rep(_) => panic!("bad variant rule {:?}", rule),
   }
   (def, cast)
 }

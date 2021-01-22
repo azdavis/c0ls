@@ -18,7 +18,7 @@ pub(crate) fn ident(s: &str) -> Ident {
 pub(crate) fn unwrap_node(rule: &Rule) -> Node {
   match rule {
     Rule::Node(node) => *node,
-    _ => unreachable!(),
+    _ => panic!("unwrap_node on {:?}", rule),
   }
 }
 
