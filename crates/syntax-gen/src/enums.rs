@@ -34,7 +34,7 @@ fn variant(cx: &Cx, rule: &Rule) -> (TokenStream, TokenStream) {
       };
     }
     Rule::Token(tok) => {
-      name = ident(cx.tokens.name(*tok).unwrap());
+      name = ident(cx.tokens.name(*tok));
       def = quote! { #name(SyntaxToken) };
       cast = quote! {
         SyntaxKind::#name => Some(Self::#name(node.first_token().unwrap()))

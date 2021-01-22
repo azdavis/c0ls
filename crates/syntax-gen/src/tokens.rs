@@ -13,20 +13,20 @@ pub(crate) struct Tokens {
 }
 
 impl Tokens {
-  pub(crate) fn name(&self, token: Token) -> Option<&str> {
+  pub(crate) fn name(&self, token: Token) -> &str {
     if let Some(x) = self.punctuation.get(&token) {
-      return Some(x);
+      return x;
     }
     if let Some(x) = self.keywords.get(&token) {
-      return Some(x);
+      return x;
     }
     if let Some(x) = self.content.get(&token) {
-      return Some(x);
+      return x;
     }
     if Some(token) == self.use_token {
-      return Some("UseKw");
+      return "UseKw";
     }
-    None
+    unreachable!("{:?} does not have a name", token)
   }
 }
 

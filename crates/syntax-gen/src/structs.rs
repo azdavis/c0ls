@@ -42,7 +42,7 @@ fn field(cx: &Cx, rule: &Rule) -> TokenStream {
 }
 
 fn token_field(cx: &Cx, name: Option<&str>, token: Token) -> TokenStream {
-  let kind = cx.tokens.name(token).unwrap();
+  let kind = cx.tokens.name(token);
   let name = match name {
     None => ident(&pascal_to_snake(kind)),
     Some(x) => ident(x),
