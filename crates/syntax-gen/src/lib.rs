@@ -10,6 +10,11 @@ use crate::util::{ident, sort_tokens, Cx};
 use quote::quote;
 use ungrammar::{Grammar, Rule};
 
+enum Kind {
+  Struct,
+  Enum,
+}
+
 pub fn gen() -> String {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
   let tokens = tokens::get(&grammar);
@@ -19,13 +24,19 @@ pub fn gen() -> String {
   for node in cx.grammar.iter() {
     let data = &cx.grammar[node];
     let name = ident(&data.name);
-    let ty = match &data.rule {
-      Rule::Seq(rules) => structs::get(&cx, name.clone(), rules),
-      Rule::Alt(rules) => enums::get(&cx, name.clone(), rules),
-      rule => structs::get(&cx, name.clone(), std::slice::from_ref(rule)),
+    let (kind, rules) = match &data.rule {
+      Rule::Seq(rules) => (Kind::Struct, rules.as_slice()),
+      Rule::Alt(rules) => (Kind::Enum, rules.as_slice()),
+      rule => (Kind::Struct, std::slice::from_ref(rule)),
+    };
+    let ty = match kind {
+      Kind::Struct => {
+        syntax_kinds.push(name.clone());
+        structs::get(&cx, name, rules)
+      }
+      Kind::Enum => enums::get(&cx, name, rules),
     };
     types.push(ty);
-    syntax_kinds.push(name);
   }
   let Cx { grammar, tokens } = cx;
   syntax_kinds.extend(sort_tokens(&grammar, tokens.content).map(|x| x.1));
