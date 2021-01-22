@@ -1,0 +1,141 @@
+// not 100% accurate (note the commas in e.g. FnDeclItem). prefix 'content'
+// tokens with '$'.
+
+Root = Item*
+
+Item =
+  StructDeclItem
+| StructDefnItem
+| FnDeclItem
+| FnDefnItem
+| TypeDefnItem
+| UseItem
+
+StructDeclItem = 'struct' '$Ident' ';'
+StructDefnItem = 'struct' '$Ident' '{' Field* '}' ';'
+FnDeclItem = Ty '$Ident' '(' Param* ')' ';'
+FnDefnItem = Ty '$Ident' '(' Param* ')' BlockStmt
+TypeDefnItem = 'typedef' Ty '$Ident'
+UseItem = '#use' UseLit
+
+UseLit = '$LibLit' | '$StringLit'
+Param = Ty '$Ident' ','
+Field = Ty '$Ident' ';'
+
+Stmt =
+  SimpStmt
+| IfStmt
+| WhileStmt
+| ForStmt
+| ReturnStmt
+| BlockStmt
+| AssertStmt
+| ErrorStmt
+
+SimpStmt = Simp ';'
+IfStmt = 'if' '(' cond:Expr ')' if_branch:Stmt ElseBranch?
+WhileStmt = 'while' '(' cond:Expr ')' body:Stmt
+ForStmt =
+  'for' '('
+    init:Simp? init_semi:';' cond:Expr cond_semi:';' term:Simp?
+  ')' body:Stmt
+ReturnStmt = 'return' Expr? ';'
+BlockStmt = '{' Stmt* '}'
+AssertStmt = 'assert' '(' Expr ')' ';'
+ErrorStmt = 'error' '(' Expr ')' ';'
+
+ElseBranch = 'else' else_branch:Stmt
+
+Simp =
+  AsgnSimp
+| IncSimp
+| DecSimp
+| DeclSimp
+| DefnSimp
+| ExprSimp
+
+AsgnSimp = lhs:Expr AsgnOp rhs:Expr
+IncSimp = Expr '++'
+DecSimp = Expr '--'
+DeclSimp = Ty '$Ident'
+DefnSimp = Ty '$Ident' '=' Expr
+ExprSimp = Expr
+
+Ty =
+  IntTy
+| BoolTy
+| StringTy
+| CharTy
+| VoidTy
+| PtrTy
+| ArrayTy
+| StructTy
+| IdentTy
+
+IntTy = 'int'
+BoolTy = 'bool'
+StringTy = 'string'
+CharTy = 'char'
+VoidTy = 'void'
+PtrTy = Ty '*'
+ArrayTy = Ty '[' ']'
+StructTy = 'struct' '$Ident'
+IdentTy = '$Ident'
+
+Expr =
+  DecExpr
+| HexExpr
+| StringExpr
+| CharExpr
+| TrueExpr
+| FalseExpr
+| NullExpr
+| IdentExpr
+| ParenExpr
+| BinOpExpr
+| UnOpExpr
+| TernaryExpr
+| CallExpr
+| DotExpr
+| ArrowExpr
+| SubscriptExpr
+| AllocExpr
+| AllocArrayExpr
+
+DecExpr = '$DecLit'
+HexExpr = '$HexLit'
+StringExpr = '$StringLit'
+CharExpr = '$CharLit'
+TrueExpr = 'true'
+FalseExpr = 'false'
+NullExpr = 'NULL'
+IdentExpr = '$Ident'
+ParenExpr = '(' Expr ')'
+BinOpExpr = lhs:Expr BinOp rhs:Expr
+UnOpExpr = UnOp Expr
+TernaryExpr = cond:Expr '?' if_branch:Expr ':' else_branch:Expr
+CallExpr = '$Ident' '(' Arg* ')'
+DotExpr = Expr '.' '$Ident'
+ArrowExpr = Expr '->' '$Ident'
+SubscriptExpr = ary:Expr '[' idx:Expr ']'
+AllocExpr = 'alloc' '(' Ty ')'
+AllocArrayExpr = 'alloc_array' '(' Ty ',' Expr ')'
+
+Arg = Expr ','
+
+// support tokens
+
+BinOp =
+  '+' | '-' | '*' | '/'
+| '%' | '<<' | '>>'
+| '&' | '^' | '|'
+| '==' | '!=' | '<' | '<=' | '>' | '>='
+| '&&' | '||'
+
+UnOp = '!' | '~' | '-' | '*'
+
+AsgnOp =
+  '='
+| '+=' | '-=' | '*=' | '/='
+| '%=' | '<<=' | '>>='
+| '&=' | '^=' | '|='
