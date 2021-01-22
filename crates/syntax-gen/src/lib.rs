@@ -1,7 +1,6 @@
 #![deny(rust_2018_idioms)]
 
 mod enums;
-mod slow_map;
 mod string;
 mod structs;
 mod tokens;
