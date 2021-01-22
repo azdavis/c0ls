@@ -40,11 +40,11 @@ fn variant(cx: &Cx, rule: &Rule) -> (TokenStream, TokenStream) {
         SyntaxKind::#name => Some(Self::#name(node.first_token().unwrap()))
       };
     }
-    Rule::Labeled { .. } => panic!("Labeled"),
-    Rule::Seq(_) => panic!("Seq"),
-    Rule::Alt(_) => panic!("Alt"),
-    Rule::Opt(_) => panic!("Opt"),
-    Rule::Rep(_) => panic!("Rep"),
+    Rule::Labeled { .. }
+    | Rule::Seq(_)
+    | Rule::Alt(_)
+    | Rule::Opt(_)
+    | Rule::Rep(_) => unreachable!(),
   }
   (def, cast)
 }
