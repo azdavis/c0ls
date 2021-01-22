@@ -29,7 +29,7 @@ checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 name = "lex"
 version = "0.1.0"
 dependencies = [
- "syntax-neue",
+ "syntax",
 ]
 
 [[package]]
@@ -45,7 +45,7 @@ dependencies = [
 name = "parse"
 version = "0.1.0"
 dependencies = [
- "syntax-neue",
+ "syntax",
 ]
 
 [[package]]
@@ -104,21 +104,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "syntax"
+version = "0.1.0"
+dependencies = [
+ "event-parse",
+ "rowan",
+ "syntax-gen",
+]
+
+[[package]]
 name = "syntax-gen"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
  "ungrammar",
-]
-
-[[package]]
-name = "syntax-neue"
-version = "0.1.0"
-dependencies = [
- "event-parse",
- "rowan",
- "syntax-gen",
 ]
 
 [[package]]

@@ -6,4 +6,4 @@ edition = "2018"
 publish = false
 
 [dependencies]
-syntax = { path = "../syntax-neue", package = "syntax-neue" }
+syntax = { path = "../syntax" }
