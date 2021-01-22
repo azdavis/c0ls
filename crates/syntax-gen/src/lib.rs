@@ -6,7 +6,7 @@ mod structs;
 mod tokens;
 mod util;
 
-use crate::util::{ident, Cx};
+use crate::util::{ident, sort_tokens, Cx};
 use quote::quote;
 use ungrammar::{Grammar, Rule};
 
@@ -27,7 +27,19 @@ pub fn gen() -> String {
     types.push(ty);
     syntax_kinds.push(name);
   }
-  syntax_kinds.extend(cx.tokens.all_names().map(ident));
+  let Cx { grammar, tokens } = cx;
+  syntax_kinds.extend(sort_tokens(&grammar, tokens.content).map(|x| x.1));
+  let keywords: Vec<_> = sort_tokens(&grammar, tokens.keywords).collect();
+  let keyword_arms = keywords
+    .iter()
+    .map(|(bs, kind)| quote! { #bs => Some(Self::#kind) });
+  syntax_kinds.extend(keywords.iter().map(|x| x.1.clone()));
+  let punctuation: Vec<_> = sort_tokens(&grammar, tokens.punctuation).collect();
+  let punctuation_len = punctuation.len();
+  let punctuation_elements = punctuation
+    .iter()
+    .map(|(bs, kind)| quote! { (#bs, Self::#kind) });
+  syntax_kinds.extend(punctuation.iter().map(|x| x.1.clone()));
   let last = syntax_kinds.last().unwrap();
   let ret = quote! {
     pub use event_parse;
@@ -40,14 +52,31 @@ pub fn gen() -> String {
       LineComment,
       BlockComment,
       Invalid,
-      #(#syntax_kinds),*
+      UseKw,
+      #(#syntax_kinds ,)*
+    }
+
+    impl SyntaxKind {
+      pub const PUNCTUATION: [(&'static [u8], Self); #punctuation_len] = [
+        #(#punctuation_elements ,)*
+      ];
+
+      pub fn keyword(bs: &[u8]) -> Option<Self> {
+        match bs {
+          #(#keyword_arms ,)*
+          _ => None,
+        }
+      }
     }
 
     impl event_parse::Triviable for SyntaxKind {
       fn is_trivia(&self) -> bool {
         matches!(
           *self,
-          Self::Whitespace | Self::LineComment | Self::BlockComment | Self::Invalid
+          Self::Whitespace
+          | Self::LineComment
+          | Self::BlockComment
+          | Self::Invalid
         )
       }
     }
