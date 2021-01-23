@@ -33,7 +33,7 @@ Stmt =
 | ErrorStmt
 
 SimpStmt = Simp ';'
-IfStmt = 'if' '(' cond:Expr ')' if_branch:Stmt ElseBranch?
+IfStmt = 'if' '(' cond:Expr ')' yes:Stmt ElseBranch?
 WhileStmt = 'while' '(' cond:Expr ')' body:Stmt
 ForStmt =
   'for' '('
@@ -44,7 +44,7 @@ BlockStmt = '{' Stmt* '}'
 AssertStmt = 'assert' '(' Expr ')' ';'
 ErrorStmt = 'error' '(' Expr ')' ';'
 
-ElseBranch = 'else' else_branch:Stmt
+ElseBranch = 'else' no:Stmt
 
 Simp =
   AsgnSimp
@@ -113,7 +113,7 @@ IdentExpr = '$Ident'
 ParenExpr = '(' Expr ')'
 BinOpExpr = lhs:Expr op:BinOp rhs:Expr
 UnOpExpr = op:UnOp Expr
-TernaryExpr = cond:Expr '?' if_branch:Expr ':' else_branch:Expr
+TernaryExpr = cond:Expr '?' yes:Expr ':' no:Expr
 CallExpr = '$Ident' '(' Arg* ')'
 DotExpr = Expr '.' '$Ident'
 ArrowExpr = Expr '->' '$Ident'
