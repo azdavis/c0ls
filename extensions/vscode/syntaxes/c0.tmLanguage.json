@@ -1,0 +1,53 @@
+{
+  "name": "C0",
+  "scopeName": "source.c0",
+  "patterns": [
+    { "include": "#lineComment" },
+    { "include": "#blockComment" },
+    { "include": "#decLit" },
+    { "include": "#hexLit" },
+    { "include": "#stringLit" },
+    { "include": "#charLit" },
+    { "include": "#controlKw" },
+    { "include": "#otherKw" }
+  ],
+  "repository": {
+    "lineComment": {
+      "name": "comment.line.c0",
+      "begin": "//",
+      "end": "$"
+    },
+    "blockComment": {
+      "name": "comment.block.c0",
+      "begin": "/\\*",
+      "end": "\\*/",
+      "patterns": [{ "include": "#blockComment" }]
+    },
+    "decLit": {
+      "name": "constant.numeric.integer.decimal.c0",
+      "match": "\\b(0|[1-9][0-9]*)\\b"
+    },
+    "hexLit": {
+      "name": "constant.numeric.integer.hexadecimal.c0",
+      "match": "\\b0[xX][0-9a-fA-F]+\\b"
+    },
+    "stringLit": {
+      "name": "string.quoted.double.c0",
+      "begin": "\"",
+      "end": "\""
+    },
+    "charLit": {
+      "name": "string.quoted.single.char.c0",
+      "begin": "'",
+      "end": "'"
+    },
+    "controlKw": {
+      "name": "keyword.control.c0",
+      "match": "\\b(assert|else|error|for|if|return|while)\\b"
+    },
+    "otherKw": {
+      "name": "keyword.other.c0",
+      "match": "\\b(alloc|alloc_array|bool|char|false|int|NULL|string|struct|true|typedef|void)\\b"
+    }
+  }
+}

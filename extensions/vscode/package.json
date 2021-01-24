@@ -1,0 +1,39 @@
+{
+  "private": true,
+  "name": "c0",
+  "displayName": "C0",
+  "version": "0.1.0",
+  "preview": true,
+  "description": "C0 support for VS Code",
+  "publisher": "azdavis",
+  "author": "Ariel Davis <ariel.z.davis@icloud.com>",
+  "repository": {
+    "url": "https://github.com/azdavis/c0ls.git",
+    "type": "git"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "c0",
+        "extensions": [
+          ".c0",
+          ".h0"
+        ],
+        "aliases": [
+          "C0"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "c0",
+        "scopeName": "source.c0",
+        "path": "./syntaxes/c0.tmLanguage.json"
+      }
+    ]
+  },
+  "engines": {
+    "vscode": "^1.52.0"
+  }
+}
