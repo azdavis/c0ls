@@ -1,3 +1,5 @@
+//! Generates the Rust code for the `syntax` crate.
+
 #![deny(rust_2018_idioms)]
 
 mod enums;

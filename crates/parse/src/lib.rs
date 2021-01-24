@@ -1,3 +1,5 @@
+//! Parses tokens into a concrete syntax tree.
+
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 

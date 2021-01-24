@@ -1,3 +1,5 @@
+//! Lexes a string into tokens.
+
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
