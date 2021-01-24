@@ -1,5 +1,6 @@
 *.tmp
 /.vscode/cspell.json
-/c0ref.pdf
 /crates/syntax/src/generated.rs
+/pdf
 /target
+/thoughts.md
