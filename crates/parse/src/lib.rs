@@ -50,7 +50,7 @@ impl Sink<SK> for BuilderSink {
   }
 
   fn token(&mut self, token: Token<'_, SK>) {
-    self.builder.token(token.kind.into(), token.text.into());
+    self.builder.token(token.kind.into(), token.text);
     let start = self.range.as_ref().map_or(0, |range| range.end);
     self.range = Some(start..start + token.text.len());
   }

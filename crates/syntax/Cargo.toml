@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 event-parse = { path = "../event-parse" }
-rowan = "0.10"
+rowan = "0.12"
 
 [build-dependencies]
 syntax-gen = { path = "../syntax-gen" }
