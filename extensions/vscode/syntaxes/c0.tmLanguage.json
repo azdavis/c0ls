@@ -34,12 +34,22 @@
     "stringLit": {
       "name": "string.quoted.double.c0",
       "begin": "\"",
-      "end": "\""
+      "end": "\"",
+      "patterns": [{ "include": "#charEsc" }]
     },
     "charLit": {
       "name": "string.quoted.single.char.c0",
       "begin": "'",
-      "end": "'"
+      "end": "'",
+      "patterns": [{ "include": "#charEsc" }, { "include": "#zeroEsc" }]
+    },
+    "charEsc": {
+      "name": "constant.character.escape.c0",
+      "match": "\\\\[ntvbrfa\\\\'\"]"
+    },
+    "zeroEsc": {
+      "name": "constant.character.escape.c0",
+      "match": "\\\\0"
     },
     "controlKw": {
       "name": "keyword.control.c0",
