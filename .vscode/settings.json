@@ -1,6 +1,6 @@
 {
   "files.exclude": {
-    "crates/syntax/src/generated.rs": true,
+    "crates/syntax/src/generated.rs": false,
     "target": true
   },
   "rust-analyzer.checkOnSave.command": "clippy"
