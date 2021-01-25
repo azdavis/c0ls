@@ -33,18 +33,18 @@ Stmt =
 | ErrorStmt
 
 SimpStmt = Simp ';'
-IfStmt = 'if' '(' cond:Expr ')' yes:Stmt ElseBranch?
+IfStmt = 'if' '(' cond:Expr ')' yes:Stmt no:ElseBranch?
 WhileStmt = 'while' '(' cond:Expr ')' body:Stmt
 ForStmt =
   'for' '('
-    init:Simp? init_semi:';' cond:Expr cond_semi:';' term:Simp?
+    init:Simp? init_semi:';' cond:Expr cond_semi:';' step:Simp?
   ')' body:Stmt
 ReturnStmt = 'return' Expr? ';'
 BlockStmt = '{' Stmt* '}'
 AssertStmt = 'assert' '(' Expr ')' ';'
 ErrorStmt = 'error' '(' Expr ')' ';'
 
-ElseBranch = 'else' no:Stmt
+ElseBranch = 'else' Stmt
 
 Simp =
   AsgnSimp
@@ -117,7 +117,7 @@ TernaryExpr = cond:Expr '?' yes:Expr ':' no:Expr
 CallExpr = '$Ident' '(' Arg* ')'
 DotExpr = Expr '.' '$Ident'
 ArrowExpr = Expr '->' '$Ident'
-SubscriptExpr = ary:Expr '[' idx:Expr ']'
+SubscriptExpr = array:Expr '[' idx:Expr ']'
 AllocExpr = 'alloc' '(' Ty ')'
 AllocArrayExpr = 'alloc_array' '(' Ty ',' Expr ')'
 
