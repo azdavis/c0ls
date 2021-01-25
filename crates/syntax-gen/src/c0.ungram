@@ -4,23 +4,21 @@
 Root = Item*
 
 Item =
-  StructDeclItem
-| StructDefnItem
-| FnDeclItem
-| FnDefnItem
-| TypeDefnItem
+  StructItem
+| FnItem
+| TypedefItem
 | UseItem
 
-StructDeclItem = 'struct' '$Ident' ';'
-StructDefnItem = 'struct' '$Ident' '{' Field* '}' ';'
-FnDeclItem = ret_ty:Ty '$Ident' '(' Param* ')' ';'
-FnDefnItem = ret_ty:Ty '$Ident' '(' Param* ')' body:BlockStmt
-TypeDefnItem = 'typedef' Ty '$Ident'
+StructItem = 'struct' '$Ident' Fields? ';'
+FnItem = ret_ty:Ty '$Ident' '(' Param* ')' tail:FnTail
+TypedefItem = 'typedef' Ty '$Ident'
 UseItem = '#use' UseLit
 
-UseLit = '$LibLit' | '$StringLit'
-Param = Ty '$Ident' ','
+Fields = '{' Field* '}'
 Field = Ty '$Ident' ';'
+Param = Ty '$Ident' ','
+FnTail = ';' | BlockStmt
+UseLit = '$LibLit' | '$StringLit'
 
 Stmt =
   SimpStmt

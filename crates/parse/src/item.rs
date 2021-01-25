@@ -14,7 +14,7 @@ pub(crate) fn item<'input>(
     p.eat(SK::Ident);
     if p.at(SK::Semicolon) {
       p.bump();
-      p.exit(entered, SK::StructDeclItem);
+      p.exit(entered, SK::StructItem);
     } else if p.at(SK::LCurly) {
       p.bump();
       loop {
@@ -29,7 +29,7 @@ pub(crate) fn item<'input>(
         p.eat(SK::Semicolon);
       }
       p.eat(SK::Semicolon);
-      p.exit(entered, SK::StructDefnItem);
+      p.exit(entered, SK::StructItem);
     } else {
       let ty_hd_exited = p.exit(entered, SK::StructTy);
       fn_tail(p, tds, ty_hd_exited);
@@ -43,7 +43,7 @@ pub(crate) fn item<'input>(
       tds.insert(tok.text);
     }
     p.eat(SK::Semicolon);
-    p.exit(entered, SK::TypeDefnItem);
+    p.exit(entered, SK::TypedefItem);
   } else if p.at(SK::UseKw) {
     let entered = p.enter();
     p.bump();
@@ -68,11 +68,11 @@ fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
   if p.at(SK::Semicolon) {
     let entered = p.precede(ty_exited);
     p.bump();
-    p.exit(entered, SK::FnDeclItem);
+    p.exit(entered, SK::FnItem);
   } else if p.at(SK::LCurly) {
     let entered = p.precede(ty_exited);
     stmt_block(p, tds);
-    p.exit(entered, SK::FnDefnItem);
+    p.exit(entered, SK::FnItem);
   } else {
     p.error();
   }
