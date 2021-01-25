@@ -41,19 +41,21 @@ pub fn gen() -> String {
     types.push(ty);
   }
   let Cx { grammar, tokens } = cx;
-  syntax_kinds.extend(sort_tokens(&grammar, tokens.content).map(|x| x.1));
   let keywords: Vec<_> = sort_tokens(&grammar, tokens.keywords).collect();
   let keyword_arms = keywords
     .iter()
     .map(|(bs, kind)| quote! { #bs => Some(Self::#kind) });
-  syntax_kinds.extend(keywords.iter().map(|x| x.1.clone()));
   let punctuation: Vec<_> = sort_tokens(&grammar, tokens.punctuation).collect();
   let punctuation_len = punctuation.len();
   let punctuation_elements = punctuation
     .iter()
     .map(|(bs, kind)| quote! { (#bs, Self::#kind) });
-  syntax_kinds.extend(punctuation.iter().map(|x| x.1.clone()));
-  let last = syntax_kinds.last().unwrap();
+  let new_syntax_kinds = sort_tokens(&grammar, tokens.content)
+    .chain(keywords.iter().cloned())
+    .chain(punctuation.iter().cloned())
+    .map(|x| x.1);
+  syntax_kinds.extend(new_syntax_kinds);
+  let last_syntax_kind = syntax_kinds.last().unwrap();
   let ret = quote! {
     pub use event_parse;
     pub use rowan;
@@ -107,7 +109,7 @@ pub fn gen() -> String {
       type Kind = SyntaxKind;
 
       fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
-        assert!(raw.0 <= SyntaxKind::#last as u16);
+        assert!(raw.0 <= SyntaxKind::#last_syntax_kind as u16);
         unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
       }
 
