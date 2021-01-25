@@ -9,6 +9,7 @@ use syntax::rowan::GreenNodeBuilder;
 use syntax::{SyntaxKind as SK, SyntaxNode};
 
 mod expr;
+mod item;
 mod root;
 mod stmt;
 mod ty;
