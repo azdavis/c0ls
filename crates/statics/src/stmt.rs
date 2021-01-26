@@ -6,7 +6,7 @@ use crate::{expr, ty};
 use std::collections::hash_map::Entry;
 use syntax::ast::{AsgnOp, BlockStmt, Expr, Simp, Stmt, UnOp};
 
-pub fn get_block(
+pub(crate) fn get_block(
   cx: &mut Cx,
   items: &ItemDb,
   vars: &mut NameToTy,

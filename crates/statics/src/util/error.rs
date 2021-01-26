@@ -25,7 +25,7 @@ pub enum Thing {
 }
 
 #[derive(Default)]
-pub struct ErrorDb {
+pub(crate) struct ErrorDb {
   inner: Vec<Error>,
 }
 

@@ -5,7 +5,7 @@ use crate::{stmt, ty};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
 
-pub fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
+pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
   match item {
     Item::StructItem(item) => {
       let fs = unwrap_or!(item.fields(), return);

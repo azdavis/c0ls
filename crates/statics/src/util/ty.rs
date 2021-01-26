@@ -2,13 +2,13 @@ use crate::util::name::Name;
 use std::collections::HashMap;
 
 /// A type store. Do not pass [`Ty`]s returned by one `TyDb` to another `TyDb`.
-pub struct TyDb {
+pub(crate) struct TyDb {
   ty_to_data: Vec<TyData>,
   data_to_ty: HashMap<TyData, Ty>,
 }
 
 impl TyDb {
-  pub fn mk(&mut self, data: TyData) -> Ty {
+  pub(crate) fn mk(&mut self, data: TyData) -> Ty {
     if let Some(&ty) = self.data_to_ty.get(&data) {
       return ty;
     }
@@ -22,7 +22,7 @@ impl TyDb {
     ret
   }
 
-  pub fn get(&self, ty: Ty) -> &TyData {
+  pub(crate) fn get(&self, ty: Ty) -> &TyData {
     self.ty_to_data.get(ty.0 as usize).expect("no data for ty")
   }
 }
@@ -72,7 +72,7 @@ impl Ty {
 /// Data about a type. Give this to a [`TyDb`] to get back a corresponding
 /// [`Ty`]. Note the lack of `void`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum TyData {
+pub(crate) enum TyData {
   /// The 'type' of not-well-typed expressions. Permits any operation. Distinct
   /// from Top, since you cannot dereference a pointer-to-Top.
   Error,

@@ -4,7 +4,7 @@ use crate::util::ty::{Ty, TyData};
 use crate::util::{Cx, NameToTy};
 use syntax::ast::Ty as AstTy;
 
-pub fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
+pub(crate) fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
   match ty {
     AstTy::IntTy(_) => Ty::Int,
     AstTy::BoolTy(_) => Ty::Bool,
@@ -39,6 +39,10 @@ pub fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
 
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
-pub fn get_opt(cx: &mut Cx, type_defs: &NameToTy, ty: Option<AstTy>) -> Ty {
+pub(crate) fn get_opt(
+  cx: &mut Cx,
+  type_defs: &NameToTy,
+  ty: Option<AstTy>,
+) -> Ty {
   ty.map_or(Ty::Error, |ty| get(cx, type_defs, ty))
 }
