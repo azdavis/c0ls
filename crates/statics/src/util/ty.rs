@@ -34,6 +34,7 @@ impl Default for TyDb {
       ty_to_data: Vec::with_capacity(Ty::LEN),
       data_to_ty: HashMap::with_capacity(Ty::LEN),
     };
+    ret.insert(TyData::Error);
     ret.insert(TyData::Top);
     ret.insert(TyData::Int);
     ret.insert(TyData::Bool);
@@ -56,21 +57,25 @@ pub struct Ty(u32);
 /// keep in sync with `impl Default for TyDb`
 #[allow(non_upper_case_globals)]
 impl Ty {
-  pub const Top: Self = Self(0);
-  pub const Int: Self = Self(1);
-  pub const Bool: Self = Self(2);
-  pub const String: Self = Self(3);
-  pub const Char: Self = Self(4);
-  pub const Void: Self = Self(5);
-  pub const PtrTop: Self = Self(6);
-  pub const ArrayTop: Self = Self(7);
-  const LEN: usize = 8;
+  pub const Error: Self = Self(0);
+  pub const Top: Self = Self(1);
+  pub const Int: Self = Self(2);
+  pub const Bool: Self = Self(3);
+  pub const String: Self = Self(4);
+  pub const Char: Self = Self(5);
+  pub const Void: Self = Self(6);
+  pub const PtrTop: Self = Self(7);
+  pub const ArrayTop: Self = Self(8);
+  const LEN: usize = 9;
 }
 
 /// Data about a type. Give this to a [`TyDb`] to get back a corresponding
 /// [`Ty`]. Note the lack of `void`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TyData {
+  /// The 'type' of not-well-typed expressions. Permits any operation. Distinct
+  /// from Top, since you cannot dereference a pointer-to-Top.
+  Error,
   /// 'Any' type. Used to model the type of `NULL`. Not writeable in user code.
   Top,
   Int,

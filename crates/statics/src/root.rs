@@ -1,13 +1,13 @@
 use crate::item;
-use crate::util::ty::TyDb;
-use crate::util::ItemDb;
+use crate::util::error::Error;
+use crate::util::{Cx, ItemDb};
 use syntax::ast::Root;
 
-pub fn get(root: Root) -> Option<()> {
+pub fn get(root: Root) -> Vec<Error> {
   let mut items = ItemDb::default();
-  let mut tys = TyDb::default();
+  let mut cx = Cx::default();
   for item in root.items() {
-    item::get(&mut items, &mut tys, item)?;
+    item::get(&mut cx, &mut items, item);
   }
-  Some(())
+  cx.errors.finish()
 }

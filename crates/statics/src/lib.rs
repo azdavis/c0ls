@@ -2,6 +2,16 @@
 
 #![deny(rust_2018_idioms)]
 
+#[macro_use]
+macro_rules! unwrap_or {
+  ($opt:expr,$or:expr) => {
+    match $opt {
+      ::core::option::Option::Some(x) => x,
+      ::core::option::Option::None => $or,
+    }
+  };
+}
+
 mod expr;
 mod item;
 mod root;
