@@ -22,9 +22,9 @@ pub fn get(
       let (params, ret) = bin_op_ty(expr.op()?);
       let lhs_ty = get(items, vars, tys, expr.lhs()?)?;
       let rhs_ty = get(items, vars, tys, expr.rhs()?)?;
-      let arg_ty = unify(tys, lhs_ty, rhs_ty)?;
       for &param in params {
-        if unify(tys, param, arg_ty).is_some() {
+        if unify(tys, param, lhs_ty).is_some() {
+          unify(tys, param, rhs_ty)?;
           return Some(ret);
         }
       }

@@ -21,20 +21,20 @@ pub struct FnData {
   pub defined: bool,
 }
 
-pub fn unify(tys: &mut TyDb, ty1: Ty, ty2: Ty) -> Option<Ty> {
+pub fn unify(tys: &mut TyDb, expected: Ty, found: Ty) -> Option<Ty> {
   // mini-optimization, also easier than writing lots of match arms
-  if ty1 == ty2 {
-    return Some(ty1);
+  if expected == found {
+    return Some(expected);
   }
-  match (tys.get(ty1), tys.get(ty2)) {
-    (TyData::Top, _) => Some(ty2),
-    (_, TyData::Top) => Some(ty1),
-    (&TyData::Ptr(ty1), &TyData::Ptr(ty2)) => {
-      let res = unify(tys, ty1, ty2)?;
+  match (tys.get(expected), tys.get(found)) {
+    (TyData::Top, _) => Some(found),
+    (_, TyData::Top) => Some(expected),
+    (&TyData::Ptr(expected), &TyData::Ptr(found)) => {
+      let res = unify(tys, expected, found)?;
       Some(tys.mk(TyData::Ptr(res)))
     }
-    (&TyData::Array(ty1), &TyData::Array(ty2)) => {
-      let res = unify(tys, ty1, ty2)?;
+    (&TyData::Array(expected), &TyData::Array(found)) => {
+      let res = unify(tys, expected, found)?;
       Some(tys.mk(TyData::Array(res)))
     }
     _ => None,
