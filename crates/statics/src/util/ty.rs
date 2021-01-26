@@ -42,6 +42,8 @@ impl Default for TyDb {
     ret.insert(TyData::Void);
     ret.insert(TyData::Ptr(Ty::Top));
     ret.insert(TyData::Array(Ty::Top));
+    assert_eq!(ret.ty_to_data.len(), Ty::LEN);
+    assert_eq!(ret.data_to_ty.len(), Ty::LEN);
     ret
   }
 }
@@ -62,7 +64,7 @@ impl Ty {
   pub const Void: Self = Self(5);
   pub const PtrTop: Self = Self(6);
   pub const ArrayTop: Self = Self(7);
-  const LEN: usize = 7;
+  const LEN: usize = 8;
 }
 
 /// Data about a type. Give this to a [`TyDb`] to get back a corresponding
