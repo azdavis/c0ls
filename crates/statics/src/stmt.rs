@@ -57,8 +57,8 @@ fn get(
       let cond_ty = expr::get_opt(cx, items, &vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       if let Some(step) = stmt.step() {
-        if let Simp::DeclSimp(_) | Simp::DefnSimp(_) = step {
-          todo!("step cannot be decl/defn")
+        if let Simp::DeclSimp(_) = step {
+          todo!("step cannot be decl")
         }
         get_simp(cx, items, &mut vars, Some(step));
       }
@@ -121,25 +121,20 @@ fn get_simp(
       let want_rhs_ty = asgn_op_ty(cx, lhs_ty, simp.op());
       unify(cx, want_rhs_ty, rhs_ty);
     }
-    Simp::IncSimp(simp) => get_inc_dec(cx, items, vars, simp.expr()),
-    Simp::DecSimp(simp) => get_inc_dec(cx, items, vars, simp.expr()),
+    Simp::IncDecSimp(simp) => {
+      let expr = simp.expr();
+      if !is_lv(&expr) {
+        todo!("cannot inc/dec expression");
+      }
+      let ty = expr::get_opt(cx, items, vars, expr);
+      unify(cx, Ty::Int, ty);
+    }
     Simp::DeclSimp(simp) => {
       let ty = ty::get_opt(cx, &items.type_defs, simp.ty());
-      let ident = unwrap_or!(simp.ident(), return);
-      match vars.entry(Name::new(ident.text())) {
-        Entry::Occupied(_) => {
-          cx.errors
-            .push(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
-        }
-        Entry::Vacant(entry) => {
-          entry.insert(ty);
-        }
+      if let Some(defn_tail) = simp.defn_tail() {
+        let expr_ty = expr::get_opt(cx, items, vars, defn_tail.expr());
+        unify(cx, ty, expr_ty);
       }
-    }
-    Simp::DefnSimp(simp) => {
-      let ty = ty::get_opt(cx, &items.type_defs, simp.ty());
-      let expr_ty = expr::get_opt(cx, items, vars, simp.expr());
-      unify(cx, ty, expr_ty);
       let ident = unwrap_or!(simp.ident(), return);
       match vars.entry(Name::new(ident.text())) {
         Entry::Occupied(_) => {
@@ -155,19 +150,6 @@ fn get_simp(
       expr::get_opt(cx, items, vars, simp.expr());
     }
   }
-}
-
-fn get_inc_dec(
-  cx: &mut Cx,
-  items: &ItemDb,
-  vars: &NameToTy,
-  expr: Option<Expr>,
-) {
-  if !is_lv(&expr) {
-    todo!("cannot inc/dec this expression");
-  }
-  let ty = expr::get_opt(cx, items, vars, expr);
-  unify(cx, Ty::Int, ty);
 }
 
 fn is_lv(expr: &Option<Expr>) -> bool {

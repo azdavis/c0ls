@@ -97,13 +97,13 @@ fn stmt_simple_opt(
   if ty_opt(p, tds).is_some() {
     let entered = p.enter();
     p.eat(SK::Ident);
-    return Some(if p.at(SK::Eq) {
+    if p.at(SK::Eq) {
+      let entered = p.enter();
       p.bump();
       expr(p, tds);
-      p.exit(entered, SK::DefnSimp)
-    } else {
-      p.exit(entered, SK::DeclSimp)
-    });
+      p.exit(entered, SK::DefnTail);
+    }
+    return Some(p.exit(entered, SK::DeclSimp));
   }
   let exited = expr_opt(p, tds)?;
   let entered = p.precede(exited);
@@ -123,12 +123,9 @@ fn stmt_simple_opt(
     p.bump();
     expr(p, tds);
     p.exit(entered, SK::AsgnSimp)
-  } else if p.at(SK::PlusPlus) {
+  } else if p.at(SK::PlusPlus) || p.at(SK::MinusMinus) {
     p.bump();
-    p.exit(entered, SK::IncSimp)
-  } else if p.at(SK::MinusMinus) {
-    p.bump();
-    p.exit(entered, SK::DecSimp)
+    p.exit(entered, SK::IncDecSimp)
   } else {
     p.exit(entered, SK::ExprSimp)
   };

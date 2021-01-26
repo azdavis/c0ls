@@ -46,17 +46,15 @@ ElseBranch = 'else' Stmt
 
 Simp =
   AsgnSimp
-| IncSimp
-| DecSimp
+| IncDecSimp
 | DeclSimp
-| DefnSimp
 | ExprSimp
 
 AsgnSimp = lhs:Expr op:AsgnOp rhs:Expr
-IncSimp = Expr '++'
-DecSimp = Expr '--'
-DeclSimp = Ty '$Ident'
-DefnSimp = Ty '$Ident' '=' Expr
+IncDecSimp = Expr IncDec
+IncDec = '++' | '--'
+DeclSimp = Ty '$Ident' DefnTail?
+DefnTail = '=' Expr
 ExprSimp = Expr
 
 Ty =
