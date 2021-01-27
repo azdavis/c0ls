@@ -44,7 +44,7 @@ pub fn gen() -> String {
   let keywords: Vec<_> = sort_tokens(&grammar, tokens.keywords).collect();
   let keyword_arms = keywords
     .iter()
-    .map(|(bs, kind)| quote! { #bs => Some(Self::#kind) });
+    .map(|(bs, kind)| quote! { #bs => Self::#kind });
   let punctuation: Vec<_> = sort_tokens(&grammar, tokens.punctuation).collect();
   let punctuation_len = punctuation.len();
   let punctuation_elements = punctuation
@@ -77,10 +77,11 @@ pub fn gen() -> String {
       ];
 
       pub fn keyword(bs: &[u8]) -> Option<Self> {
-        match bs {
+        let ret = match bs {
           #(#keyword_arms ,)*
-          _ => None,
-        }
+          _ => return None,
+        };
+        Some(ret)
       }
     }
 

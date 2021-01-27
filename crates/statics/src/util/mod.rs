@@ -49,18 +49,19 @@ pub(crate) fn unify_impl(cx: &mut Cx, expected: Ty, found: Ty) -> Option<Ty> {
   if expected == found {
     return Some(expected);
   }
-  match (cx.tys.get(expected), cx.tys.get(found)) {
-    (TyData::Error, _) | (_, TyData::Error) => Some(Ty::Error),
-    (TyData::Top, _) => Some(found),
-    (_, TyData::Top) => Some(expected),
+  let ret = match (cx.tys.get(expected), cx.tys.get(found)) {
+    (TyData::Error, _) | (_, TyData::Error) => Ty::Error,
+    (TyData::Top, _) => found,
+    (_, TyData::Top) => expected,
     (&TyData::Ptr(expected), &TyData::Ptr(found)) => {
       let res = unify_impl(cx, expected, found)?;
-      Some(cx.tys.mk(TyData::Ptr(res)))
+      cx.tys.mk(TyData::Ptr(res))
     }
     (&TyData::Array(expected), &TyData::Array(found)) => {
       let res = unify_impl(cx, expected, found)?;
-      Some(cx.tys.mk(TyData::Array(res)))
+      cx.tys.mk(TyData::Array(res))
     }
-    _ => None,
-  }
+    _ => return None,
+  };
+  Some(ret)
 }
