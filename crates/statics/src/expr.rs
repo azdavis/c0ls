@@ -55,22 +55,7 @@ pub(crate) fn get(
           unify(cx, Ty::Int, ty);
           Ty::Int
         }
-        UnOpKind::Star => match *cx.tys.get(ty) {
-          TyData::Ptr(inner) => {
-            if inner == Ty::Top {
-              cx.errors
-                .push(expr.syntax().text_range(), ErrorKind::DerefNull);
-              Ty::Error
-            } else {
-              inner
-            }
-          }
-          _ => {
-            cx.errors
-              .push(expr.syntax().text_range(), ErrorKind::DerefNonPtr(ty));
-            Ty::Error
-          }
-        },
+        UnOpKind::Star => deref(cx, ty),
       }
     }
     Expr::TernaryExpr(expr) => {
@@ -115,14 +100,7 @@ pub(crate) fn get(
     }
     Expr::ArrowExpr(expr) => {
       let ptr_ty = get_opt(cx, items, vars, expr.expr());
-      let struct_ty = match *cx.tys.get(ptr_ty) {
-        TyData::Ptr(ty) => ty,
-        _ => {
-          cx.errors
-            .push(expr.syntax().text_range(), ErrorKind::DerefNonPtr(ptr_ty));
-          Ty::Error
-        }
-      };
+      let struct_ty = deref(cx, ptr_ty);
       struct_field(cx, items, struct_ty, expr.ident())
     }
     Expr::SubscriptExpr(expr) => {
@@ -162,6 +140,23 @@ pub(crate) fn get_opt(
   expr: Option<Expr>,
 ) -> Ty {
   expr.map_or(Ty::Error, |expr| get(cx, items, vars, expr))
+}
+
+fn deref(cx: &mut Cx, ty: Ty) -> Ty {
+  match *cx.tys.get(ty) {
+    TyData::Ptr(inner) => {
+      if inner == Ty::Top {
+        // TODO ErrorKind::DerefNull
+        Ty::Error
+      } else {
+        inner
+      }
+    }
+    _ => {
+      // TODO ErrorKind::DerefNonPtr(ty)
+      Ty::Error
+    }
+  }
 }
 
 fn struct_field(
