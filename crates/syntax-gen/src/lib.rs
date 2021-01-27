@@ -2,9 +2,9 @@
 
 #![deny(rust_2018_idioms)]
 
-mod enums;
+mod alt;
+mod seq;
 mod string;
-mod structs;
 mod tokens;
 mod util;
 
@@ -13,8 +13,8 @@ use quote::quote;
 use ungrammar::{Grammar, Rule};
 
 enum Kind {
-  Struct,
-  Enum,
+  Seq,
+  Alt,
 }
 
 pub fn gen() -> String {
@@ -27,16 +27,16 @@ pub fn gen() -> String {
     let data = &cx.grammar[node];
     let name = ident(&data.name);
     let (kind, rules) = match &data.rule {
-      Rule::Seq(rules) => (Kind::Struct, rules.as_slice()),
-      Rule::Alt(rules) => (Kind::Enum, rules.as_slice()),
-      rule => (Kind::Struct, std::slice::from_ref(rule)),
+      Rule::Seq(rules) => (Kind::Seq, rules.as_slice()),
+      Rule::Alt(rules) => (Kind::Alt, rules.as_slice()),
+      rule => (Kind::Seq, std::slice::from_ref(rule)),
     };
     let ty = match kind {
-      Kind::Struct => {
+      Kind::Seq => {
         syntax_kinds.push(name.clone());
-        structs::get(&cx, name, rules)
+        seq::get(&cx, name, rules)
       }
-      Kind::Enum => enums::get(&cx, name, rules),
+      Kind::Alt => alt::get(&cx, name, rules),
     };
     types.push(ty);
   }
