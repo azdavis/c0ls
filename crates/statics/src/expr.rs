@@ -30,10 +30,10 @@ pub(crate) fn get(
     },
     Expr::ParenExpr(expr) => get_opt(cx, items, vars, expr.expr()),
     Expr::BinOpExpr(expr) => {
-      let op = unwrap_or!(expr.op(), return Ty::Error);
-      let (params, ret) = bin_op_ty(op);
       let lhs_ty = get_opt(cx, items, vars, expr.lhs());
       let rhs_ty = get_opt(cx, items, vars, expr.rhs());
+      let op = unwrap_or!(expr.op(), return Ty::Error);
+      let (params, ret) = bin_op_ty(op);
       for &param in params {
         if unify_impl(cx, param, lhs_ty).is_some() {
           unify(cx, param, rhs_ty);
