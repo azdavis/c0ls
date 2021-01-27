@@ -102,7 +102,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   }
   let ret_ty = ty::get_opt(cx, &items.type_defs, item.ret_ty());
   let defined = match item.tail() {
-    None | Some(FnTail::Semicolon(_)) => false,
+    None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
       if stmt::get_block(cx, items, &mut vars, ret_ty, block) {
         todo!("not all code paths return")

@@ -4,7 +4,7 @@ use crate::util::ty::Ty;
 use crate::util::{unify, Cx, ItemDb, NameToTy};
 use crate::{expr, ty};
 use std::collections::hash_map::Entry;
-use syntax::ast::{AsgnOp, BlockStmt, Expr, Simp, Stmt, UnOp};
+use syntax::ast::{AsgnOp, AsgnOpKind, BlockStmt, Expr, Simp, Stmt, UnOpKind};
 
 pub(crate) fn get_block(
   cx: &mut Cx,
@@ -157,9 +157,9 @@ fn is_lv(expr: &Option<Expr>) -> bool {
   match expr {
     Expr::IdentExpr(_) => true,
     Expr::ParenExpr(expr) => is_lv(&expr.expr()),
-    Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return true) {
-      UnOp::Star(_) => is_lv(&expr.expr()),
-      UnOp::Bang(_) | UnOp::Tilde(_) | UnOp::Minus(_) => false,
+    Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return true).kind {
+      UnOpKind::Star => is_lv(&expr.expr()),
+      UnOpKind::Bang | UnOpKind::Tilde | UnOpKind::Minus => false,
     },
     Expr::DotExpr(expr) => is_lv(&expr.expr()),
     Expr::ArrowExpr(expr) => is_lv(&expr.expr()),
@@ -180,18 +180,18 @@ fn is_lv(expr: &Option<Expr>) -> bool {
 }
 
 fn asgn_op_ty(cx: &mut Cx, lhs_ty: Ty, op: Option<AsgnOp>) -> Ty {
-  match unwrap_or!(op, return Ty::Error) {
-    AsgnOp::Eq(_) => lhs_ty,
-    AsgnOp::PlusEq(_)
-    | AsgnOp::MinusEq(_)
-    | AsgnOp::StarEq(_)
-    | AsgnOp::SlashEq(_)
-    | AsgnOp::PercentEq(_)
-    | AsgnOp::LtLtEq(_)
-    | AsgnOp::GtGtEq(_)
-    | AsgnOp::AndEq(_)
-    | AsgnOp::CaratEq(_)
-    | AsgnOp::BarEq(_) => {
+  match unwrap_or!(op, return Ty::Error).kind {
+    AsgnOpKind::Eq => lhs_ty,
+    AsgnOpKind::PlusEq
+    | AsgnOpKind::MinusEq
+    | AsgnOpKind::StarEq
+    | AsgnOpKind::SlashEq
+    | AsgnOpKind::PercentEq
+    | AsgnOpKind::LtLtEq
+    | AsgnOpKind::GtGtEq
+    | AsgnOpKind::AndEq
+    | AsgnOpKind::CaratEq
+    | AsgnOpKind::BarEq => {
       unify(cx, Ty::Int, lhs_ty);
       Ty::Int
     }

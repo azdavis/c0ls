@@ -17,7 +17,8 @@ UseItem = '#use' UseLit
 Fields = '{' Field* '}'
 Field = Ty '$Ident' ';'
 Param = Ty '$Ident' ','
-FnTail = ';' | BlockStmt
+FnTail = SemicolonTail | BlockStmt
+SemicolonTail = ';'
 UseLit = '$LibLit' | '$StringLit'
 
 Stmt =

@@ -67,7 +67,9 @@ fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
   comma_sep(p, SK::RRound, |p| param(p, tds));
   if p.at(SK::Semicolon) {
     let entered = p.precede(ty_exited);
+    let semi = p.enter();
     p.bump();
+    p.exit(semi, SK::SemicolonTail);
     p.exit(entered, SK::FnItem);
   } else if p.at(SK::LCurly) {
     let entered = p.precede(ty_exited);

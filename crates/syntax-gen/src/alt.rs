@@ -1,50 +1,79 @@
-use crate::util::{ident, Cx};
+use crate::util::{ident, unwrap_node, unwrap_token, Cx};
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use quote::{format_ident, quote};
 use ungrammar::Rule;
 
 pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
-  let (defs, casts): (Vec<_>, Vec<_>) =
-    rules.iter().map(|rule| variant(cx, rule)).unzip();
+  match rules.first().unwrap() {
+    Rule::Node(_) => get_nodes(cx, name, rules),
+    Rule::Token(_) => get_tokens(cx, name, rules),
+    bad => panic!("bad alt rule {:?}", bad),
+  }
+}
+
+fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+  let (defs, arms): (Vec<_>, Vec<_>) = rules
+    .iter()
+    .map(|rule| {
+      let name = ident(&cx.grammar[unwrap_node(rule)].name);
+      let def = quote! { #name(#name) };
+      let cast = quote! { SK::#name => Self::#name(#name(node)) };
+      let syntax = quote! { Self::#name(x) => x.syntax() };
+      (def, (cast, syntax))
+    })
+    .unzip();
+  let (casts, syntaxes): (Vec<_>, Vec<_>) = arms.into_iter().unzip();
   quote! {
     pub enum #name {
       #(#defs ,)*
     }
     impl Cast for #name {
       fn cast(node: SyntaxNode) -> Option<Self> {
-        match node.kind() {
+        let ret = match node.kind() {
           #(#casts ,)*
-          _ => None,
+          _ => return None,
+        };
+        Some(ret)
+      }
+    }
+    impl Syntax for #name {
+      fn syntax(&self) -> &SyntaxNode {
+        match self {
+          #(#syntaxes ,)*
         }
       }
     }
   }
 }
 
-fn variant(cx: &Cx, rule: &Rule) -> (TokenStream, TokenStream) {
-  let name;
-  let def;
-  let cast;
-  match rule {
-    Rule::Node(node) => {
-      name = ident(&cx.grammar[*node].name);
-      def = quote! { #name(#name) };
-      cast = quote! {
-        SK::#name => Some(Self::#name(#name(node)))
-      };
+fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+  let name_kind = format_ident!("{}Kind", name);
+  let (defs, casts): (Vec<_>, Vec<_>) = rules
+    .iter()
+    .map(|rule| {
+      let name = ident(&cx.tokens.name(unwrap_token(rule)));
+      let def = quote! { #name };
+      let cast = quote! { SK::#name => #name_kind::#name };
+      (def, cast)
+    })
+    .unzip();
+  quote! {
+    pub enum #name_kind {
+      #(#defs ,)*
     }
-    Rule::Token(tok) => {
-      name = ident(cx.tokens.name(*tok));
-      def = quote! { #name(SyntaxToken) };
-      cast = quote! {
-        SK::#name => Some(Self::#name(node.first_token().unwrap()))
-      };
+    pub struct #name {
+      pub token: SyntaxToken,
+      pub kind: #name_kind,
     }
-    Rule::Labeled { .. }
-    | Rule::Seq(_)
-    | Rule::Alt(_)
-    | Rule::Opt(_)
-    | Rule::Rep(_) => panic!("bad variant rule {:?}", rule),
+    impl Cast for #name {
+      fn cast(node: SyntaxNode) -> Option<Self> {
+        let kind = match node.kind() {
+          #(#casts ,)*
+          _ => return None,
+        };
+        let token = node.first_token().unwrap();
+        Some(Self { kind, token })
+      }
+    }
   }
-  (def, cast)
 }

@@ -2,7 +2,7 @@ use crate::ty;
 use crate::util::error::{ErrorKind, Thing};
 use crate::util::ty::{Ty, TyData};
 use crate::util::{unify, unify_impl, Cx, ItemDb, NameToTy};
-use syntax::ast::{BinOp, Expr, Syntax as _, UnOp};
+use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::SyntaxToken;
 
 pub(crate) fn get(
@@ -33,7 +33,7 @@ pub(crate) fn get(
       let lhs_ty = get_opt(cx, items, vars, expr.lhs());
       let rhs_ty = get_opt(cx, items, vars, expr.rhs());
       let op = unwrap_or!(expr.op(), return Ty::Error);
-      let (params, ret) = bin_op_ty(op);
+      let (params, ret) = bin_op_ty(op.kind);
       for &param in params {
         if unify_impl(cx, param, lhs_ty).is_some() {
           unify(cx, param, rhs_ty);
@@ -46,16 +46,16 @@ pub(crate) fn get(
     Expr::UnOpExpr(expr) => {
       let ty = get_opt(cx, items, vars, expr.expr());
       let op = unwrap_or!(expr.op(), return Ty::Error);
-      match op {
-        UnOp::Bang(_) => {
+      match op.kind {
+        UnOpKind::Bang => {
           unify(cx, Ty::Bool, ty);
           Ty::Bool
         }
-        UnOp::Tilde(_) | UnOp::Minus(_) => {
+        UnOpKind::Tilde | UnOpKind::Minus => {
           unify(cx, Ty::Int, ty);
           Ty::Int
         }
-        UnOp::Star(_) => match *cx.tys.get(ty) {
+        UnOpKind::Star => match *cx.tys.get(ty) {
           TyData::Ptr(inner) => {
             if inner == Ty::Top {
               cx.errors
@@ -195,32 +195,32 @@ fn no_struct(cx: &mut Cx, ty: Ty) {
   }
 }
 
-fn bin_op_ty(op: BinOp) -> (&'static [Ty], Ty) {
+fn bin_op_ty(op: BinOpKind) -> (&'static [Ty], Ty) {
   let params: &'static [Ty];
   let ret;
   match op {
-    BinOp::Plus(_)
-    | BinOp::Minus(_)
-    | BinOp::Star(_)
-    | BinOp::Slash(_)
-    | BinOp::Percent(_)
-    | BinOp::LtLt(_)
-    | BinOp::GtGt(_)
-    | BinOp::And(_)
-    | BinOp::Carat(_)
-    | BinOp::Bar(_) => {
+    BinOpKind::Plus
+    | BinOpKind::Minus
+    | BinOpKind::Star
+    | BinOpKind::Slash
+    | BinOpKind::Percent
+    | BinOpKind::LtLt
+    | BinOpKind::GtGt
+    | BinOpKind::And
+    | BinOpKind::Carat
+    | BinOpKind::Bar => {
       params = &[Ty::Int];
       ret = Ty::Int;
     }
-    BinOp::EqEq(_) | BinOp::BangEq(_) => {
+    BinOpKind::EqEq | BinOpKind::BangEq => {
       params = &[Ty::Int, Ty::Bool, Ty::Char, Ty::PtrTop, Ty::ArrayTop];
       ret = Ty::Bool;
     }
-    BinOp::Lt(_) | BinOp::LtEq(_) | BinOp::Gt(_) | BinOp::GtEq(_) => {
+    BinOpKind::Lt | BinOpKind::LtEq | BinOpKind::Gt | BinOpKind::GtEq => {
       params = &[Ty::Int, Ty::Char];
       ret = Ty::Bool;
     }
-    BinOp::AndAnd(_) | BinOp::BarBar(_) => {
+    BinOpKind::AndAnd | BinOpKind::BarBar => {
       params = &[Ty::Bool];
       ret = Ty::Bool;
     }
