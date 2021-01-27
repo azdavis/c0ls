@@ -54,11 +54,11 @@ pub(crate) fn unify_impl(cx: &mut Cx, expected: Ty, found: Ty) -> Option<Ty> {
     (TyData::Top, _) => Some(found),
     (_, TyData::Top) => Some(expected),
     (&TyData::Ptr(expected), &TyData::Ptr(found)) => {
-      let res = unify(cx, expected, found);
+      let res = unify_impl(cx, expected, found)?;
       Some(cx.tys.mk(TyData::Ptr(res)))
     }
     (&TyData::Array(expected), &TyData::Array(found)) => {
-      let res = unify(cx, expected, found);
+      let res = unify_impl(cx, expected, found)?;
       Some(cx.tys.mk(TyData::Array(res)))
     }
     _ => None,
