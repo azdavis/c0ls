@@ -1,6 +1,7 @@
-use crate::ty;
-use crate::util::error::{ErrorKind, Thing};
-use crate::util::{name::Name, no_struct, no_void, ty::Ty, Cx, NameToTy};
+use crate::error::{ErrorKind, Thing};
+use crate::name::Name;
+use crate::ty::Ty;
+use crate::util::{no_struct, no_void, Cx, NameToTy};
 use std::collections::hash_map::Entry;
 use syntax::{ast::Ty as AstTy, rowan::TextRange, SyntaxToken};
 
@@ -11,7 +12,7 @@ pub(crate) fn get(
   ident: Option<SyntaxToken>,
   ty: Option<AstTy>,
 ) -> Option<(TextRange, Ty)> {
-  let ret = ty::get_opt(cx, type_defs, ty);
+  let ret = super::ty::get_opt(cx, type_defs, ty);
   let ty = match ret {
     None => Ty::Error,
     Some((range, ty)) => {

@@ -1,7 +1,6 @@
-use crate::util::error::{Assignment, ErrorKind};
-use crate::util::ty::Ty;
+use crate::error::{Assignment, ErrorKind};
+use crate::ty::Ty;
 use crate::util::{unify, Cx, ItemDb, NameToTy};
-use crate::{decl, expr};
 use syntax::ast::{
   AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
@@ -42,7 +41,7 @@ fn get(
       false
     }
     Stmt::IfStmt(stmt) => {
-      let cond_ty = expr::get_opt(cx, items, vars, stmt.cond());
+      let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       let if_end = get_opt_or(cx, items, &mut vars.clone(), ret_ty, stmt.yes());
       let else_end = match stmt.no() {
@@ -52,7 +51,7 @@ fn get(
       if_end && else_end
     }
     Stmt::WhileStmt(stmt) => {
-      let cond_ty = expr::get_opt(cx, items, vars, stmt.cond());
+      let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       get_opt_or(cx, items, &mut vars.clone(), ret_ty, stmt.body());
       false
@@ -60,7 +59,7 @@ fn get(
     Stmt::ForStmt(stmt) => {
       let mut vars = vars.clone();
       get_simp(cx, items, &mut vars, stmt.init());
-      let cond_ty = expr::get_opt(cx, items, &vars, stmt.cond());
+      let cond_ty = super::expr::get_opt(cx, items, &vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       if let Some(step) = stmt.step() {
         if let Simp::DeclSimp(ref decl) = step {
@@ -72,7 +71,7 @@ fn get(
       false
     }
     Stmt::ReturnStmt(stmt) => {
-      let ty = expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
       match (ty, ret_ty == Ty::Void) {
         (Some((range, _)), true) => cx.error(range, ErrorKind::ReturnExprVoid),
         (None, false) => {
@@ -87,12 +86,12 @@ fn get(
     }
     Stmt::BlockStmt(stmt) => get_block(cx, items, vars, ret_ty, stmt),
     Stmt::AssertStmt(stmt) => {
-      let ty = expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
       unify(cx, Ty::Bool, ty);
       false
     }
     Stmt::ErrorStmt(stmt) => {
-      let ty = expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
       unify(cx, Ty::String, ty);
       false
     }
@@ -129,8 +128,8 @@ fn get_simp(
           );
         }
       }
-      let lhs_ty = expr::get_opt(cx, items, vars, lhs);
-      let rhs_ty = expr::get_opt(cx, items, vars, simp.rhs());
+      let lhs_ty = super::expr::get_opt(cx, items, vars, lhs);
+      let rhs_ty = super::expr::get_opt(cx, items, vars, simp.rhs());
       let want_rhs_ty = asgn_op_ty(cx, lhs_ty, simp.op());
       unify(cx, want_rhs_ty, rhs_ty);
     }
@@ -149,20 +148,21 @@ fn get_simp(
           cx.error(expr.syntax().text_range(), ErrorKind::CannotAssign(assign));
         }
       }
-      let ty = expr::get_opt(cx, items, vars, expr);
+      let ty = super::expr::get_opt(cx, items, vars, expr);
       unify(cx, Ty::Int, ty);
     }
     Simp::DeclSimp(simp) => {
-      let ty = decl::get(cx, &items.type_defs, vars, simp.ident(), simp.ty());
+      let ty =
+        super::decl::get(cx, &items.type_defs, vars, simp.ident(), simp.ty());
       if let Some(defn_tail) = simp.defn_tail() {
-        let expr_ty = expr::get_opt(cx, items, vars, defn_tail.expr());
+        let expr_ty = super::expr::get_opt(cx, items, vars, defn_tail.expr());
         if let Some((_, ty)) = ty {
           unify(cx, ty, expr_ty);
         }
       }
     }
     Simp::ExprSimp(simp) => {
-      expr::get_opt(cx, items, vars, simp.expr());
+      super::expr::get_opt(cx, items, vars, simp.expr());
     }
   }
 }

@@ -1,12 +1,8 @@
-pub(crate) mod error;
-pub(crate) mod name;
-pub(crate) mod ty;
-
-use error::{Error, ErrorKind};
-use name::Name;
+use crate::error::{Error, ErrorKind};
+use crate::name::Name;
+use crate::ty::{Ty, TyData, TyDb};
 use rustc_hash::FxHashMap;
 use syntax::rowan::TextRange;
-use ty::{Ty, TyData, TyDb};
 use unwrap_or::unwrap_or;
 
 /// The context. This information is always mutable as we check the various
@@ -17,9 +13,9 @@ use unwrap_or::unwrap_or;
 /// are mutable, but for expressions, they are not. For types, we don't even
 /// need to know what variables are in scope.
 #[derive(Default)]
-pub(crate) struct Cx {
-  pub(crate) tys: TyDb,
-  pub(crate) errors: Vec<Error>,
+pub struct Cx {
+  pub tys: TyDb,
+  pub errors: Vec<Error>,
 }
 
 impl Cx {
@@ -31,16 +27,16 @@ impl Cx {
 pub(crate) type NameToTy = FxHashMap<Name, Ty>;
 
 #[derive(Default)]
-pub(crate) struct ItemDb {
-  pub(crate) fns: FxHashMap<Name, FnData>,
-  pub(crate) type_defs: NameToTy,
-  pub(crate) structs: FxHashMap<Name, NameToTy>,
+pub struct ItemDb {
+  pub fns: FxHashMap<Name, FnData>,
+  pub type_defs: NameToTy,
+  pub structs: FxHashMap<Name, NameToTy>,
 }
 
-pub(crate) struct FnData {
-  pub(crate) params: Vec<(Name, TextRange, Ty)>,
-  pub(crate) ret_ty: Ty,
-  pub(crate) defined: bool,
+pub struct FnData {
+  pub params: Vec<(Name, TextRange, Ty)>,
+  pub ret_ty: Ty,
+  pub defined: bool,
 }
 
 pub(crate) fn unify(

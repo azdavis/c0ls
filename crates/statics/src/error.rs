@@ -1,4 +1,4 @@
-use crate::util::ty::Ty;
+use crate::ty::Ty;
 use syntax::rowan::TextRange;
 
 pub struct Error {

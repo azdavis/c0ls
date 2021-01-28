@@ -2,12 +2,10 @@
 
 #![deny(rust_2018_idioms)]
 
-mod decl;
-mod expr;
-mod item;
-mod root;
-mod stmt;
-mod ty;
-mod util;
+mod ck;
+pub mod error;
+pub mod name;
+pub mod ty;
+pub mod util;
 
-pub use root::get;
+pub use ck::root::get;

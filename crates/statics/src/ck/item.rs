@@ -1,7 +1,7 @@
-use crate::util::error::{ErrorKind, Thing};
-use crate::util::name::Name;
-use crate::util::{no_struct, ty::Ty, unify, Cx, FnData, ItemDb, NameToTy};
-use crate::{decl, stmt, ty};
+use crate::error::{ErrorKind, Thing};
+use crate::name::Name;
+use crate::ty::Ty;
+use crate::util::{no_struct, unify, Cx, FnData, ItemDb, NameToTy};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
@@ -13,7 +13,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let mut fields = NameToTy::default();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
-        let ty = ty::get_opt_or(cx, &items.type_defs, field.ty());
+        let ty = super::ty::get_opt_or(cx, &items.type_defs, field.ty());
         match fields.entry(Name::new(ident.text())) {
           Entry::Occupied(_) => cx.error(
             field.syntax().text_range(),
@@ -68,7 +68,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
     }
     Item::TypedefItem(item) => {
       let ident = unwrap_or!(item.ident(), return);
-      let ty = ty::get_opt_or(cx, &items.type_defs, item.ty());
+      let ty = super::ty::get_opt_or(cx, &items.type_defs, item.ty());
       match items.type_defs.entry(Name::new(ident.text())) {
         Entry::Occupied(_) => {
           cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
@@ -86,13 +86,18 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let mut vars = NameToTy::default();
   let mut params = Vec::new();
   for param in item.params() {
-    let ty =
-      decl::get(cx, &items.type_defs, &mut vars, param.ident(), param.ty());
+    let ty = super::decl::get(
+      cx,
+      &items.type_defs,
+      &mut vars,
+      param.ident(),
+      param.ty(),
+    );
     if let (Some(ident), Some((range, ty))) = (param.ident(), ty) {
       params.push((Name::new(ident.text()), range, ty));
     }
   }
-  let ret_ty = match ty::get_opt(cx, &items.type_defs, item.ret_ty()) {
+  let ret_ty = match super::ty::get_opt(cx, &items.type_defs, item.ret_ty()) {
     Some((range, ty)) => {
       no_struct(cx, range, ty);
       ty
@@ -103,7 +108,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
     None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
       let range = block.syntax().text_range();
-      if stmt::get_block(cx, items, &mut vars, ret_ty, block) {
+      if super::stmt::get_block(cx, items, &mut vars, ret_ty, block) {
         cx.error(range, ErrorKind::InvalidNoReturn);
       }
       true

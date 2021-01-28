@@ -1,6 +1,5 @@
-use crate::ty;
-use crate::util::error::{ErrorKind, Thing};
-use crate::util::ty::{Ty, TyData};
+use crate::error::{ErrorKind, Thing};
+use crate::ty::{Ty, TyData};
 use crate::util::{
   no_struct, no_void, unify, unify_impl, Cx, ItemDb, NameToTy,
 };
@@ -118,11 +117,11 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       }
     }
     Expr::AllocExpr(expr) => {
-      let inner_ty = ty::get_opt_or(cx, &items.type_defs, expr.ty());
+      let inner_ty = super::ty::get_opt_or(cx, &items.type_defs, expr.ty());
       cx.tys.mk(TyData::Ptr(inner_ty))
     }
     Expr::AllocArrayExpr(expr) => {
-      let inner_ty = ty::get_opt_or(cx, &items.type_defs, expr.ty());
+      let inner_ty = super::ty::get_opt_or(cx, &items.type_defs, expr.ty());
       let len_ty = get_opt(cx, items, vars, expr.expr());
       unify(cx, Ty::Int, len_ty);
       cx.tys.mk(TyData::Array(inner_ty))
