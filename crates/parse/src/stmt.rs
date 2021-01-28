@@ -96,8 +96,8 @@ fn stmt_simple_opt(
   p: &mut Parser<'_, SK>,
   tds: &TypeDefs<'_>,
 ) -> Option<Exited> {
-  if ty_opt(p, tds).is_some() {
-    let entered = p.enter();
+  if let Some(ty) = ty_opt(p, tds) {
+    let entered = p.precede(ty);
     p.eat(SK::Ident);
     if p.at(SK::Eq) {
       let entered = p.enter();
