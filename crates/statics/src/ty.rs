@@ -12,11 +12,11 @@ pub(crate) fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
     AstTy::CharTy(_) => Ty::Char,
     AstTy::VoidTy(_) => Ty::Void,
     AstTy::PtrTy(ty) => {
-      let inner = get_opt(cx, type_defs, ty.ty());
+      let inner = get_opt_or(cx, type_defs, ty.ty());
       cx.tys.mk(TyData::Ptr(inner))
     }
     AstTy::ArrayTy(ty) => {
-      let inner = get_opt(cx, type_defs, ty.ty());
+      let inner = get_opt_or(cx, type_defs, ty.ty());
       cx.tys.mk(TyData::Array(inner))
     }
     AstTy::StructTy(ty) => ty.ident().map_or(Ty::Error, |ident| {
@@ -39,7 +39,7 @@ pub(crate) fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
 
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
-pub(crate) fn get_opt(
+pub(crate) fn get_opt_or(
   cx: &mut Cx,
   type_defs: &NameToTy,
   ty: Option<AstTy>,

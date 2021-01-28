@@ -28,10 +28,10 @@ pub(crate) fn get(
         Some(&ty) => ty,
       },
     },
-    Expr::ParenExpr(expr) => get_opt(cx, items, vars, expr.expr()),
+    Expr::ParenExpr(expr) => get_opt_or(cx, items, vars, expr.expr()),
     Expr::BinOpExpr(expr) => {
-      let lhs_ty = get_opt(cx, items, vars, expr.lhs());
-      let rhs_ty = get_opt(cx, items, vars, expr.rhs());
+      let lhs_ty = get_opt_or(cx, items, vars, expr.lhs());
+      let rhs_ty = get_opt_or(cx, items, vars, expr.rhs());
       let op = unwrap_or!(expr.op(), return Ty::Error);
       let (params, ret) = bin_op_ty(op.kind);
       for &param in params {
@@ -44,7 +44,7 @@ pub(crate) fn get(
       ret
     }
     Expr::UnOpExpr(expr) => {
-      let ty = get_opt(cx, items, vars, expr.expr());
+      let ty = get_opt_or(cx, items, vars, expr.expr());
       let op = unwrap_or!(expr.op(), return Ty::Error);
       match op.kind {
         UnOpKind::Bang => {
@@ -59,9 +59,9 @@ pub(crate) fn get(
       }
     }
     Expr::TernaryExpr(expr) => {
-      let cond_ty = get_opt(cx, items, vars, expr.cond());
-      let yes_ty = get_opt(cx, items, vars, expr.yes());
-      let no_ty = get_opt(cx, items, vars, expr.no());
+      let cond_ty = get_opt_or(cx, items, vars, expr.cond());
+      let yes_ty = get_opt_or(cx, items, vars, expr.yes());
+      let no_ty = get_opt_or(cx, items, vars, expr.no());
       unify(cx, Ty::Bool, cond_ty);
       let ret_ty = unify(cx, yes_ty, no_ty);
       no_void(ret_ty);
@@ -76,7 +76,7 @@ pub(crate) fn get(
       }
       let arg_tys: Vec<_> = expr
         .args()
-        .map(|arg| get_opt(cx, items, vars, arg.expr()))
+        .map(|arg| get_opt_or(cx, items, vars, arg.expr()))
         .collect();
       let fn_data = unwrap_or!(items.fns.get(fn_name), {
         cx.errors
@@ -95,17 +95,17 @@ pub(crate) fn get(
       fn_data.ret_ty
     }
     Expr::DotExpr(expr) => {
-      let struct_ty = get_opt(cx, items, vars, expr.expr());
+      let struct_ty = get_opt_or(cx, items, vars, expr.expr());
       struct_field(cx, items, struct_ty, expr.ident())
     }
     Expr::ArrowExpr(expr) => {
-      let ptr_ty = get_opt(cx, items, vars, expr.expr());
+      let ptr_ty = get_opt_or(cx, items, vars, expr.expr());
       let struct_ty = deref(cx, ptr_ty);
       struct_field(cx, items, struct_ty, expr.ident())
     }
     Expr::SubscriptExpr(expr) => {
-      let array_ty = get_opt(cx, items, vars, expr.array());
-      let idx_ty = get_opt(cx, items, vars, expr.idx());
+      let array_ty = get_opt_or(cx, items, vars, expr.array());
+      let idx_ty = get_opt_or(cx, items, vars, expr.idx());
       unify(cx, Ty::Int, idx_ty);
       match *cx.tys.get(array_ty) {
         TyData::Array(ty) => ty,
@@ -119,12 +119,12 @@ pub(crate) fn get(
       }
     }
     Expr::AllocExpr(expr) => {
-      let inner_ty = ty::get_opt(cx, &items.type_defs, expr.ty());
+      let inner_ty = ty::get_opt_or(cx, &items.type_defs, expr.ty());
       cx.tys.mk(TyData::Ptr(inner_ty))
     }
     Expr::AllocArrayExpr(expr) => {
-      let inner_ty = ty::get_opt(cx, &items.type_defs, expr.ty());
-      let len_ty = get_opt(cx, items, vars, expr.expr());
+      let inner_ty = ty::get_opt_or(cx, &items.type_defs, expr.ty());
+      let len_ty = get_opt_or(cx, items, vars, expr.expr());
       unify(cx, Ty::Int, len_ty);
       cx.tys.mk(TyData::Array(inner_ty))
     }
@@ -133,7 +133,7 @@ pub(crate) fn get(
 
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
-pub(crate) fn get_opt(
+pub(crate) fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,
   vars: &NameToTy,

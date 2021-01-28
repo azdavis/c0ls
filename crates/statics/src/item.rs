@@ -12,7 +12,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let mut fields = NameToTy::new();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
-        let ty = ty::get_opt(cx, &items.type_defs, field.ty());
+        let ty = ty::get_opt_or(cx, &items.type_defs, field.ty());
         match fields.entry(Name::new(ident.text())) {
           Entry::Occupied(_) => cx.errors.push(
             field.syntax().text_range(),
@@ -68,7 +68,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
     }
     Item::TypedefItem(item) => {
       let ident = unwrap_or!(item.ident(), return);
-      let ty = ty::get_opt(cx, &items.type_defs, item.ty());
+      let ty = ty::get_opt_or(cx, &items.type_defs, item.ty());
       match items.type_defs.entry(Name::new(ident.text())) {
         Entry::Occupied(_) => cx
           .errors
@@ -87,7 +87,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let mut params = Vec::new();
   for param in item.params() {
     let ident = unwrap_or!(param.ident(), continue);
-    let ty = ty::get_opt(cx, &items.type_defs, param.ty());
+    let ty = ty::get_opt_or(cx, &items.type_defs, param.ty());
     let name = Name::new(ident.text());
     match vars.entry(name.clone()) {
       Entry::Occupied(_) => cx.errors.push(
@@ -100,7 +100,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
     }
     params.push((name, ty));
   }
-  let ret_ty = ty::get_opt(cx, &items.type_defs, item.ret_ty());
+  let ret_ty = ty::get_opt_or(cx, &items.type_defs, item.ret_ty());
   let defined = match item.tail() {
     None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
