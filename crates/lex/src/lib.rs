@@ -3,8 +3,9 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
-use std::ops::Range;
+use std::convert::TryInto;
 use syntax::event_parse::Token;
+use syntax::rowan::{TextRange, TextSize};
 use syntax::SyntaxKind as SK;
 
 #[derive(Debug)]
@@ -15,7 +16,7 @@ pub struct Lex<'input> {
 
 #[derive(Debug)]
 pub struct LexError {
-  pub range: Range<usize>,
+  pub range: TextRange,
   pub kind: LexErrorKind,
 }
 
@@ -256,9 +257,13 @@ fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
 
 fn err(cx: &mut Cx, start: usize, kind: LexErrorKind) {
   cx.errors.push(LexError {
-    range: start..cx.i,
+    range: TextRange::new(text_size(start), text_size(cx.i)),
     kind,
   });
+}
+
+fn text_size(n: usize) -> TextSize {
+  n.try_into().unwrap()
 }
 
 enum Whitespace {
