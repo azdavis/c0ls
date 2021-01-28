@@ -32,7 +32,7 @@ pub enum LexErrorKind {
   InvalidSource,
 }
 
-pub fn lex(s: &str) -> Lex<'_> {
+pub fn get(s: &str) -> Lex<'_> {
   let bs = s.as_bytes();
   let mut tokens = Vec::new();
   let mut cx = Cx::default();

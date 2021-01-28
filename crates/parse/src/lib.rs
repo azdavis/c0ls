@@ -26,7 +26,7 @@ pub struct Error {
   pub expected: Vec<SK>,
 }
 
-pub fn parse(tokens: Vec<Token<'_, SK>>) -> Parse {
+pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
   let mut p = Parser::new(tokens);
   root::root(&mut p);
   let mut sink = BuilderSink::default();
