@@ -4,7 +4,6 @@
 
 mod alt;
 mod seq;
-mod string;
 mod tokens;
 mod util;
 

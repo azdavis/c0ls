@@ -1,5 +1,5 @@
-use crate::string::pascal_to_snake;
 use crate::util::{ident, unwrap_node, Cx};
+use identifier_case::pascal_to_snake;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::collections::HashMap;

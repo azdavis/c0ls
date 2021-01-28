@@ -1,5 +1,11 @@
-/// works with either upper or lower snake case.
-pub(crate) fn snake_to_pascal(s: &str) -> String {
+//! Utilities for working with identifiers in different cases.
+
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+
+/// Works with either upper or lower snake case.
+pub fn snake_to_pascal(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut is_cap = true;
   for c in s.chars() {
@@ -15,8 +21,8 @@ pub(crate) fn snake_to_pascal(s: &str) -> String {
   ret
 }
 
-/// also works for camelCase.
-pub(crate) fn pascal_to_snake(s: &str) -> String {
+/// Also works for camelCase.
+pub fn pascal_to_snake(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut cs = s.chars();
   // don't put a _ at the start
@@ -30,36 +36,6 @@ pub(crate) fn pascal_to_snake(s: &str) -> String {
     ret.push(c.to_ascii_lowercase());
   }
   ret
-}
-
-pub(crate) fn char_name(c: char) -> &'static str {
-  match c {
-    '-' => "Minus",
-    ',' => "Comma",
-    ';' => "Semicolon",
-    ':' => "Colon",
-    '!' => "Bang",
-    '?' => "Question",
-    '.' => "Dot",
-    '(' => "LRound",
-    ')' => "RRound",
-    '[' => "LSquare",
-    ']' => "RSquare",
-    '{' => "LCurly",
-    '}' => "RCurly",
-    '*' => "Star",
-    '/' => "Slash",
-    '&' => "And",
-    '%' => "Percent",
-    '^' => "Carat",
-    '+' => "Plus",
-    '<' => "Lt",
-    '=' => "Eq",
-    '>' => "Gt",
-    '|' => "Bar",
-    '~' => "Tilde",
-    _ => panic!("don't know the name for {}", c),
-  }
 }
 
 #[test]

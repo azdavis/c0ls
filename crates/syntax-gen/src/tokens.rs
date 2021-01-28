@@ -1,4 +1,4 @@
-use crate::string::{char_name, snake_to_pascal};
+use identifier_case::snake_to_pascal;
 use std::collections::HashMap;
 use ungrammar::{Grammar, Token};
 
@@ -57,4 +57,34 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
     assert!(map.insert(token, ins).is_none());
   }
   ret
+}
+
+fn char_name(c: char) -> &'static str {
+  match c {
+    '-' => "Minus",
+    ',' => "Comma",
+    ';' => "Semicolon",
+    ':' => "Colon",
+    '!' => "Bang",
+    '?' => "Question",
+    '.' => "Dot",
+    '(' => "LRound",
+    ')' => "RRound",
+    '[' => "LSquare",
+    ']' => "RSquare",
+    '{' => "LCurly",
+    '}' => "RCurly",
+    '*' => "Star",
+    '/' => "Slash",
+    '&' => "And",
+    '%' => "Percent",
+    '^' => "Carat",
+    '+' => "Plus",
+    '<' => "Lt",
+    '=' => "Eq",
+    '>' => "Gt",
+    '|' => "Bar",
+    '~' => "Tilde",
+    _ => panic!("don't know the name for {}", c),
+  }
 }
