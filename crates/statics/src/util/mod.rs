@@ -73,3 +73,15 @@ pub(crate) fn unify_impl(cx: &mut Cx, expected: Ty, found: Ty) -> Option<Ty> {
   };
   Some(ret)
 }
+
+pub(crate) fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
+  if ty == Ty::Void {
+    cx.errors.push(range, ErrorKind::InvalidVoid);
+  }
+}
+
+pub(crate) fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
+  if let TyData::Struct(_) = cx.tys.get(ty) {
+    cx.errors.push(range, ErrorKind::InvalidStruct);
+  }
+}

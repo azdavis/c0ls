@@ -1,7 +1,9 @@
 use crate::ty;
 use crate::util::error::{ErrorKind, Thing};
 use crate::util::ty::{Ty, TyData};
-use crate::util::{unify, unify_impl, Cx, ItemDb, NameToTy};
+use crate::util::{
+  no_struct, no_void, unify, unify_impl, Cx, ItemDb, NameToTy,
+};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
@@ -192,18 +194,6 @@ fn struct_field(
     cx.errors.push(range, ErrorKind::Undefined(Thing::Field));
     Ty::Error
   })
-}
-
-fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
-  if ty == Ty::Void {
-    cx.errors.push(range, ErrorKind::InvalidVoid);
-  }
-}
-
-fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
-  if let TyData::Struct(_) = cx.tys.get(ty) {
-    cx.errors.push(range, ErrorKind::InvalidStruct);
-  }
 }
 
 fn bin_op_ty(op: BinOpKind) -> (&'static [Ty], Ty) {
