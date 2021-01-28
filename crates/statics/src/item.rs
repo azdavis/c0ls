@@ -1,7 +1,7 @@
 use crate::util::error::{ErrorKind, Thing};
 use crate::util::name::Name;
 use crate::util::{unify, Cx, FnData, ItemDb, NameToTy};
-use crate::{stmt, ty};
+use crate::{decl, stmt, ty};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
@@ -87,20 +87,11 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let mut vars = NameToTy::default();
   let mut params = Vec::new();
   for param in item.params() {
-    let ident = unwrap_or!(param.ident(), continue);
-    let (range, ty) =
-      unwrap_or!(ty::get_opt(cx, &items.type_defs, param.ty()), continue);
-    let name = Name::new(ident.text());
-    match vars.entry(name.clone()) {
-      Entry::Occupied(_) => cx.errors.push(
-        param.syntax().text_range(),
-        ErrorKind::Duplicate(Thing::Variable),
-      ),
-      Entry::Vacant(entry) => {
-        entry.insert(ty);
-      }
+    let ty =
+      decl::get(cx, &items.type_defs, &mut vars, param.ident(), param.ty());
+    if let (Some(ident), Some((range, ty))) = (param.ident(), ty) {
+      params.push((Name::new(ident.text()), range, ty));
     }
-    params.push((name, range, ty));
   }
   let ret_ty = ty::get_opt_or(cx, &items.type_defs, item.ret_ty());
   let defined = match item.tail() {

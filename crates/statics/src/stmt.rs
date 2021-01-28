@@ -1,9 +1,7 @@
-use crate::util::error::{Assignment, ErrorKind, Thing};
-use crate::util::name::Name;
+use crate::util::error::{Assignment, ErrorKind};
 use crate::util::ty::Ty;
 use crate::util::{unify, Cx, ItemDb, NameToTy};
-use crate::{expr, ty};
-use std::collections::hash_map::Entry;
+use crate::{decl, expr};
 use syntax::ast::{
   AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
@@ -160,19 +158,11 @@ fn get_simp(
       unify(cx, Ty::Int, ty);
     }
     Simp::DeclSimp(simp) => {
-      let ty = ty::get_opt_or(cx, &items.type_defs, simp.ty());
+      let ty = decl::get(cx, &items.type_defs, vars, simp.ident(), simp.ty());
       if let Some(defn_tail) = simp.defn_tail() {
         let expr_ty = expr::get_opt(cx, items, vars, defn_tail.expr());
-        unify(cx, ty, expr_ty);
-      }
-      let ident = unwrap_or!(simp.ident(), return);
-      match vars.entry(Name::new(ident.text())) {
-        Entry::Occupied(_) => {
-          cx.errors
-            .push(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
-        }
-        Entry::Vacant(entry) => {
-          entry.insert(ty);
+        if let Some((_, ty)) = ty {
+          unify(cx, ty, expr_ty);
         }
       }
     }

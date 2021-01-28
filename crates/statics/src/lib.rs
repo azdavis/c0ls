@@ -2,6 +2,7 @@
 
 #![deny(rust_2018_idioms)]
 
+mod decl;
 mod expr;
 mod item;
 mod root;
