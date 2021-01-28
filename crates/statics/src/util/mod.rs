@@ -33,7 +33,6 @@ pub(crate) struct ItemDb {
 pub(crate) struct FnData {
   pub(crate) params: Vec<(Name, TextRange, Ty)>,
   pub(crate) ret_ty: Ty,
-  // TODO is the right place to put this?
   pub(crate) defined: bool,
 }
 

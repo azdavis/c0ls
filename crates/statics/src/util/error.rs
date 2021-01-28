@@ -16,6 +16,22 @@ pub enum ErrorKind {
   SubscriptNonArray(Ty),
   FieldGetNonStruct(Ty),
   MismatchedTypes(Ty, Ty),
+  ShadowedFunction,
+  MismatchedTypesAny(&'static [Ty], Ty),
+  InvalidVoid,
+  InvalidStruct,
+  InvalidNoReturn,
+  Unreachable,
+  InvalidStepDecl,
+  ReturnExprVoid,
+  NoReturnExprNotVoid,
+  CannotAssign(Assignment),
+}
+
+pub enum Assignment {
+  Assign,
+  Inc,
+  Dec,
 }
 
 pub enum Thing {

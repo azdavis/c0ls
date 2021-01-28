@@ -1,10 +1,12 @@
-use crate::util::error::{ErrorKind, Thing};
+use crate::util::error::{Assignment, ErrorKind, Thing};
 use crate::util::name::Name;
 use crate::util::ty::Ty;
 use crate::util::{unify, Cx, ItemDb, NameToTy};
 use crate::{expr, ty};
 use std::collections::hash_map::Entry;
-use syntax::ast::{AsgnOp, AsgnOpKind, BlockStmt, Expr, Simp, Stmt, UnOpKind};
+use syntax::ast::{
+  AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
+};
 use syntax::rowan::TextRange;
 
 pub(crate) fn get_block(
@@ -15,11 +17,16 @@ pub(crate) fn get_block(
   block: BlockStmt,
 ) -> bool {
   let mut end = false;
+  let mut reported = false;
   for stmt in block.stmts() {
-    if end {
-      todo!("unreachable");
+    if end && !reported {
+      cx.errors
+        .push(stmt.syntax().text_range(), ErrorKind::Unreachable);
+      reported = true;
     }
-    end = get(cx, items, vars, ret_ty, stmt);
+    if get(cx, items, vars, ret_ty, stmt) {
+      end = true;
+    }
   }
   end
 }
@@ -58,8 +65,9 @@ fn get(
       let cond_ty = expr::get_opt(cx, items, &vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       if let Some(step) = stmt.step() {
-        if let Simp::DeclSimp(_) = step {
-          todo!("step cannot be decl")
+        if let Simp::DeclSimp(ref decl) = step {
+          cx.errors
+            .push(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
         }
         get_simp(cx, items, &mut vars, Some(step));
       }
@@ -67,11 +75,15 @@ fn get(
       false
     }
     Stmt::ReturnStmt(stmt) => {
-      match (stmt.expr(), ret_ty == Ty::Void) {
-        (Some(_), true) => todo!("return expr but void type"),
-        (None, false) => todo!("no return expr but non-void type"),
-        (Some(expr), false) => {
-          let ty = expr::get_opt(cx, items, vars, Some(expr));
+      let ty = expr::get_opt(cx, items, vars, stmt.expr());
+      match (ty, ret_ty == Ty::Void) {
+        (Some((range, _)), true) => {
+          cx.errors.push(range, ErrorKind::ReturnExprVoid)
+        }
+        (None, false) => cx
+          .errors
+          .push(stmt.syntax().text_range(), ErrorKind::NoReturnExprNotVoid),
+        (Some(_), false) => {
           unify(cx, ret_ty, ty);
         }
         (None, true) => {}
@@ -114,8 +126,13 @@ fn get_simp(
   match simp {
     Simp::AsgnSimp(simp) => {
       let lhs = simp.lhs();
-      if !is_lv(&lhs) {
-        todo!("cannot assign to expression");
+      if let Some(ref lhs) = lhs {
+        if !is_lv(lhs) {
+          cx.errors.push(
+            lhs.syntax().text_range(),
+            ErrorKind::CannotAssign(Assignment::Assign),
+          );
+        }
       }
       let lhs_ty = expr::get_opt(cx, items, vars, lhs);
       let rhs_ty = expr::get_opt(cx, items, vars, simp.rhs());
@@ -124,8 +141,19 @@ fn get_simp(
     }
     Simp::IncDecSimp(simp) => {
       let expr = simp.expr();
-      if !is_lv(&expr) {
-        todo!("cannot inc/dec expression");
+      if let Some(ref expr) = expr {
+        if !is_lv(expr) {
+          let assign = match simp.inc_dec() {
+            Some(inc_dec) => match inc_dec.kind {
+              IncDecKind::PlusPlus => Assignment::Inc,
+              IncDecKind::MinusMinus => Assignment::Dec,
+            },
+            // this really shouldn't happen.
+            None => Assignment::Assign,
+          };
+          cx.errors
+            .push(expr.syntax().text_range(), ErrorKind::CannotAssign(assign));
+        }
       }
       let ty = expr::get_opt(cx, items, vars, expr);
       unify(cx, Ty::Int, ty);
@@ -153,18 +181,17 @@ fn get_simp(
   }
 }
 
-fn is_lv(expr: &Option<Expr>) -> bool {
-  let expr = unwrap_or!(expr.as_ref(), return true);
+fn is_lv(expr: &Expr) -> bool {
   match expr {
     Expr::IdentExpr(_) => true,
-    Expr::ParenExpr(expr) => is_lv(&expr.expr()),
+    Expr::ParenExpr(expr) => is_lv_opt(&expr.expr()),
     Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return true).kind {
-      UnOpKind::Star => is_lv(&expr.expr()),
+      UnOpKind::Star => is_lv_opt(&expr.expr()),
       UnOpKind::Bang | UnOpKind::Tilde | UnOpKind::Minus => false,
     },
-    Expr::DotExpr(expr) => is_lv(&expr.expr()),
-    Expr::ArrowExpr(expr) => is_lv(&expr.expr()),
-    Expr::SubscriptExpr(expr) => is_lv(&expr.array()),
+    Expr::DotExpr(expr) => is_lv_opt(&expr.expr()),
+    Expr::ArrowExpr(expr) => is_lv_opt(&expr.expr()),
+    Expr::SubscriptExpr(expr) => is_lv_opt(&expr.array()),
     Expr::DecExpr(_)
     | Expr::HexExpr(_)
     | Expr::StringExpr(_)
@@ -178,6 +205,10 @@ fn is_lv(expr: &Option<Expr>) -> bool {
     | Expr::AllocExpr(_)
     | Expr::AllocArrayExpr(_) => false,
   }
+}
+
+fn is_lv_opt(expr: &Option<Expr>) -> bool {
+  expr.as_ref().map_or(true, is_lv)
 }
 
 fn asgn_op_ty(

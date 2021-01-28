@@ -105,8 +105,9 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let defined = match item.tail() {
     None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
+      let range = block.syntax().text_range();
       if stmt::get_block(cx, items, &mut vars, ret_ty, block) {
-        todo!("not all code paths return")
+        cx.errors.push(range, ErrorKind::InvalidNoReturn);
       }
       true
     }

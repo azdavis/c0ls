@@ -25,17 +25,20 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
     },
     Expr::ParenExpr(expr) => get_opt_or(cx, items, vars, expr.expr()),
     Expr::BinOpExpr(expr) => {
-      let lhs_ty = get_opt_or(cx, items, vars, expr.lhs());
+      let lhs_ty = get_opt(cx, items, vars, expr.lhs());
       let rhs_ty = get_opt(cx, items, vars, expr.rhs());
       let op = unwrap_or!(expr.op(), return Ty::Error);
       let (params, ret) = bin_op_ty(op.kind);
-      for &param in params {
-        if unify_impl(cx, param, lhs_ty).is_some() {
-          unify(cx, param, rhs_ty);
-          return ret;
+      if let Some((range, lhs_ty)) = lhs_ty {
+        for &param in params {
+          if unify_impl(cx, param, lhs_ty).is_some() {
+            unify(cx, param, rhs_ty);
+            return ret;
+          }
         }
+        cx.errors
+          .push(range, ErrorKind::MismatchedTypesAny(params, lhs_ty));
       }
-      // TODO push 'mismatched types: expected any of ..., found ...'
       ret
     }
     Expr::UnOpExpr(expr) => {
@@ -59,15 +62,17 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       let no_ty = get_opt(cx, items, vars, expr.no());
       unify(cx, Ty::Bool, cond_ty);
       let ret_ty = unify(cx, yes_ty, no_ty);
-      no_void(ret_ty);
-      no_struct(cx, ret_ty);
+      let range = expr.syntax().text_range();
+      no_void(cx, range, ret_ty);
+      no_struct(cx, range, ret_ty);
       ret_ty
     }
     Expr::CallExpr(expr) => {
       let fn_ident = unwrap_or!(expr.ident(), return Ty::Error);
       let fn_name = fn_ident.text();
       if vars.contains_key(fn_name) {
-        todo!("variables shadow function names and variables are not functions")
+        cx.errors
+          .push(fn_ident.text_range(), ErrorKind::ShadowedFunction);
       }
       let arg_tys: Vec<_> = expr
         .args()
@@ -188,15 +193,15 @@ fn struct_field(
   })
 }
 
-fn no_void(ty: Ty) {
+fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
   if ty == Ty::Void {
-    todo!("expression cannot have void type")
+    cx.errors.push(range, ErrorKind::InvalidVoid);
   }
 }
 
-fn no_struct(cx: &mut Cx, ty: Ty) {
+fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
   if let TyData::Struct(_) = cx.tys.get(ty) {
-    todo!("expression cannot have struct type")
+    cx.errors.push(range, ErrorKind::InvalidStruct);
   }
 }
 
