@@ -2,9 +2,9 @@ use crate::error::{Assignment, ErrorKind};
 use crate::ty::Ty;
 use crate::util::{add_var, unify, Cx, ItemDb, VarDb};
 use syntax::ast::{
-  AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
+  AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
-use syntax::rowan::TextRange;
+use syntax::SyntaxToken;
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get_block(
@@ -114,35 +114,50 @@ fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
   let simp = unwrap_or!(simp, return);
   match simp {
     Simp::AsgnSimp(simp) => {
-      let lhs = simp.lhs();
-      if let Some(ref lhs) = lhs {
-        if !is_lv(lhs) {
-          cx.error(
-            lhs.syntax().text_range(),
-            ErrorKind::CannotAssign(Assignment::Assign),
-          );
-        }
-      }
-      let lhs_ty = super::expr::get_opt(cx, items, vars, lhs);
       let rhs_ty = super::expr::get_opt(cx, items, vars, simp.rhs());
-      let want_rhs_ty = asgn_op_ty(cx, lhs_ty, simp.op());
-      unify(cx, want_rhs_ty, rhs_ty);
+      let lhs = simp.lhs();
+      let var = lv_var(cx, Assignment::Assign, &lhs);
+      let want_lhs_ty = match simp.op() {
+        None => None,
+        Some(op) => match op.kind {
+          AsgnOpKind::Eq => {
+            if let Some(var) = var.and_then(|var| vars.get_mut(var.text())) {
+              var.defined = true;
+            }
+            rhs_ty.map(|x| x.1)
+          }
+          AsgnOpKind::PlusEq
+          | AsgnOpKind::MinusEq
+          | AsgnOpKind::StarEq
+          | AsgnOpKind::SlashEq
+          | AsgnOpKind::PercentEq
+          | AsgnOpKind::LtLtEq
+          | AsgnOpKind::GtGtEq
+          | AsgnOpKind::AndEq
+          | AsgnOpKind::CaratEq
+          | AsgnOpKind::BarEq => {
+            unify(cx, Ty::Int, rhs_ty);
+            Some(Ty::Int)
+          }
+        },
+      };
+      let lhs_ty = super::expr::get_opt(cx, items, vars, lhs);
+      if let Some(want_lhs_ty) = want_lhs_ty {
+        unify(cx, want_lhs_ty, lhs_ty);
+      }
     }
     Simp::IncDecSimp(simp) => {
+      let asgn = match simp.inc_dec() {
+        Some(inc_dec) => match inc_dec.kind {
+          IncDecKind::PlusPlus => Assignment::Inc,
+          IncDecKind::MinusMinus => Assignment::Dec,
+        },
+        // this really shouldn't happen.
+        None => Assignment::Assign,
+      };
       let expr = simp.expr();
-      if let Some(ref expr) = expr {
-        if !is_lv(expr) {
-          let assign = match simp.inc_dec() {
-            Some(inc_dec) => match inc_dec.kind {
-              IncDecKind::PlusPlus => Assignment::Inc,
-              IncDecKind::MinusMinus => Assignment::Dec,
-            },
-            // this really shouldn't happen.
-            None => Assignment::Assign,
-          };
-          cx.error(expr.syntax().text_range(), ErrorKind::CannotAssign(assign));
-        }
-      }
+      // get the error if any, but ignore the var (this doesn't init it).
+      lv_var(cx, asgn, &expr);
       let ty = super::expr::get_opt(cx, items, vars, expr);
       unify(cx, Ty::Int, ty);
     }
@@ -168,17 +183,40 @@ fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
   }
 }
 
-fn is_lv(expr: &Expr) -> bool {
-  match expr {
-    Expr::IdentExpr(_) => true,
-    Expr::ParenExpr(expr) => is_lv_opt(&expr.expr()),
-    Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return true).kind {
-      UnOpKind::Star => is_lv_opt(&expr.expr()),
-      UnOpKind::Bang | UnOpKind::Tilde | UnOpKind::Minus => false,
+fn lv_var(
+  cx: &mut Cx,
+  asgn: Assignment,
+  expr: &Option<Expr>,
+) -> Option<SyntaxToken> {
+  let expr = expr.as_ref()?;
+  match lv(expr) {
+    None => {
+      cx.error(expr.syntax().text_range(), ErrorKind::CannotAssign(asgn));
+      None
+    }
+    Some(lv) => match lv {
+      Lv::Var(var) => Some(var),
+      Lv::Other => None,
     },
-    Expr::DotExpr(expr) => is_lv_opt(&expr.expr()),
-    Expr::ArrowExpr(expr) => is_lv_opt(&expr.expr()),
-    Expr::SubscriptExpr(expr) => is_lv_opt(&expr.array()),
+  }
+}
+
+enum Lv {
+  Var(SyntaxToken),
+  Other,
+}
+
+fn lv(expr: &Expr) -> Option<Lv> {
+  match expr {
+    Expr::IdentExpr(ident) => Some(ident.ident().map_or(Lv::Other, Lv::Var)),
+    Expr::ParenExpr(expr) => lv_opt(&expr.expr()),
+    Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return None).kind {
+      UnOpKind::Star => lv_opt_other(&expr.expr()),
+      UnOpKind::Bang | UnOpKind::Tilde | UnOpKind::Minus => None,
+    },
+    Expr::DotExpr(expr) => lv_opt_other(&expr.expr()),
+    Expr::ArrowExpr(expr) => lv_opt_other(&expr.expr()),
+    Expr::SubscriptExpr(expr) => lv_opt_other(&expr.array()),
     Expr::DecExpr(_)
     | Expr::HexExpr(_)
     | Expr::StringExpr(_)
@@ -190,33 +228,14 @@ fn is_lv(expr: &Expr) -> bool {
     | Expr::TernaryExpr(_)
     | Expr::CallExpr(_)
     | Expr::AllocExpr(_)
-    | Expr::AllocArrayExpr(_) => false,
+    | Expr::AllocArrayExpr(_) => None,
   }
 }
 
-fn is_lv_opt(expr: &Option<Expr>) -> bool {
-  expr.as_ref().map_or(true, is_lv)
+fn lv_opt(expr: &Option<Expr>) -> Option<Lv> {
+  expr.as_ref().and_then(lv)
 }
 
-fn asgn_op_ty(
-  cx: &mut Cx,
-  lhs_ty: Option<(TextRange, Ty)>,
-  op: Option<AsgnOp>,
-) -> Ty {
-  match unwrap_or!(op, return Ty::Error).kind {
-    AsgnOpKind::Eq => lhs_ty.map_or(Ty::Error, |x| x.1),
-    AsgnOpKind::PlusEq
-    | AsgnOpKind::MinusEq
-    | AsgnOpKind::StarEq
-    | AsgnOpKind::SlashEq
-    | AsgnOpKind::PercentEq
-    | AsgnOpKind::LtLtEq
-    | AsgnOpKind::GtGtEq
-    | AsgnOpKind::AndEq
-    | AsgnOpKind::CaratEq
-    | AsgnOpKind::BarEq => {
-      unify(cx, Ty::Int, lhs_ty);
-      Ty::Int
-    }
-  }
+fn lv_opt_other(expr: &Option<Expr>) -> Option<Lv> {
+  expr.as_ref().and_then(lv).map(|_| Lv::Other)
 }

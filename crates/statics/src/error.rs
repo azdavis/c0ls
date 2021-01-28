@@ -28,6 +28,7 @@ pub enum ErrorKind {
   ReturnExprVoid,
   NoReturnExprNotVoid,
   CannotAssign(Assignment),
+  UninitializedVar,
 }
 
 #[derive(Debug)]

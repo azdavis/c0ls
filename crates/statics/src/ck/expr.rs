@@ -19,7 +19,12 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
           cx.error(ident.text_range(), ErrorKind::Undefined(Thing::Variable));
           Ty::Error
         }
-        Some(&data) => data.ty,
+        Some(&data) => {
+          if !data.defined {
+            cx.error(ident.text_range(), ErrorKind::UninitializedVar);
+          }
+          data.ty
+        }
       },
     },
     Expr::ParenExpr(expr) => get_opt_or(cx, items, vars, expr.expr()),
