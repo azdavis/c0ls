@@ -9,13 +9,12 @@ pub struct Error {
 pub enum ErrorKind {
   Duplicate(Thing),
   Undefined(Thing),
-  WrongNumParams(usize, usize),
+  MismatchedNumParams(usize, usize),
   DerefNull,
   DerefNonPtr(Ty),
-  WrongNumArgs(usize, usize),
+  MismatchedNumArgs(usize, usize),
   SubscriptNonArray(Ty),
   FieldGetNonStruct(Ty),
-  NoSuchField,
   MismatchedTypes(Ty, Ty),
 }
 

@@ -81,7 +81,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       if fn_data.params.len() != arg_tys.len() {
         cx.errors.push(
           expr.syntax().text_range(),
-          ErrorKind::WrongNumArgs(fn_data.params.len(), arg_tys.len()),
+          ErrorKind::MismatchedNumArgs(fn_data.params.len(), arg_tys.len()),
         );
       }
       for (&(_, _, param_ty), arg_ty) in fn_data.params.iter().zip(arg_tys) {
@@ -183,7 +183,7 @@ fn struct_field(
     return Ty::Error;
   });
   unwrap_or!(struct_data.get(field.text()).copied(), {
-    cx.errors.push(range, ErrorKind::NoSuchField);
+    cx.errors.push(range, ErrorKind::Undefined(Thing::Field));
     Ty::Error
   })
 }

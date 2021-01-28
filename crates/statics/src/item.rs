@@ -47,7 +47,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
           if old_data.params.len() != new_data.params.len() {
             cx.errors.push(
               ident.text_range(),
-              ErrorKind::WrongNumParams(
+              ErrorKind::MismatchedNumParams(
                 old_data.params.len(),
                 new_data.params.len(),
               ),
