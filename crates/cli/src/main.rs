@@ -38,7 +38,7 @@ fn run() -> Result<bool, Box<dyn Error>> {
   show_errors!("parse", parse.errors);
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
-  let root = Root::cast(parse.tree).expect("parse didn't give a root");
+  let root = Root::cast(parse.tree.into()).expect("parse didn't give a root");
   statics::get(&mut cx, &mut items, root);
   show_errors!("statics", cx.errors);
   Ok(lex.errors.is_empty() && parse.errors.is_empty() && cx.errors.is_empty())

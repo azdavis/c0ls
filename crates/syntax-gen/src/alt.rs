@@ -28,7 +28,8 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
       #(#defs ,)*
     }
     impl Cast for #name {
-      fn cast(node: SyntaxNode) -> Option<Self> {
+      fn cast(elem: SyntaxElement) -> Option<Self> {
+        let node = elem.into_node()?;
         let ret = match node.kind() {
           #(#casts ,)*
           _ => return None,
@@ -66,12 +67,12 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
       pub kind: #name_kind,
     }
     impl Cast for #name {
-      fn cast(node: SyntaxNode) -> Option<Self> {
-        let kind = match node.kind() {
+      fn cast(elem: SyntaxElement) -> Option<Self> {
+        let token = elem.into_token()?;
+        let kind = match token.kind() {
           #(#casts ,)*
           _ => return None,
         };
-        let token = node.first_token().unwrap();
         Some(Self { kind, token })
       }
     }

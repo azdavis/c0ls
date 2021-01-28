@@ -14,7 +14,8 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
       #(#fields)*
     }
     impl Cast for #name {
-      fn cast(node: SyntaxNode) -> Option<Self> {
+      fn cast(elem: SyntaxElement) -> Option<Self> {
+        let node = elem.into_node()?;
         if node.kind() == SK::#name {
           Some(Self(node))
         } else {
@@ -130,12 +131,12 @@ fn node_field<'cx>(
     Modifier::Rep => {
       name_ident = format_ident!("{}s", name);
       ret_ty = quote! { impl Iterator<Item = #kind> };
-      body = quote! { nodes(self) };
+      body = quote! { children(self) };
     }
     Modifier::Opt | Modifier::Regular => {
       name_ident = ident(name);
       ret_ty = quote! { Option<#kind> };
-      body = quote! { nodes(self).nth(#idx) };
+      body = quote! { children(self).nth(#idx) };
     }
   }
   quote! {
