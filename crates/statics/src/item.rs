@@ -9,7 +9,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
   match item {
     Item::StructItem(item) => {
       let fs = unwrap_or!(item.fields(), return);
-      let mut fields = NameToTy::new();
+      let mut fields = NameToTy::default();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
         let ty = ty::get_opt_or(cx, &items.type_defs, field.ty());
@@ -83,7 +83,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
 }
 
 fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
-  let mut vars = NameToTy::new();
+  let mut vars = NameToTy::default();
   let mut params = Vec::new();
   for param in item.params() {
     let ident = unwrap_or!(param.ident(), continue);

@@ -9,4 +9,5 @@ publish = false
 identifier-case = { path = "../identifier-case" }
 proc-macro2 = "1"
 quote = "1"
+rustc-hash = "1"
 ungrammar = "1"

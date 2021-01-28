@@ -1,14 +1,14 @@
 use identifier_case::snake_to_pascal;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use ungrammar::{Grammar, Token};
 
 const CONTENT_SIGIL: char = '$';
 
 #[derive(Debug, Default)]
 pub(crate) struct Tokens {
-  pub(crate) punctuation: HashMap<Token, String>,
-  pub(crate) keywords: HashMap<Token, String>,
-  pub(crate) content: HashMap<Token, String>,
+  pub(crate) punctuation: FxHashMap<Token, String>,
+  pub(crate) keywords: FxHashMap<Token, String>,
+  pub(crate) content: FxHashMap<Token, String>,
   use_token: Option<Token>,
 }
 

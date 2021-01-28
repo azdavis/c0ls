@@ -1,10 +1,11 @@
 use crate::util::name::Name;
-use std::collections::HashMap;
+use core::hash::BuildHasherDefault;
+use rustc_hash::FxHashMap;
 
 /// A type store. Do not pass [`Ty`]s returned by one `TyDb` to another `TyDb`.
 pub(crate) struct TyDb {
   ty_to_data: Vec<TyData>,
-  data_to_ty: HashMap<TyData, Ty>,
+  data_to_ty: FxHashMap<TyData, Ty>,
 }
 
 impl TyDb {
@@ -32,7 +33,10 @@ impl Default for TyDb {
   fn default() -> Self {
     let mut ret = Self {
       ty_to_data: Vec::with_capacity(Ty::LEN),
-      data_to_ty: HashMap::with_capacity(Ty::LEN),
+      data_to_ty: FxHashMap::with_capacity_and_hasher(
+        Ty::LEN,
+        BuildHasherDefault::default(),
+      ),
     };
     ret.insert(TyData::Error);
     ret.insert(TyData::Top);

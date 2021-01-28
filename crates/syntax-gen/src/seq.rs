@@ -2,12 +2,11 @@ use crate::util::{ident, unwrap_node, Cx};
 use identifier_case::pascal_to_snake;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use std::collections::HashMap;
 use std::hash::Hash;
 use ungrammar::{Node, Rule, Token};
 
 pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
-  let mut counts = Counts::new();
+  let mut counts = Counts::default();
   let fields = rules.iter().map(|rule| field(cx, &mut counts, rule));
   quote! {
     pub struct #name(SyntaxNode);
@@ -31,7 +30,7 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   }
 }
 
-type Counts<T> = HashMap<T, usize>;
+type Counts<T> = rustc_hash::FxHashMap<T, usize>;
 
 fn get_idx<T>(counts: &mut Counts<T>, key: T) -> usize
 where

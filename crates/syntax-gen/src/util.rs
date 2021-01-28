@@ -1,8 +1,8 @@
 use crate::tokens::Tokens;
 use proc_macro2::{Ident, Literal};
 use quote::format_ident;
+use rustc_hash::FxHashMap;
 use std::cmp::Reverse;
-use std::collections::HashMap;
 use ungrammar::{Grammar, Node, Rule, Token};
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ pub(crate) fn unwrap_token(rule: &Rule) -> Token {
 
 pub(crate) fn sort_tokens(
   grammar: &Grammar,
-  m: HashMap<Token, String>,
+  m: FxHashMap<Token, String>,
 ) -> impl Iterator<Item = (Literal, Ident)> + '_ {
   let mut xs: Vec<_> = m
     .into_iter()

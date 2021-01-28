@@ -4,7 +4,7 @@ pub(crate) mod ty;
 
 use error::ErrorKind;
 use name::Name;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use syntax::rowan::TextRange;
 use ty::{Ty, TyData, TyDb};
 
@@ -21,13 +21,13 @@ pub(crate) struct Cx {
   pub(crate) errors: error::ErrorDb,
 }
 
-pub(crate) type NameToTy = HashMap<Name, Ty>;
+pub(crate) type NameToTy = FxHashMap<Name, Ty>;
 
 #[derive(Default)]
 pub(crate) struct ItemDb {
-  pub(crate) fns: HashMap<Name, FnData>,
+  pub(crate) fns: FxHashMap<Name, FnData>,
   pub(crate) type_defs: NameToTy,
-  pub(crate) structs: HashMap<Name, NameToTy>,
+  pub(crate) structs: FxHashMap<Name, NameToTy>,
 }
 
 pub(crate) struct FnData {
