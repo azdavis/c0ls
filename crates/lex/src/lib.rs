@@ -39,6 +39,8 @@ pub fn get(s: &str) -> Lex<'_> {
   while cx.i < bs.len() {
     let start = cx.i;
     let kind = go(&mut cx, bs);
+    // must always advance
+    assert!(start < cx.i);
     let text = std::str::from_utf8(&bs[start..cx.i]).unwrap();
     tokens.push(Token { kind, text });
   }
@@ -236,9 +238,9 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // invalid char. go until we find a valid str. this should terminate before
   // cx.i goes past the end of bs because bs comes from a str.
   loop {
-    match std::str::from_utf8(&bs[start..cx.i]) {
-      Ok(_) => break,
-      Err(_) => cx.i += 1,
+    cx.i += 1;
+    if std::str::from_utf8(&bs[start..cx.i]).is_ok() {
+      break;
     }
   }
   err(cx, start, LexErrorKind::InvalidSource);
