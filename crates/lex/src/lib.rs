@@ -29,6 +29,7 @@ pub enum LexErrorKind {
   UnclosedLibLit,
   WrongLenCharLit(usize),
   InvalidCharEscape,
+  IntLitTooLarge,
   InvalidSource,
 }
 
@@ -56,6 +57,8 @@ struct Cx {
   i: usize,
   saw_use: bool,
 }
+
+const MAX: u32 = 1 << 31;
 
 /// requires bs is a valid &str. returns sk and updates cx.i from start to end
 /// such that bs[start..end] is a str and sk is the kind for that str.
@@ -133,14 +136,27 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         advance_while(cx, bs, u8::is_ascii_hexdigit);
         if old_i == cx.i {
           err(cx, start, LexErrorKind::EmptyHexLit);
+        } else {
+          let digits = std::str::from_utf8(&bs[old_i..cx.i]).unwrap();
+          // this is different from dec lit, not sure why.
+          if u32::from_str_radix(digits, 16).is_err() {
+            err(cx, start, LexErrorKind::IntLitTooLarge);
+          }
         }
         SK::HexLit
       } else {
         SK::DecLit
       }
     } else {
-      // dec
       advance_while(cx, bs, u8::is_ascii_digit);
+      let digits = std::str::from_utf8(&bs[start..cx.i]).unwrap();
+      let too_large = match u32::from_str_radix(digits, 10) {
+        Ok(n) => n > MAX,
+        Err(_) => true,
+      };
+      if too_large {
+        err(cx, start, LexErrorKind::IntLitTooLarge);
+      }
       SK::DecLit
     };
   }
