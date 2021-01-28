@@ -74,7 +74,7 @@ impl Ty {
 }
 
 /// Data about a type. Give this to a [`TyDb`] to get back a corresponding
-/// [`Ty`]. Note the lack of `void`.
+/// [`Ty`].
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum TyData {
   /// The 'type' of not-well-typed expressions. Permits any operation. Distinct
