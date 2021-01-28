@@ -1,13 +1,11 @@
 use crate::error::{ErrorKind, Thing};
 use crate::ty::{Ty, TyData};
-use crate::util::{
-  no_struct, no_void, unify, unify_impl, Cx, ItemDb, NameToTy,
-};
+use crate::util::{no_struct, no_void, unify, unify_impl, Cx, ItemDb, VarDb};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
 
-fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
+fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
   match expr {
     Expr::DecExpr(_) | Expr::HexExpr(_) => Ty::Int,
     Expr::StringExpr(_) => Ty::String,
@@ -21,7 +19,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
           cx.error(ident.text_range(), ErrorKind::Undefined(Thing::Variable));
           Ty::Error
         }
-        Some(&ty) => ty,
+        Some(&data) => data.ty,
       },
     },
     Expr::ParenExpr(expr) => get_opt_or(cx, items, vars, expr.expr()),
@@ -134,7 +132,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
 fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,
-  vars: &NameToTy,
+  vars: &VarDb,
   expr: Option<Expr>,
 ) -> Ty {
   expr.map_or(Ty::Error, |expr| get(cx, items, vars, expr))
@@ -143,7 +141,7 @@ fn get_opt_or(
 pub(crate) fn get_opt(
   cx: &mut Cx,
   items: &ItemDb,
-  vars: &NameToTy,
+  vars: &VarDb,
   expr: Option<Expr>,
 ) -> Option<(TextRange, Ty)> {
   expr.map(|expr| (expr.syntax().text_range(), get(cx, items, vars, expr)))

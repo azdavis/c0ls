@@ -1,7 +1,7 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
-use crate::util::{no_struct, unify, Cx, FnData, ItemDb, NameToTy};
+use crate::util::{no_struct, unify, Cx, FnData, ItemDb, NameToTy, VarDb};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
@@ -83,7 +83,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
 }
 
 fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
-  let mut vars = NameToTy::default();
+  let mut vars = VarDb::default();
   let mut params = Vec::new();
   for param in item.params() {
     let ty = super::decl::get(

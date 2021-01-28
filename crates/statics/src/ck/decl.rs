@@ -1,14 +1,14 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
-use crate::util::{no_struct, no_void, Cx, NameToTy};
+use crate::util::{no_struct, no_void, Cx, NameToTy, VarData, VarDb};
 use std::collections::hash_map::Entry;
 use syntax::{ast::Ty as AstTy, rowan::TextRange, SyntaxToken};
 
 pub(crate) fn get(
   cx: &mut Cx,
   type_defs: &NameToTy,
-  vars: &mut NameToTy,
+  vars: &mut VarDb,
   ident: Option<SyntaxToken>,
   ty: Option<AstTy>,
 ) -> Option<(TextRange, Ty)> {
@@ -27,7 +27,7 @@ pub(crate) fn get(
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
       }
       Entry::Vacant(entry) => {
-        entry.insert(ty);
+        entry.insert(VarData { ty, defined: true });
       }
     }
   }

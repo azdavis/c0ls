@@ -26,6 +26,14 @@ impl Cx {
 
 pub(crate) type NameToTy = FxHashMap<Name, Ty>;
 
+pub(crate) type VarDb = FxHashMap<Name, VarData>;
+
+#[derive(Debug, Clone, Copy)]
+pub struct VarData {
+  pub ty: Ty,
+  pub defined: bool,
+}
+
 #[derive(Debug, Default)]
 pub struct ItemDb {
   pub fns: FxHashMap<Name, FnData>,

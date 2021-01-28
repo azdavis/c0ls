@@ -1,6 +1,6 @@
 use crate::error::{Assignment, ErrorKind};
 use crate::ty::Ty;
-use crate::util::{unify, Cx, ItemDb, NameToTy};
+use crate::util::{unify, Cx, ItemDb, VarDb};
 use syntax::ast::{
   AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
@@ -10,7 +10,7 @@ use unwrap_or::unwrap_or;
 pub(crate) fn get_block(
   cx: &mut Cx,
   items: &ItemDb,
-  vars: &mut NameToTy,
+  vars: &mut VarDb,
   ret_ty: Ty,
   block: BlockStmt,
 ) -> bool {
@@ -31,7 +31,7 @@ pub(crate) fn get_block(
 fn get(
   cx: &mut Cx,
   items: &ItemDb,
-  vars: &mut NameToTy,
+  vars: &mut VarDb,
   ret_ty: Ty,
   stmt: Stmt,
 ) -> bool {
@@ -103,19 +103,14 @@ fn get(
 fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,
-  vars: &mut NameToTy,
+  vars: &mut VarDb,
   ret_ty: Ty,
   stmt: Option<Stmt>,
 ) -> bool {
   stmt.map_or(false, |stmt| get(cx, items, vars, ret_ty, stmt))
 }
 
-fn get_simp(
-  cx: &mut Cx,
-  items: &ItemDb,
-  vars: &mut NameToTy,
-  simp: Option<Simp>,
-) {
+fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
   let simp = unwrap_or!(simp, return);
   match simp {
     Simp::AsgnSimp(simp) => {
