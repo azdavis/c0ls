@@ -108,7 +108,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
     None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
       let range = block.syntax().text_range();
-      if super::stmt::get_block(cx, items, &mut vars, ret_ty, block) {
+      if !super::stmt::get_block(cx, items, &mut vars, ret_ty, block) {
         cx.error(range, ErrorKind::InvalidNoReturn);
       }
       true
