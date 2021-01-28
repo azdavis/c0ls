@@ -5,12 +5,7 @@ use crate::util::{unify, unify_impl, Cx, ItemDb, NameToTy};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
 
-pub(crate) fn get(
-  cx: &mut Cx,
-  items: &ItemDb,
-  vars: &NameToTy,
-  expr: Expr,
-) -> Ty {
+fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
   match expr {
     Expr::DecExpr(_) | Expr::HexExpr(_) => Ty::Int,
     Expr::StringExpr(_) => Ty::String,
@@ -133,7 +128,7 @@ pub(crate) fn get(
 
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
-pub(crate) fn get_opt_or(
+fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,
   vars: &NameToTy,

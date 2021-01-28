@@ -5,7 +5,7 @@ use crate::util::{Cx, NameToTy};
 use syntax::ast::{Syntax as _, Ty as AstTy};
 use syntax::rowan::TextRange;
 
-pub(crate) fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
+fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
   match ty {
     AstTy::IntTy(_) => Ty::Int,
     AstTy::BoolTy(_) => Ty::Bool,
@@ -47,6 +47,7 @@ pub(crate) fn get_opt_or(
 ) -> Ty {
   ty.map_or(Ty::Error, |ty| get(cx, type_defs, ty))
 }
+
 pub(crate) fn get_opt(
   cx: &mut Cx,
   type_defs: &NameToTy,

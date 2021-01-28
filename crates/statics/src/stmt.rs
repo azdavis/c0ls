@@ -148,7 +148,7 @@ fn get_simp(
       }
     }
     Simp::ExprSimp(simp) => {
-      expr::get_opt_or(cx, items, vars, simp.expr());
+      expr::get_opt(cx, items, vars, simp.expr());
     }
   }
 }
