@@ -1,6 +1,6 @@
 use crate::util::error::{ErrorKind, Thing};
 use crate::util::name::Name;
-use crate::util::{unify, Cx, FnData, ItemDb, NameToTy};
+use crate::util::{no_struct, ty::Ty, unify, Cx, FnData, ItemDb, NameToTy};
 use crate::{decl, stmt, ty};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
@@ -93,7 +93,13 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
       params.push((Name::new(ident.text()), range, ty));
     }
   }
-  let ret_ty = ty::get_opt_or(cx, &items.type_defs, item.ret_ty());
+  let ret_ty = match ty::get_opt(cx, &items.type_defs, item.ret_ty()) {
+    Some((range, ty)) => {
+      no_struct(cx, range, ty);
+      ty
+    }
+    None => Ty::Error,
+  };
   let defined = match item.tail() {
     None | Some(FnTail::SemicolonTail(_)) => false,
     Some(FnTail::BlockStmt(block)) => {
