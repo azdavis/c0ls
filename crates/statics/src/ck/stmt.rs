@@ -43,10 +43,20 @@ fn get(
     Stmt::IfStmt(stmt) => {
       let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
-      let if_end = get_opt_or(cx, items, &mut vars.clone(), ret_ty, stmt.yes());
+      let mut if_vars = vars.clone();
+      let if_end = get_opt_or(cx, items, &mut if_vars, ret_ty, stmt.yes());
       let else_end = match stmt.no() {
         None => false,
-        Some(no) => get_opt_or(cx, items, &mut vars.clone(), ret_ty, no.stmt()),
+        Some(no) => {
+          let mut else_vars = vars.clone();
+          let ret = get_opt_or(cx, items, &mut else_vars, ret_ty, no.stmt());
+          for (name, data) in vars.iter_mut() {
+            let defined = if_vars[name].defined && else_vars[name].defined;
+            assert!(!data.defined || defined);
+            data.defined = defined;
+          }
+          ret
+        }
       };
       if_end && else_end
     }
@@ -57,17 +67,19 @@ fn get(
       false
     }
     Stmt::ForStmt(stmt) => {
-      let mut vars = vars.clone();
-      get_simp(cx, items, &mut vars, stmt.init());
-      let cond_ty = super::expr::get_opt(cx, items, &vars, stmt.cond());
+      let mut for_vars = vars.clone();
+      if let Some(var) = get_simp(cx, items, &mut for_vars, stmt.init()) {
+        vars.get_mut(var.text()).unwrap().defined = true;
+      }
+      let cond_ty = super::expr::get_opt(cx, items, &for_vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       if let Some(step) = stmt.step() {
         if let Simp::DeclSimp(ref decl) = step {
           cx.error(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
         }
-        get_simp(cx, items, &mut vars, Some(step));
+        get_simp(cx, items, &mut for_vars, Some(step));
       }
-      get_opt_or(cx, items, &mut vars, ret_ty, stmt.body());
+      get_opt_or(cx, items, &mut for_vars, ret_ty, stmt.body());
       false
     }
     Stmt::ReturnStmt(stmt) => {
@@ -84,7 +96,16 @@ fn get(
       }
       true
     }
-    Stmt::BlockStmt(stmt) => get_block(cx, items, vars, ret_ty, stmt),
+    Stmt::BlockStmt(stmt) => {
+      let mut block_vars = vars.clone();
+      let ret = get_block(cx, items, &mut block_vars, ret_ty, stmt);
+      for (name, data) in vars.iter_mut() {
+        let defined = block_vars[name].defined;
+        assert!(!data.defined || defined);
+        data.defined = defined;
+      }
+      ret
+    }
     Stmt::AssertStmt(stmt) => {
       let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
       unify(cx, Ty::Bool, ty);
@@ -110,8 +131,16 @@ fn get_opt_or(
   stmt.map_or(false, |stmt| get(cx, items, vars, ret_ty, stmt))
 }
 
-fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
-  let simp = unwrap_or!(simp, return);
+/// returns the newly-defined but previously declared variable, if there was
+/// one. this is used as an optimization for checking `for` loops.
+fn get_simp(
+  cx: &mut Cx,
+  items: &ItemDb,
+  vars: &mut VarDb,
+  simp: Option<Simp>,
+) -> Option<SyntaxToken> {
+  let mut ret: Option<SyntaxToken> = None;
+  let simp = unwrap_or!(simp, return ret);
   match simp {
     Simp::AsgnSimp(simp) => {
       let rhs_ty = super::expr::get_opt(cx, items, vars, simp.rhs());
@@ -121,8 +150,11 @@ fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
         None => None,
         Some(op) => match op.kind {
           AsgnOpKind::Eq => {
-            if let Some(var) = var.and_then(|var| vars.get_mut(var.text())) {
-              var.defined = true;
+            if let Some(var) = var {
+              if let Some(data) = vars.get_mut(var.text()) {
+                data.defined = true;
+                ret = Some(var);
+              }
             }
             rhs_ty.map(|x| x.1)
           }
@@ -181,6 +213,7 @@ fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
       super::expr::get_opt(cx, items, vars, simp.expr());
     }
   }
+  ret
 }
 
 fn lv_var(
