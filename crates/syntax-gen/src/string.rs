@@ -1,3 +1,4 @@
+/// works with either upper or lower snake case.
 pub(crate) fn snake_to_pascal(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut is_cap = true;
@@ -14,7 +15,7 @@ pub(crate) fn snake_to_pascal(s: &str) -> String {
   ret
 }
 
-/// also works for camelCase
+/// also works for camelCase.
 pub(crate) fn pascal_to_snake(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut cs = s.chars();
@@ -66,4 +67,12 @@ fn snake_to_pascal_t() {
   assert_eq!(snake_to_pascal("fella"), "Fella");
   assert_eq!(snake_to_pascal("the_best"), "TheBest");
   assert_eq!(snake_to_pascal("HEY_THERE_DUDE"), "HeyThereDude");
+}
+
+#[test]
+fn pascal_to_snake_t() {
+  assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
+  assert_eq!(pascal_to_snake("readFile"), "read_file");
+  assert_eq!(pascal_to_snake("GetLine"), "get_line");
+  assert_eq!(pascal_to_snake("LEN"), "len");
 }
