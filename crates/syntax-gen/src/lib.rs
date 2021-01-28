@@ -1,5 +1,7 @@
 //! Generates the Rust code for the `syntax` crate.
 
+#![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 mod alt;
@@ -16,6 +18,7 @@ enum Kind {
   Alt,
 }
 
+/// Returns a string of Rust code to be used in the `syntax` crate.
 pub fn gen() -> String {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
   let tokens = tokens::get(&grammar);

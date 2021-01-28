@@ -12,7 +12,7 @@ use unwrap_or::unwrap_or;
 /// always needed. For example, when checking statements, the variables in scope
 /// are mutable, but for expressions, they are not. For types, we don't even
 /// need to know what variables are in scope.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Cx {
   pub tys: TyDb,
   pub errors: Vec<Error>,
@@ -26,13 +26,14 @@ impl Cx {
 
 pub(crate) type NameToTy = FxHashMap<Name, Ty>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ItemDb {
   pub fns: FxHashMap<Name, FnData>,
   pub type_defs: NameToTy,
   pub structs: FxHashMap<Name, NameToTy>,
 }
 
+#[derive(Debug)]
 pub struct FnData {
   pub params: Vec<(Name, TextRange, Ty)>,
   pub ret_ty: Ty,

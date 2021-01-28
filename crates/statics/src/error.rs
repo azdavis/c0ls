@@ -1,11 +1,13 @@
 use crate::ty::Ty;
 use syntax::rowan::TextRange;
 
+#[derive(Debug)]
 pub struct Error {
   pub range: TextRange,
   pub kind: ErrorKind,
 }
 
+#[derive(Debug)]
 pub enum ErrorKind {
   Duplicate(Thing),
   Undefined(Thing),
@@ -28,12 +30,14 @@ pub enum ErrorKind {
   CannotAssign(Assignment),
 }
 
+#[derive(Debug)]
 pub enum Assignment {
   Assign,
   Inc,
   Dec,
 }
 
+#[derive(Debug)]
 pub enum Thing {
   Field,
   Struct,

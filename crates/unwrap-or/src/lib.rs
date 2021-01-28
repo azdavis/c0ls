@@ -1,5 +1,6 @@
 //! A macro for unwrapping options.
 
+#![deny(missing_debug_implementations)]
 #![deny(missing_doc_code_examples)]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]

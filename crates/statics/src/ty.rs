@@ -3,6 +3,7 @@ use core::hash::BuildHasherDefault;
 use rustc_hash::FxHashMap;
 
 /// A type store. Do not pass [`Ty`]s returned by one `TyDb` to another `TyDb`.
+#[derive(Debug)]
 pub struct TyDb {
   ty_to_data: Vec<TyData>,
   data_to_ty: FxHashMap<TyData, Ty>,

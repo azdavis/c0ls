@@ -1,5 +1,6 @@
 //! Performs static analysis on an abstract syntax tree.
 
+#![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
 mod ck;
