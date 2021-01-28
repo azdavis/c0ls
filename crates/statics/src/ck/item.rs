@@ -1,7 +1,9 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
-use crate::util::{no_struct, unify, Cx, FnData, ItemDb, NameToTy, VarDb};
+use crate::util::{
+  add_var, no_struct, unify, Cx, FnData, ItemDb, NameToTy, VarDb,
+};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
@@ -86,15 +88,10 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let mut vars = VarDb::default();
   let mut params = Vec::new();
   for param in item.params() {
-    let ty = super::decl::get(
-      cx,
-      &items.type_defs,
-      &mut vars,
-      param.ident(),
-      param.ty(),
-    );
-    if let (Some(ident), Some((range, ty))) = (param.ident(), ty) {
-      params.push((Name::new(ident.text()), range, ty));
+    let ty = super::ty::get_opt(cx, &items.type_defs, param.ty());
+    if let (Some(ident), Some((ty_range, ty))) = (param.ident(), ty) {
+      params.push((Name::new(ident.text()), ty_range, ty));
+      add_var(cx, &mut vars, ident, ty_range, ty, true);
     }
   }
   let ret_ty = match super::ty::get_opt(cx, &items.type_defs, item.ret_ty()) {

@@ -1,6 +1,6 @@
 use crate::error::{Assignment, ErrorKind};
 use crate::ty::Ty;
-use crate::util::{unify, Cx, ItemDb, VarDb};
+use crate::util::{add_var, unify, Cx, ItemDb, VarDb};
 use syntax::ast::{
   AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
@@ -147,13 +147,19 @@ fn get_simp(cx: &mut Cx, items: &ItemDb, vars: &mut VarDb, simp: Option<Simp>) {
       unify(cx, Ty::Int, ty);
     }
     Simp::DeclSimp(simp) => {
-      let ty =
-        super::decl::get(cx, &items.type_defs, vars, simp.ident(), simp.ty());
-      if let Some(defn_tail) = simp.defn_tail() {
-        let expr_ty = super::expr::get_opt(cx, items, vars, defn_tail.expr());
-        if let Some((_, ty)) = ty {
-          unify(cx, ty, expr_ty);
+      let ty = super::ty::get_opt(cx, &items.type_defs, simp.ty());
+      let defined = match simp.defn_tail() {
+        None => false,
+        Some(defn_tail) => {
+          let expr_ty = super::expr::get_opt(cx, items, vars, defn_tail.expr());
+          if let Some((_, ty)) = ty {
+            unify(cx, ty, expr_ty);
+          }
+          true
         }
+      };
+      if let (Some(ident), Some((ty_range, ty))) = (simp.ident(), ty) {
+        add_var(cx, vars, ident, ty_range, ty, defined);
       }
     }
     Simp::ExprSimp(simp) => {

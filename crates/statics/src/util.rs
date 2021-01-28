@@ -1,8 +1,9 @@
-use crate::error::{Error, ErrorKind};
+use crate::error::{Error, ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::{Ty, TyData, TyDb};
 use rustc_hash::FxHashMap;
-use syntax::rowan::TextRange;
+use std::collections::hash_map::Entry;
+use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
 
 /// The context. This information is always mutable as we check the various
@@ -93,5 +94,25 @@ pub(crate) fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
 pub(crate) fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
   if let TyData::Struct(_) = cx.tys.get(ty) {
     cx.error(range, ErrorKind::InvalidStruct);
+  }
+}
+
+pub(crate) fn add_var(
+  cx: &mut Cx,
+  vars: &mut VarDb,
+  ident: SyntaxToken,
+  ty_range: TextRange,
+  ty: Ty,
+  defined: bool,
+) {
+  no_struct(cx, ty_range, ty);
+  no_void(cx, ty_range, ty);
+  match vars.entry(Name::new(ident.text())) {
+    Entry::Occupied(_) => {
+      cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
+    }
+    Entry::Vacant(entry) => {
+      entry.insert(VarData { ty, defined });
+    }
   }
 }
