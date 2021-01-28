@@ -19,8 +19,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       None => Ty::Error,
       Some(ident) => match vars.get(ident.text()) {
         None => {
-          cx.errors
-            .push(ident.text_range(), ErrorKind::Undefined(Thing::Variable));
+          cx.error(ident.text_range(), ErrorKind::Undefined(Thing::Variable));
           Ty::Error
         }
         Some(&ty) => ty,
@@ -39,8 +38,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
             return ret;
           }
         }
-        cx.errors
-          .push(range, ErrorKind::MismatchedTypesAny(params, lhs_ty));
+        cx.error(range, ErrorKind::MismatchedTypesAny(params, lhs_ty));
       }
       ret
     }
@@ -74,20 +72,18 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       let fn_ident = unwrap_or!(expr.ident(), return Ty::Error);
       let fn_name = fn_ident.text();
       if vars.contains_key(fn_name) {
-        cx.errors
-          .push(fn_ident.text_range(), ErrorKind::ShadowedFunction);
+        cx.error(fn_ident.text_range(), ErrorKind::ShadowedFunction);
       }
       let arg_tys: Vec<_> = expr
         .args()
         .map(|arg| get_opt(cx, items, vars, arg.expr()))
         .collect();
       let fn_data = unwrap_or!(items.fns.get(fn_name), {
-        cx.errors
-          .push(fn_ident.text_range(), ErrorKind::Undefined(Thing::Function));
+        cx.error(fn_ident.text_range(), ErrorKind::Undefined(Thing::Function));
         return Ty::Error;
       });
       if fn_data.params.len() != arg_tys.len() {
-        cx.errors.push(
+        cx.error(
           expr.syntax().text_range(),
           ErrorKind::MismatchedNumArgs(fn_data.params.len(), arg_tys.len()),
         );
@@ -113,7 +109,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
       match *cx.tys.get(array_ty) {
         TyData::Array(ty) => ty,
         _ => {
-          cx.errors.push(
+          cx.error(
             expr.syntax().text_range(),
             ErrorKind::SubscriptNonArray(array_ty),
           );
@@ -158,14 +154,14 @@ fn deref(cx: &mut Cx, range: TextRange, ty: Ty) -> Ty {
   match *cx.tys.get(ty) {
     TyData::Ptr(inner) => {
       if inner == Ty::Top {
-        cx.errors.push(range, ErrorKind::DerefNull);
+        cx.error(range, ErrorKind::DerefNull);
         Ty::Error
       } else {
         inner
       }
     }
     _ => {
-      cx.errors.push(range, ErrorKind::DerefNonPtr(ty));
+      cx.error(range, ErrorKind::DerefNonPtr(ty));
       Ty::Error
     }
   }
@@ -182,16 +178,16 @@ fn struct_field(
   let struct_name = match cx.tys.get(ty) {
     TyData::Struct(n) => n,
     _ => {
-      cx.errors.push(range, ErrorKind::FieldGetNonStruct(ty));
+      cx.error(range, ErrorKind::FieldGetNonStruct(ty));
       return Ty::Error;
     }
   };
   let struct_data = unwrap_or!(items.structs.get(struct_name), {
-    cx.errors.push(range, ErrorKind::Undefined(Thing::Struct));
+    cx.error(range, ErrorKind::Undefined(Thing::Struct));
     return Ty::Error;
   });
   unwrap_or!(struct_data.get(field.text()).copied(), {
-    cx.errors.push(range, ErrorKind::Undefined(Thing::Field));
+    cx.error(range, ErrorKind::Undefined(Thing::Field));
     Ty::Error
   })
 }

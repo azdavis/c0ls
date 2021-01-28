@@ -2,7 +2,7 @@ pub(crate) mod error;
 pub(crate) mod name;
 pub(crate) mod ty;
 
-use error::ErrorKind;
+use error::{Error, ErrorKind};
 use name::Name;
 use rustc_hash::FxHashMap;
 use syntax::rowan::TextRange;
@@ -19,7 +19,13 @@ use unwrap_or::unwrap_or;
 #[derive(Default)]
 pub(crate) struct Cx {
   pub(crate) tys: TyDb,
-  pub(crate) errors: error::ErrorDb,
+  pub(crate) errors: Vec<Error>,
+}
+
+impl Cx {
+  pub(crate) fn error(&mut self, range: TextRange, kind: ErrorKind) {
+    self.errors.push(Error { range, kind });
+  }
 }
 
 pub(crate) type NameToTy = FxHashMap<Name, Ty>;
@@ -44,8 +50,7 @@ pub(crate) fn unify(
 ) -> Ty {
   let (range, found) = unwrap_or!(found, return expected);
   unwrap_or!(unify_impl(cx, expected, found), {
-    cx.errors
-      .push(range, ErrorKind::MismatchedTypes(expected, found));
+    cx.error(range, ErrorKind::MismatchedTypes(expected, found));
     Ty::Error
   })
 }
@@ -76,12 +81,12 @@ pub(crate) fn unify_impl(cx: &mut Cx, expected: Ty, found: Ty) -> Option<Ty> {
 
 pub(crate) fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
   if ty == Ty::Void {
-    cx.errors.push(range, ErrorKind::InvalidVoid);
+    cx.error(range, ErrorKind::InvalidVoid);
   }
 }
 
 pub(crate) fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
   if let TyData::Struct(_) = cx.tys.get(ty) {
-    cx.errors.push(range, ErrorKind::InvalidStruct);
+    cx.error(range, ErrorKind::InvalidStruct);
   }
 }

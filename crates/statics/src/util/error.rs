@@ -41,18 +41,3 @@ pub enum Thing {
   Function,
   Typedef,
 }
-
-#[derive(Default)]
-pub(crate) struct ErrorDb {
-  inner: Vec<Error>,
-}
-
-impl ErrorDb {
-  pub(crate) fn push(&mut self, range: TextRange, kind: ErrorKind) {
-    self.inner.push(Error { range, kind })
-  }
-
-  pub(crate) fn finish(self) -> Vec<Error> {
-    self.inner
-  }
-}

@@ -19,8 +19,7 @@ pub(crate) fn get_block(
   let mut reported = false;
   for stmt in block.stmts() {
     if end && !reported {
-      cx.errors
-        .push(stmt.syntax().text_range(), ErrorKind::Unreachable);
+      cx.error(stmt.syntax().text_range(), ErrorKind::Unreachable);
       reported = true;
     }
     if get(cx, items, vars, ret_ty, stmt) {
@@ -65,8 +64,7 @@ fn get(
       unify(cx, Ty::Bool, cond_ty);
       if let Some(step) = stmt.step() {
         if let Simp::DeclSimp(ref decl) = step {
-          cx.errors
-            .push(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
+          cx.error(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
         }
         get_simp(cx, items, &mut vars, Some(step));
       }
@@ -76,12 +74,10 @@ fn get(
     Stmt::ReturnStmt(stmt) => {
       let ty = expr::get_opt(cx, items, vars, stmt.expr());
       match (ty, ret_ty == Ty::Void) {
-        (Some((range, _)), true) => {
-          cx.errors.push(range, ErrorKind::ReturnExprVoid)
+        (Some((range, _)), true) => cx.error(range, ErrorKind::ReturnExprVoid),
+        (None, false) => {
+          cx.error(stmt.syntax().text_range(), ErrorKind::NoReturnExprNotVoid)
         }
-        (None, false) => cx
-          .errors
-          .push(stmt.syntax().text_range(), ErrorKind::NoReturnExprNotVoid),
         (Some(_), false) => {
           unify(cx, ret_ty, ty);
         }
@@ -127,7 +123,7 @@ fn get_simp(
       let lhs = simp.lhs();
       if let Some(ref lhs) = lhs {
         if !is_lv(lhs) {
-          cx.errors.push(
+          cx.error(
             lhs.syntax().text_range(),
             ErrorKind::CannotAssign(Assignment::Assign),
           );
@@ -150,8 +146,7 @@ fn get_simp(
             // this really shouldn't happen.
             None => Assignment::Assign,
           };
-          cx.errors
-            .push(expr.syntax().text_range(), ErrorKind::CannotAssign(assign));
+          cx.error(expr.syntax().text_range(), ErrorKind::CannotAssign(assign));
         }
       }
       let ty = expr::get_opt(cx, items, vars, expr);

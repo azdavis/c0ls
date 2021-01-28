@@ -28,8 +28,7 @@ fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
       None => Ty::Error,
       Some(ident) => match type_defs.get(ident.text()) {
         None => {
-          cx.errors
-            .push(ident.text_range(), ErrorKind::Undefined(Thing::Typedef));
+          cx.error(ident.text_range(), ErrorKind::Undefined(Thing::Typedef));
           Ty::Error
         }
         Some(&ty) => ty,

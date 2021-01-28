@@ -23,8 +23,7 @@ pub(crate) fn get(
   if let Some(ident) = ident {
     match vars.entry(Name::new(ident.text())) {
       Entry::Occupied(_) => {
-        cx.errors
-          .push(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
+        cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
       }
       Entry::Vacant(entry) => {
         entry.insert(ty);

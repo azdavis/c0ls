@@ -15,7 +15,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
         let ident = unwrap_or!(field.ident(), continue);
         let ty = ty::get_opt_or(cx, &items.type_defs, field.ty());
         match fields.entry(Name::new(ident.text())) {
-          Entry::Occupied(_) => cx.errors.push(
+          Entry::Occupied(_) => cx.error(
             field.syntax().text_range(),
             ErrorKind::Duplicate(Thing::Field),
           ),
@@ -27,9 +27,9 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let ident = unwrap_or!(item.ident(), return);
       let name = Name::new(ident.text());
       match items.structs.entry(name) {
-        Entry::Occupied(_) => cx
-          .errors
-          .push(ident.text_range(), ErrorKind::Duplicate(Thing::Struct)),
+        Entry::Occupied(_) => {
+          cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Struct))
+        }
         Entry::Vacant(entry) => {
           entry.insert(fields);
         }
@@ -42,11 +42,10 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
         Entry::Occupied(mut entry) => {
           let old_data = entry.get();
           if old_data.defined && new_data.defined {
-            cx.errors
-              .push(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
+            cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
           }
           if old_data.params.len() != new_data.params.len() {
-            cx.errors.push(
+            cx.error(
               ident.text_range(),
               ErrorKind::MismatchedNumParams(
                 old_data.params.len(),
@@ -71,9 +70,9 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let ident = unwrap_or!(item.ident(), return);
       let ty = ty::get_opt_or(cx, &items.type_defs, item.ty());
       match items.type_defs.entry(Name::new(ident.text())) {
-        Entry::Occupied(_) => cx
-          .errors
-          .push(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef)),
+        Entry::Occupied(_) => {
+          cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
+        }
         Entry::Vacant(entry) => {
           entry.insert(ty);
         }
@@ -105,7 +104,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
     Some(FnTail::BlockStmt(block)) => {
       let range = block.syntax().text_range();
       if stmt::get_block(cx, items, &mut vars, ret_ty, block) {
-        cx.errors.push(range, ErrorKind::InvalidNoReturn);
+        cx.error(range, ErrorKind::InvalidNoReturn);
       }
       true
     }
