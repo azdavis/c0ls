@@ -8,3 +8,4 @@ publish = false
 [dependencies]
 rustc-hash = "1"
 syntax = { path = "../syntax" }
+unwrap-or = { path = "../unwrap-or" }

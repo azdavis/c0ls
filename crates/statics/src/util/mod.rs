@@ -7,6 +7,7 @@ use name::Name;
 use rustc_hash::FxHashMap;
 use syntax::rowan::TextRange;
 use ty::{Ty, TyData, TyDb};
+use unwrap_or::unwrap_or;
 
 /// The context. This information is always mutable as we check the various
 /// constructs, and is always needed.

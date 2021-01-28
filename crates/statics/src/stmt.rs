@@ -8,6 +8,7 @@ use syntax::ast::{
   AsgnOp, AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };
 use syntax::rowan::TextRange;
+use unwrap_or::unwrap_or;
 
 pub(crate) fn get_block(
   cx: &mut Cx,

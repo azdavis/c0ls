@@ -4,6 +4,7 @@ use crate::util::ty::{Ty, TyData};
 use crate::util::{unify, unify_impl, Cx, ItemDb, NameToTy};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
+use unwrap_or::unwrap_or;
 
 fn get(cx: &mut Cx, items: &ItemDb, vars: &NameToTy, expr: Expr) -> Ty {
   match expr {
