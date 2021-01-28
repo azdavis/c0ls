@@ -43,9 +43,7 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
     p.bump();
     if p.at(SK::LRound) {
       p.bump();
-      comma_sep(p, SK::RRound, |p| {
-        expr(p, tds);
-      });
+      comma_sep(p, SK::RRound, SK::Arg, |p| expr(p, tds));
       Some(p.exit(entered, SK::CallExpr))
     } else {
       Some(p.exit(entered, SK::IdentExpr))

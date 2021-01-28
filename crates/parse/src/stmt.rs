@@ -33,8 +33,10 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
     p.eat(SK::RRound);
     stmt(p, tds);
     if p.at(SK::ElseKw) {
+      let else_branch = p.enter();
       p.bump();
       stmt(p, tds);
+      p.exit(else_branch, SK::ElseBranch);
     }
     Some(p.exit(entered, SK::IfStmt))
   } else if p.at(SK::WhileKw) {

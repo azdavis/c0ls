@@ -1,6 +1,6 @@
 use crate::stmt::stmt_block;
 use crate::ty::{ty, ty_hd_opt, ty_opt, ty_tl};
-use crate::util::{comma_sep, must, TypeDefs};
+use crate::util::{comma_sep, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
@@ -16,18 +16,26 @@ pub(crate) fn item<'input>(
       p.bump();
       p.exit(entered, SK::StructItem);
     } else if p.at(SK::LCurly) {
+      let fields = p.enter();
       p.bump();
       loop {
         if p.at(SK::RCurly) {
           p.bump();
           break;
         }
-        if param_opt(p, tds).is_none() {
-          p.error();
-          break;
-        }
+        let ty = match ty_opt(p, tds) {
+          Some(x) => x,
+          None => {
+            p.error();
+            break;
+          }
+        };
+        let field = p.precede(ty);
+        p.eat(SK::Ident);
         p.eat(SK::Semicolon);
+        p.exit(field, SK::Field);
       }
+      p.exit(fields, SK::Fields);
       p.eat(SK::Semicolon);
       p.exit(entered, SK::StructItem);
     } else {
@@ -64,7 +72,10 @@ fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
   let ty_exited = ty_tl(p, ty_hd_exited);
   p.eat(SK::Ident);
   p.eat(SK::LRound);
-  comma_sep(p, SK::RRound, |p| param(p, tds));
+  comma_sep(p, SK::RRound, SK::Param, |p| {
+    ty(p, tds);
+    p.eat(SK::Ident);
+  });
   if p.at(SK::Semicolon) {
     let entered = p.precede(ty_exited);
     let semi = p.enter();
@@ -78,15 +89,4 @@ fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
   } else {
     p.error();
   }
-}
-
-fn param(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) {
-  must(p, |p| param_opt(p, tds))
-}
-
-fn param_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
-  let exited = ty_opt(p, tds)?;
-  let entered = p.precede(exited);
-  p.eat(SK::Ident);
-  Some(p.exit(entered, SK::Param))
 }
