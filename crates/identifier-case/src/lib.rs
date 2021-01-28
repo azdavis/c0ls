@@ -50,5 +50,4 @@ fn pascal_to_snake_t() {
   assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
   assert_eq!(pascal_to_snake("readFile"), "read_file");
   assert_eq!(pascal_to_snake("GetLine"), "get_line");
-  assert_eq!(pascal_to_snake("LEN"), "len");
 }
