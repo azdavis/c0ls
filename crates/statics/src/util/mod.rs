@@ -2,8 +2,10 @@ pub(crate) mod error;
 pub(crate) mod name;
 pub(crate) mod ty;
 
+use error::ErrorKind;
 use name::Name;
 use std::collections::HashMap;
+use syntax::rowan::TextRange;
 use ty::{Ty, TyData, TyDb};
 
 /// The context. This information is always mutable as we check the various
@@ -29,17 +31,23 @@ pub(crate) struct ItemDb {
 }
 
 pub(crate) struct FnData {
-  pub(crate) params: Vec<(Name, Ty)>,
+  pub(crate) params: Vec<(Name, TextRange, Ty)>,
   pub(crate) ret_ty: Ty,
   // TODO is the right place to put this?
   pub(crate) defined: bool,
 }
 
-pub(crate) fn unify(cx: &mut Cx, expected: Ty, found: Ty) -> Ty {
-  match unify_impl(cx, expected, found) {
-    Some(x) => x,
-    None => todo!("issue a mismatched types error, return Ty::Error"),
-  }
+pub(crate) fn unify(
+  cx: &mut Cx,
+  expected: Ty,
+  found: Option<(TextRange, Ty)>,
+) -> Ty {
+  let (range, found) = unwrap_or!(found, return expected);
+  unwrap_or!(unify_impl(cx, expected, found), {
+    cx.errors
+      .push(range, ErrorKind::MismatchedTypes(expected, found));
+    Ty::Error
+  })
 }
 
 /// produces no errors. used to implement `unify`, and exported to allow for

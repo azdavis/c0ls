@@ -2,7 +2,8 @@ use crate::util::error::{ErrorKind, Thing};
 use crate::util::name::Name;
 use crate::util::ty::{Ty, TyData};
 use crate::util::{Cx, NameToTy};
-use syntax::ast::Ty as AstTy;
+use syntax::ast::{Syntax as _, Ty as AstTy};
+use syntax::rowan::TextRange;
 
 pub(crate) fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
   match ty {
@@ -45,4 +46,11 @@ pub(crate) fn get_opt_or(
   ty: Option<AstTy>,
 ) -> Ty {
   ty.map_or(Ty::Error, |ty| get(cx, type_defs, ty))
+}
+pub(crate) fn get_opt(
+  cx: &mut Cx,
+  type_defs: &NameToTy,
+  ty: Option<AstTy>,
+) -> Option<(TextRange, Ty)> {
+  ty.map(|ty| (ty.syntax().text_range(), get(cx, type_defs, ty)))
 }

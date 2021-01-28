@@ -3,7 +3,7 @@ use crate::util::error::{ErrorKind, Thing};
 use crate::util::ty::{Ty, TyData};
 use crate::util::{unify, unify_impl, Cx, ItemDb, NameToTy};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
-use syntax::SyntaxToken;
+use syntax::{rowan::TextRange, SyntaxToken};
 
 pub(crate) fn get(
   cx: &mut Cx,
@@ -31,7 +31,7 @@ pub(crate) fn get(
     Expr::ParenExpr(expr) => get_opt_or(cx, items, vars, expr.expr()),
     Expr::BinOpExpr(expr) => {
       let lhs_ty = get_opt_or(cx, items, vars, expr.lhs());
-      let rhs_ty = get_opt_or(cx, items, vars, expr.rhs());
+      let rhs_ty = get_opt(cx, items, vars, expr.rhs());
       let op = unwrap_or!(expr.op(), return Ty::Error);
       let (params, ret) = bin_op_ty(op.kind);
       for &param in params {
@@ -44,7 +44,7 @@ pub(crate) fn get(
       ret
     }
     Expr::UnOpExpr(expr) => {
-      let ty = get_opt_or(cx, items, vars, expr.expr());
+      let ty = get_opt(cx, items, vars, expr.expr());
       let op = unwrap_or!(expr.op(), return Ty::Error);
       match op.kind {
         UnOpKind::Bang => {
@@ -55,13 +55,13 @@ pub(crate) fn get(
           unify(cx, Ty::Int, ty);
           Ty::Int
         }
-        UnOpKind::Star => deref(cx, ty),
+        UnOpKind::Star => ty.map_or(Ty::Error, |(r, t)| deref(cx, r, t)),
       }
     }
     Expr::TernaryExpr(expr) => {
-      let cond_ty = get_opt_or(cx, items, vars, expr.cond());
+      let cond_ty = get_opt(cx, items, vars, expr.cond());
       let yes_ty = get_opt_or(cx, items, vars, expr.yes());
-      let no_ty = get_opt_or(cx, items, vars, expr.no());
+      let no_ty = get_opt(cx, items, vars, expr.no());
       unify(cx, Ty::Bool, cond_ty);
       let ret_ty = unify(cx, yes_ty, no_ty);
       no_void(ret_ty);
@@ -76,7 +76,7 @@ pub(crate) fn get(
       }
       let arg_tys: Vec<_> = expr
         .args()
-        .map(|arg| get_opt_or(cx, items, vars, arg.expr()))
+        .map(|arg| get_opt(cx, items, vars, arg.expr()))
         .collect();
       let fn_data = unwrap_or!(items.fns.get(fn_name), {
         cx.errors
@@ -89,23 +89,23 @@ pub(crate) fn get(
           ErrorKind::WrongNumArgs(fn_data.params.len(), arg_tys.len()),
         );
       }
-      for (&(_, param_ty), arg_ty) in fn_data.params.iter().zip(arg_tys) {
+      for (&(_, _, param_ty), arg_ty) in fn_data.params.iter().zip(arg_tys) {
         unify(cx, param_ty, arg_ty);
       }
       fn_data.ret_ty
     }
     Expr::DotExpr(expr) => {
-      let struct_ty = get_opt_or(cx, items, vars, expr.expr());
+      let struct_ty = get_opt(cx, items, vars, expr.expr());
       struct_field(cx, items, struct_ty, expr.ident())
     }
     Expr::ArrowExpr(expr) => {
-      let ptr_ty = get_opt_or(cx, items, vars, expr.expr());
-      let struct_ty = deref(cx, ptr_ty);
+      let ptr_ty = get_opt(cx, items, vars, expr.expr());
+      let struct_ty = ptr_ty.map(|(r, t)| (r, deref(cx, r, t)));
       struct_field(cx, items, struct_ty, expr.ident())
     }
     Expr::SubscriptExpr(expr) => {
       let array_ty = get_opt_or(cx, items, vars, expr.array());
-      let idx_ty = get_opt_or(cx, items, vars, expr.idx());
+      let idx_ty = get_opt(cx, items, vars, expr.idx());
       unify(cx, Ty::Int, idx_ty);
       match *cx.tys.get(array_ty) {
         TyData::Array(ty) => ty,
@@ -124,7 +124,7 @@ pub(crate) fn get(
     }
     Expr::AllocArrayExpr(expr) => {
       let inner_ty = ty::get_opt_or(cx, &items.type_defs, expr.ty());
-      let len_ty = get_opt_or(cx, items, vars, expr.expr());
+      let len_ty = get_opt(cx, items, vars, expr.expr());
       unify(cx, Ty::Int, len_ty);
       cx.tys.mk(TyData::Array(inner_ty))
     }
@@ -142,18 +142,27 @@ pub(crate) fn get_opt_or(
   expr.map_or(Ty::Error, |expr| get(cx, items, vars, expr))
 }
 
-fn deref(cx: &mut Cx, ty: Ty) -> Ty {
+pub(crate) fn get_opt(
+  cx: &mut Cx,
+  items: &ItemDb,
+  vars: &NameToTy,
+  expr: Option<Expr>,
+) -> Option<(TextRange, Ty)> {
+  expr.map(|expr| (expr.syntax().text_range(), get(cx, items, vars, expr)))
+}
+
+fn deref(cx: &mut Cx, range: TextRange, ty: Ty) -> Ty {
   match *cx.tys.get(ty) {
     TyData::Ptr(inner) => {
       if inner == Ty::Top {
-        // TODO ErrorKind::DerefNull
+        cx.errors.push(range, ErrorKind::DerefNull);
         Ty::Error
       } else {
         inner
       }
     }
     _ => {
-      // TODO ErrorKind::DerefNonPtr(ty)
+      cx.errors.push(range, ErrorKind::DerefNonPtr(ty));
       Ty::Error
     }
   }
@@ -162,19 +171,25 @@ fn deref(cx: &mut Cx, ty: Ty) -> Ty {
 fn struct_field(
   cx: &mut Cx,
   items: &ItemDb,
-  ty: Ty,
+  ty: Option<(TextRange, Ty)>,
   field: Option<SyntaxToken>,
 ) -> Ty {
+  let (range, ty) = unwrap_or!(ty, return Ty::Error);
   let field = unwrap_or!(field, return Ty::Error);
   let struct_name = match cx.tys.get(ty) {
     TyData::Struct(n) => n,
-    _ => todo!("field get on non-struct type"),
+    _ => {
+      cx.errors.push(range, ErrorKind::FieldGetNonStruct(ty));
+      return Ty::Error;
+    }
   };
   let struct_data = unwrap_or!(items.structs.get(struct_name), {
-    todo!("no such struct defined")
+    cx.errors.push(range, ErrorKind::Undefined(Thing::Struct));
+    return Ty::Error;
   });
   unwrap_or!(struct_data.get(field.text()).copied(), {
-    todo!("no such field on struct")
+    cx.errors.push(range, ErrorKind::NoSuchField);
+    Ty::Error
   })
 }
 

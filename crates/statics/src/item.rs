@@ -54,8 +54,8 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
             );
           }
           let params = old_data.params.iter().zip(new_data.params.iter());
-          for (&(_, old_ty), &(_, new_ty)) in params {
-            unify(cx, old_ty, new_ty);
+          for (&(_, _, old_ty), &(_, range, new_ty)) in params {
+            unify(cx, old_ty, Some((range, new_ty)));
           }
           if new_data.defined {
             entry.insert(new_data);
@@ -87,7 +87,8 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   let mut params = Vec::new();
   for param in item.params() {
     let ident = unwrap_or!(param.ident(), continue);
-    let ty = ty::get_opt_or(cx, &items.type_defs, param.ty());
+    let (range, ty) =
+      unwrap_or!(ty::get_opt(cx, &items.type_defs, param.ty()), continue);
     let name = Name::new(ident.text());
     match vars.entry(name.clone()) {
       Entry::Occupied(_) => cx.errors.push(
@@ -98,7 +99,7 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
         entry.insert(ty);
       }
     }
-    params.push((name, ty));
+    params.push((name, range, ty));
   }
   let ret_ty = ty::get_opt_or(cx, &items.type_defs, item.ret_ty());
   let defined = match item.tail() {

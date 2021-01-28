@@ -14,6 +14,9 @@ pub enum ErrorKind {
   DerefNonPtr(Ty),
   WrongNumArgs(usize, usize),
   SubscriptNonArray(Ty),
+  FieldGetNonStruct(Ty),
+  NoSuchField,
+  MismatchedTypes(Ty, Ty),
 }
 
 pub enum Thing {
