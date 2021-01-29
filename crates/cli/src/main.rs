@@ -6,7 +6,6 @@ use parse::Parse;
 use statics::name::Name;
 use statics::ty::Ty;
 use statics::util::{Cx, FnData, ItemDb};
-use std::{fs, process};
 use syntax::ast::{Cast as _, Root};
 use syntax::SyntaxNode;
 
@@ -32,7 +31,7 @@ macro_rules! show_errors {
 }
 
 fn read_file(name: &str) -> Option<String> {
-  match fs::read_to_string(name) {
+  match std::fs::read_to_string(name) {
     Ok(x) => Some(x),
     Err(e) => {
       eprintln!("{}: {}", name, e);
@@ -95,7 +94,7 @@ fn main() {
   let conf = Config::parse_args_default_or_exit();
   match run(conf) {
     Some(true) => eprintln!("no errors"),
-    Some(false) => process::exit(1),
-    None => process::exit(2),
+    Some(false) => std::process::exit(1),
+    None => std::process::exit(2),
   }
 }
