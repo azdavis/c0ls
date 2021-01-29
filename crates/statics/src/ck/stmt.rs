@@ -17,8 +17,10 @@ pub(crate) fn get_block(
   block: BlockStmt,
 ) -> bool {
   let mut end = false;
+  #[cfg(feature = "unreachable")]
   let mut reported = false;
   for stmt in block.stmts() {
+    #[cfg(feature = "unreachable")]
     if end && !reported {
       cx.error(stmt.syntax().text_range(), ErrorKind::Unreachable);
       reported = true;

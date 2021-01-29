@@ -23,6 +23,7 @@ pub enum ErrorKind {
   InvalidVoid,
   InvalidStruct,
   InvalidNoReturn,
+  #[cfg(feature = "unreachable")]
   Unreachable,
   InvalidStepDecl,
   ReturnExprVoid,

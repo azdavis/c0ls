@@ -9,3 +9,6 @@ publish = false
 rustc-hash = "1"
 syntax = { path = "../syntax" }
 unwrap-or = { path = "../unwrap-or" }
+
+[features]
+unreachable = []
