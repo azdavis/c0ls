@@ -216,13 +216,9 @@ fn get_simp(
       }
     }
     Simp::IncDecSimp(simp) => {
-      let asgn = match simp.inc_dec() {
-        Some(inc_dec) => match inc_dec.kind {
-          IncDecKind::PlusPlus => Assignment::Inc,
-          IncDecKind::MinusMinus => Assignment::Dec,
-        },
-        // this really shouldn't happen.
-        None => Assignment::Assign,
+      let asgn = match simp.inc_dec().unwrap().kind {
+        IncDecKind::PlusPlus => Assignment::Inc,
+        IncDecKind::MinusMinus => Assignment::Dec,
       };
       let expr = simp.expr();
       // get the error if any, but ignore the var (this doesn't init it).
