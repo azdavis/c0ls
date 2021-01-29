@@ -68,7 +68,8 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       }
       if let Some(FnTail::BlockStmt(block)) = item.tail() {
         let range = block.syntax().text_range();
-        let ret = super::stmt::get_block(cx, items, &mut vars, ret_ty, block);
+        let ret =
+          super::stmt::get_block(cx, items, &mut vars, ret_ty, false, block);
         if ret_ty != Ty::Void && !ret {
           cx.error(range, ErrorKind::InvalidNoReturn);
         }

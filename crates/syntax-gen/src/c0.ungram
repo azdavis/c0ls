@@ -30,6 +30,8 @@ Stmt =
 | BlockStmt
 | AssertStmt
 | ErrorStmt
+| BreakStmt
+| ContinueStmt
 
 SimpStmt = Simp ';'
 IfStmt = 'if' '(' cond:Expr ')' yes:Stmt no:ElseBranch?
@@ -42,6 +44,8 @@ ReturnStmt = 'return' Expr? ';'
 BlockStmt = '{' Stmt* '}'
 AssertStmt = 'assert' '(' Expr ')' ';'
 ErrorStmt = 'error' '(' Expr ')' ';'
+BreakStmt = 'break' ';'
+ContinueStmt = 'continue' ';'
 
 ElseBranch = 'else' Stmt
 

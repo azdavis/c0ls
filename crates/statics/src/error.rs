@@ -29,6 +29,8 @@ pub enum ErrorKind {
   NoReturnExprNotVoid,
   CannotAssign(Assignment),
   UninitializedVar,
+  BreakOutsideLoop,
+  ContinueOutsideLoop,
 }
 
 #[derive(Debug)]

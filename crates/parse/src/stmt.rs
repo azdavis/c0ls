@@ -83,6 +83,16 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
     p.eat(SK::RRound);
     p.eat(SK::Semicolon);
     Some(p.exit(entered, SK::ErrorStmt))
+  } else if p.at(SK::BreakKw) {
+    let entered = p.enter();
+    p.bump();
+    p.eat(SK::Semicolon);
+    Some(p.exit(entered, SK::BreakStmt))
+  } else if p.at(SK::ContinueKw) {
+    let entered = p.enter();
+    p.bump();
+    p.eat(SK::Semicolon);
+    Some(p.exit(entered, SK::ContinueStmt))
   } else if let Some(exited) = stmt_simple_opt(p, tds) {
     let entered = p.precede(exited);
     p.eat(SK::Semicolon);

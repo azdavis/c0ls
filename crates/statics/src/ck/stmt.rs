@@ -13,6 +13,7 @@ pub(crate) fn get_block(
   items: &ItemDb,
   vars: &mut VarDb,
   ret_ty: Ty,
+  in_loop: bool,
   block: BlockStmt,
 ) -> bool {
   let mut end = false;
@@ -22,7 +23,7 @@ pub(crate) fn get_block(
       cx.error(stmt.syntax().text_range(), ErrorKind::Unreachable);
       reported = true;
     }
-    if get(cx, items, vars, ret_ty, stmt) {
+    if get(cx, items, vars, ret_ty, in_loop, stmt) {
       end = true;
     }
   }
@@ -34,6 +35,7 @@ fn get(
   items: &ItemDb,
   vars: &mut VarDb,
   ret_ty: Ty,
+  in_loop: bool,
   stmt: Stmt,
 ) -> bool {
   match stmt {
@@ -45,12 +47,14 @@ fn get(
       let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       let mut if_vars = vars.clone();
-      let if_end = get_opt_or(cx, items, &mut if_vars, ret_ty, stmt.yes());
+      let if_end =
+        get_opt_or(cx, items, &mut if_vars, ret_ty, in_loop, stmt.yes());
       let else_end = match stmt.no() {
         None => false,
         Some(no) => {
           let mut else_vars = vars.clone();
-          let ret = get_opt_or(cx, items, &mut else_vars, ret_ty, no.stmt());
+          let ret =
+            get_opt_or(cx, items, &mut else_vars, ret_ty, in_loop, no.stmt());
           define(vars, |name| {
             if_vars[name].defined && else_vars[name].defined
           });
@@ -62,7 +66,7 @@ fn get(
     Stmt::WhileStmt(stmt) => {
       let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
-      get_opt_or(cx, items, &mut vars.clone(), ret_ty, stmt.body());
+      get_opt_or(cx, items, &mut vars.clone(), ret_ty, true, stmt.body());
       false
     }
     Stmt::ForStmt(stmt) => {
@@ -73,7 +77,7 @@ fn get(
       let cond_ty = super::expr::get_opt(cx, items, &body_vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       let mut step_vars = body_vars.clone();
-      get_opt_or(cx, items, &mut body_vars, ret_ty, stmt.body());
+      get_opt_or(cx, items, &mut body_vars, ret_ty, true, stmt.body());
       if let Some(step) = stmt.step() {
         if let Simp::DeclSimp(ref decl) = step {
           cx.error(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
@@ -101,7 +105,7 @@ fn get(
     }
     Stmt::BlockStmt(stmt) => {
       let mut block_vars = vars.clone();
-      let ret = get_block(cx, items, &mut block_vars, ret_ty, stmt);
+      let ret = get_block(cx, items, &mut block_vars, ret_ty, in_loop, stmt);
       define(vars, |name| block_vars[name].defined);
       ret
     }
@@ -114,6 +118,20 @@ fn get(
       let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
       unify(cx, Ty::String, ty);
       false
+    }
+    Stmt::BreakStmt(stmt) => {
+      if !in_loop {
+        cx.error(stmt.syntax().text_range(), ErrorKind::BreakOutsideLoop);
+      }
+      define(vars, |_| true);
+      true
+    }
+    Stmt::ContinueStmt(stmt) => {
+      if !in_loop {
+        cx.error(stmt.syntax().text_range(), ErrorKind::ContinueOutsideLoop);
+      }
+      define(vars, |_| true);
+      true
     }
   }
 }
@@ -143,9 +161,10 @@ fn get_opt_or(
   items: &ItemDb,
   vars: &mut VarDb,
   ret_ty: Ty,
+  in_loop: bool,
   stmt: Option<Stmt>,
 ) -> bool {
-  stmt.map_or(false, |stmt| get(cx, items, vars, ret_ty, stmt))
+  stmt.map_or(false, |stmt| get(cx, items, vars, ret_ty, in_loop, stmt))
 }
 
 /// returns the newly-defined but previously declared variable, if there was
