@@ -23,6 +23,10 @@ pub(crate) fn get_block(
     }
     if get(cx, items, vars, ret_ty, stmt) {
       end = true;
+      // demanded by the spec
+      for (_, data) in vars.iter_mut() {
+        data.defined = true;
+      }
     }
   }
   end
