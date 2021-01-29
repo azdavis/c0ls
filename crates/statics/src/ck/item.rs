@@ -2,7 +2,8 @@ use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{
-  add_var, no_struct, unify, Cx, FnData, ItemDb, NameToTy, VarDb,
+  add_var, insert_if_empty, no_struct, unify, Cx, FnData, ItemDb, NameToTy,
+  VarDb,
 };
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
@@ -17,25 +18,17 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
         let ty = super::ty::get_opt_or(cx, &items.type_defs, field.ty());
-        match fields.entry(Name::new(ident.text())) {
-          Entry::Occupied(_) => cx.error(
+        if !insert_if_empty(&mut fields, Name::new(ident.text()), ty) {
+          cx.error(
             field.syntax().text_range(),
             ErrorKind::Duplicate(Thing::Field),
-          ),
-          Entry::Vacant(entry) => {
-            entry.insert(ty);
-          }
+          )
         }
       }
       let ident = unwrap_or!(item.ident(), return);
       let name = Name::new(ident.text());
-      match items.structs.entry(name) {
-        Entry::Occupied(_) => {
-          cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Struct))
-        }
-        Entry::Vacant(entry) => {
-          entry.insert(fields);
-        }
+      if !insert_if_empty(&mut items.structs, name, fields) {
+        cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Struct))
       }
     }
     Item::FnItem(item) => {
@@ -85,13 +78,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let text = ident.text();
       let ty = super::ty::get_opt_or(cx, &items.type_defs, item.ty());
       let dup = items.fns.contains_key(text)
-        || match items.type_defs.entry(Name::new(text)) {
-          Entry::Occupied(_) => true,
-          Entry::Vacant(entry) => {
-            entry.insert(ty);
-            false
-          }
-        };
+        || !insert_if_empty(&mut items.type_defs, Name::new(text), ty);
       if dup {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
       }

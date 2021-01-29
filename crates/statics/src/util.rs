@@ -49,6 +49,25 @@ pub struct FnData {
   pub defined: bool,
 }
 
+/// inserts value at key iff there is no existing value for key. returns whether
+/// value was inserted.
+pub(crate) fn insert_if_empty<K, V>(
+  map: &mut FxHashMap<K, V>,
+  key: K,
+  value: V,
+) -> bool
+where
+  K: std::hash::Hash + Eq,
+{
+  match map.entry(key) {
+    Entry::Occupied(_) => false,
+    Entry::Vacant(entry) => {
+      entry.insert(value);
+      true
+    }
+  }
+}
+
 pub(crate) fn unify(
   cx: &mut Cx,
   expected: Ty,
@@ -110,13 +129,7 @@ pub(crate) fn add_var(
   no_void(cx, ty_range, ty);
   let text = ident.text();
   let dup = type_defs.contains_key(text)
-    || match vars.entry(Name::new(text)) {
-      Entry::Occupied(_) => true,
-      Entry::Vacant(entry) => {
-        entry.insert(VarData { ty, defined });
-        false
-      }
-    };
+    || !insert_if_empty(vars, Name::new(text), VarData { ty, defined });
   if dup {
     cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
   }
