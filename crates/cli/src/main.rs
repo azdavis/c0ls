@@ -5,7 +5,7 @@ use lex::LexError;
 use parse::{Parse, TypeDefs};
 use statics::name::Name;
 use statics::ty::Ty;
-use statics::util::{Cx, FileKind, FnData, ItemDb};
+use statics::util::{Cx, Defined, FileKind, FnData, ItemDb};
 use syntax::ast::{Cast as _, Root};
 use syntax::SyntaxNode;
 
@@ -63,7 +63,7 @@ fn run(conf: Config) -> Option<bool> {
     FnData {
       params: vec![],
       ret_ty: Ty::Int,
-      defined: false,
+      defined: Defined::NotYet,
     },
   );
   let mut ok = true;
@@ -90,7 +90,7 @@ fn run(conf: Config) -> Option<bool> {
     cx.errors.clear();
   }
   for name in cx.called.iter() {
-    if !items.fns[name].defined {
+    if matches!(items.fns[name].defined, Defined::NotYet) {
       ok = false;
       eprintln!("`{}` called but not defined", name);
     }

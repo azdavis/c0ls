@@ -55,7 +55,17 @@ pub struct ItemDb {
 pub struct FnData {
   pub params: Vec<(Name, Ty)>,
   pub ret_ty: Ty,
-  pub defined: bool,
+  pub defined: Defined,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Defined {
+  /// Must not be defined.
+  MustNot,
+  /// Ought to be defined, but isn't yet.
+  NotYet,
+  /// Should be and is defined.
+  Yes,
 }
 
 /// inserts value at key iff there is no existing value for key. returns whether

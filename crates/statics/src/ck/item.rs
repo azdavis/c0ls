@@ -2,8 +2,8 @@ use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{
-  add_var, insert_if_empty, no_struct, no_void, unify, Cx, FileKind, FnData,
-  ItemDb, NameToTy, VarDb,
+  add_var, insert_if_empty, no_struct, no_void, unify, Cx, Defined, FileKind,
+  FnData, ItemDb, NameToTy, VarDb,
 };
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnTail, Item, Syntax};
@@ -46,8 +46,18 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
         None | Some(FnTail::SemicolonTail(_)) => None,
         Some(FnTail::BlockStmt(block)) => Some(block),
       };
+      let mut error_must_not_define = false;
+      let defined = match (tail.is_some(), kind) {
+        (true, FileKind::Source) => Defined::Yes,
+        (true, FileKind::Header) => {
+          error_must_not_define = true;
+          Defined::Yes
+        }
+        (false, FileKind::Source) => Defined::NotYet,
+        (false, FileKind::Header) => Defined::MustNot,
+      };
       let ident = unwrap_or!(item.ident(), return);
-      let mut dup = items.type_defs.contains_key(ident.text());
+      let mut error_dup = items.type_defs.contains_key(ident.text());
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
           let old = entry.get();
@@ -62,9 +72,17 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
             unify(cx, old_ty, Some(new_ty));
           }
           unify(cx, old.ret_ty, ret_ty);
-          if tail.is_some() {
-            dup = dup || old.defined;
-            entry.get_mut().defined = true;
+          match (old.defined, defined) {
+            (Defined::MustNot, Defined::MustNot) | (_, Defined::NotYet) => {}
+            (Defined::NotYet, Defined::MustNot) => {
+              entry.get_mut().defined = Defined::MustNot
+            }
+            (Defined::NotYet, Defined::Yes) => {
+              entry.get_mut().defined = Defined::Yes
+            }
+            (Defined::MustNot, Defined::Yes)
+            | (Defined::Yes, Defined::MustNot) => error_must_not_define = true,
+            (Defined::Yes, Defined::Yes) => error_dup = true,
           }
         }
         Entry::Vacant(entry) => {
@@ -74,7 +92,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
               .map(|&(ref n, (_, t))| (Name::new(n.text()), t))
               .collect(),
             ret_ty: ret_ty.map_or(Ty::Error, |x| x.1),
-            defined: tail.is_some() || matches!(kind, FileKind::Header),
+            defined,
           });
         }
       }
@@ -92,11 +110,11 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
         if ret_ty != Ty::Void && !ret {
           cx.error(range, ErrorKind::InvalidNoReturn);
         }
-        if matches!(kind, FileKind::Header) {
-          cx.error(range, ErrorKind::DefnInHeader);
-        }
       }
-      if dup {
+      if error_must_not_define {
+        cx.error(ident.text_range(), ErrorKind::DefnOfHeaderFn);
+      }
+      if error_dup {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
       }
     }
