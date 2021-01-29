@@ -55,6 +55,7 @@ fn root(node: SyntaxNode) -> Root {
 
 fn run(conf: Config) -> Option<bool> {
   let mut cx = Cx::default();
+  cx.called.insert(Name::new("main"));
   let mut items = ItemDb::default();
   let mut tds = TypeDefs::default();
   items.fns.insert(
