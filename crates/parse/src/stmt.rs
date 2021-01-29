@@ -48,14 +48,20 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
     stmt(p, tds);
     Some(p.exit(entered, SK::WhileStmt))
   } else if p.at(SK::ForKw) {
+    // note we use SimpOpt to explicitly mark whether the simp was present or
+    // not. we need to know which simp is the init and which is the step.
     let entered = p.enter();
     p.bump();
     p.eat(SK::LRound);
+    let simp_opt = p.enter();
     stmt_simple_opt(p, tds);
+    p.exit(simp_opt, SK::SimpOpt);
     p.eat(SK::Semicolon);
     expr(p, tds);
     p.eat(SK::Semicolon);
+    let simp_opt = p.enter();
     stmt_simple_opt(p, tds);
+    p.exit(simp_opt, SK::SimpOpt);
     p.eat(SK::RRound);
     stmt(p, tds);
     Some(p.exit(entered, SK::ForStmt))

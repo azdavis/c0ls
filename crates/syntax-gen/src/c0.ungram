@@ -38,7 +38,7 @@ IfStmt = 'if' '(' cond:Expr ')' yes:Stmt no:ElseBranch?
 WhileStmt = 'while' '(' cond:Expr ')' body:Stmt
 ForStmt =
   'for' '('
-    init:Simp? init_semi:';' cond:Expr cond_semi:';' step:Simp?
+    init:SimpOpt init_semi:';' cond:Expr cond_semi:';' step:SimpOpt
   ')' body:Stmt
 ReturnStmt = 'return' Expr? ';'
 BlockStmt = '{' Stmt* '}'
@@ -47,6 +47,7 @@ ErrorStmt = 'error' '(' Expr ')' ';'
 BreakStmt = 'break' ';'
 ContinueStmt = 'continue' ';'
 
+SimpOpt = Simp?
 ElseBranch = 'else' Stmt
 
 Simp =
