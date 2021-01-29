@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Name(String);
@@ -15,5 +16,11 @@ impl Name {
 impl Borrow<str> for Name {
   fn borrow(&self) -> &str {
     self.0.borrow()
+  }
+}
+
+impl fmt::Display for Name {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
   }
 }
