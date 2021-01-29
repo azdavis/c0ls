@@ -90,7 +90,13 @@ fn run(conf: Config) -> Option<bool> {
     cx.errors.clear();
   }
   for name in cx.called.iter() {
-    if matches!(items.fns[name].defined, Defined::NotYet) {
+    let this_ok = match items.fns[name].defined {
+      // special case for main
+      Defined::MustNot => name != "main",
+      Defined::NotYet => false,
+      Defined::Yes => true,
+    };
+    if !this_ok {
       ok = false;
       eprintln!("`{}` called but not defined", name);
     }

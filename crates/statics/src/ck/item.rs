@@ -74,6 +74,14 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
           unify(cx, old.ret_ty, ret_ty);
           match (old.defined, defined) {
             (Defined::MustNot, Defined::MustNot) | (_, Defined::NotYet) => {}
+            // the spec is unclear on what to do in this case. for instance,
+            // what if `int main();` is referenced in a header? it was
+            // previously marked as not yet defined, but surely it shouldn't now
+            // be marked as must not be defined? but the spec says functions
+            // declared in headers must not be defined.
+            //
+            // the compromise right now is that we indeed set defined here to
+            // MustNot, but then special-case at the end to check for main.
             (Defined::NotYet, Defined::MustNot) => {
               entry.get_mut().defined = Defined::MustNot
             }
