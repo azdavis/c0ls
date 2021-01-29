@@ -1,26 +1,36 @@
 #![deny(rust_2018_idioms)]
 
+use gumdrop::Options;
+use lex::LexError;
+use parse::Parse;
 use statics::name::Name;
 use statics::ty::Ty;
 use statics::util::{Cx, FnData, ItemDb};
-use std::{env, error::Error, fs, process};
+use std::{fs, process};
 use syntax::ast::{Cast as _, Root};
+use syntax::SyntaxNode;
+
+#[derive(Debug, Options)]
+pub struct Config {
+  #[options(help = "print this help")]
+  pub help: bool,
+  #[options(help = "source file")]
+  pub source: Option<String>,
+}
 
 fn main() {
-  match run() {
-    Ok(true) => eprintln!("no errors"),
-    Ok(false) => process::exit(1),
-    Err(e) => {
-      eprintln!("{}", e);
-      process::exit(2);
-    }
+  let conf = Config::parse_args_default_or_exit();
+  match run(conf) {
+    Some(true) => eprintln!("no errors"),
+    Some(false) => process::exit(1),
+    None => process::exit(2),
   }
 }
 
 macro_rules! show_errors {
-  ($name:expr, $errors:expr) => {
+  ($pass:expr, $name:expr, $errors:expr) => {
     if !$errors.is_empty() {
-      eprintln!("==> {} errors ({})", $name, $errors.len());
+      eprintln!("==> {} {} errors ({})", $pass, $name, $errors.len());
     }
     for e in $errors.iter() {
       eprintln!("{:?}", e);
@@ -28,16 +38,38 @@ macro_rules! show_errors {
   };
 }
 
-fn run() -> Result<bool, Box<dyn Error>> {
-  let file = match env::args().nth(1) {
-    Some(x) => x,
-    None => return Err("missing first argument".into()),
-  };
-  let contents = fs::read_to_string(&file)?;
-  let lex = lex::get(&contents);
-  show_errors!("lex", lex.errors);
+fn read_file(name: &str) -> Option<String> {
+  match fs::read_to_string(name) {
+    Ok(x) => Some(x),
+    Err(e) => {
+      eprintln!("{}: {}", name, e);
+      None
+    }
+  }
+}
+
+fn parse_one(name: &str) -> Option<(Vec<LexError>, Parse)> {
+  let s = read_file(&name)?;
+  let lex = lex::get(&s);
+  show_errors!("lex", name, lex.errors);
   let parse = parse::get(lex.tokens);
-  show_errors!("parse", parse.errors);
+  show_errors!("parse", name, parse.errors);
+  Some((lex.errors, parse))
+}
+
+fn root(node: SyntaxNode) -> Root {
+  Root::cast(node.into()).expect("parse didn't give a Root")
+}
+
+fn run(conf: Config) -> Option<bool> {
+  let source_name = match conf.source {
+    Some(x) => x,
+    None => {
+      eprintln!("no source file");
+      return None;
+    }
+  };
+  let (source_lex_errors, source_parse) = parse_one(&source_name)?;
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
   items.fns.insert(
@@ -48,8 +80,12 @@ fn run() -> Result<bool, Box<dyn Error>> {
       defined: false,
     },
   );
-  let root = Root::cast(parse.tree.into()).expect("parse didn't give a root");
-  statics::get(&mut cx, &mut items, root);
-  show_errors!("statics", cx.errors);
-  Ok(lex.errors.is_empty() && parse.errors.is_empty() && cx.errors.is_empty())
+  let source_root = root(source_parse.tree);
+  statics::get(&mut cx, &mut items, source_root);
+  show_errors!("statics", source_name, cx.errors);
+  Some(
+    source_lex_errors.is_empty()
+      && source_parse.errors.is_empty()
+      && cx.errors.is_empty(),
+  )
 }
