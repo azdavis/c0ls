@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Thing};
+use crate::name::Name;
 use crate::ty::{Ty, TyData};
 use crate::util::{no_struct, no_void, unify, unify_impl, Cx, ItemDb, VarDb};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
@@ -84,6 +85,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
         cx.error(fn_ident.text_range(), ErrorKind::Undefined(Thing::Function));
         return Ty::Error;
       });
+      cx.called.insert(Name::new(fn_name));
       if fn_data.params.len() != arg_tys.len() {
         cx.error(
           expr.syntax().text_range(),

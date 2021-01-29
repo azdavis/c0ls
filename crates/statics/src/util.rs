@@ -1,7 +1,7 @@
 use crate::error::{Error, ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::{Ty, TyData, TyDb};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::hash_map::Entry;
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
@@ -17,6 +17,9 @@ use unwrap_or::unwrap_or;
 pub struct Cx {
   pub tys: TyDb,
   pub errors: Vec<Error>,
+  /// put this on Cx since the Cx is already mutable, instead of adding it to
+  /// FnData and making the ItemDb mutable throughout expr and stmt.
+  pub called: FxHashSet<Name>,
 }
 
 impl Cx {
