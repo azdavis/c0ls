@@ -82,14 +82,18 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
     }
     Item::TypedefItem(item) => {
       let ident = unwrap_or!(item.ident(), return);
+      let text = ident.text();
       let ty = super::ty::get_opt_or(cx, &items.type_defs, item.ty());
-      match items.type_defs.entry(Name::new(ident.text())) {
-        Entry::Occupied(_) => {
-          cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
-        }
-        Entry::Vacant(entry) => {
-          entry.insert(ty);
-        }
+      let dup = items.fns.contains_key(text)
+        || match items.type_defs.entry(Name::new(text)) {
+          Entry::Occupied(_) => true,
+          Entry::Vacant(entry) => {
+            entry.insert(ty);
+            false
+          }
+        };
+      if dup {
+        cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
       }
     }
     Item::UseItem(_) => todo!("#use and multiple files"),
