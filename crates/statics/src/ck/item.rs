@@ -38,7 +38,9 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
           let old_data = entry.get();
-          if old_data.defined && new_data.defined {
+          if (old_data.defined && new_data.defined)
+            || items.type_defs.contains_key(ident.text())
+          {
             cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
           }
           if old_data.params.len() != new_data.params.len() {
