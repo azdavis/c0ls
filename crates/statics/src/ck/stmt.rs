@@ -1,4 +1,5 @@
 use crate::error::{Assignment, ErrorKind};
+use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{add_var, unify, Cx, ItemDb, VarDb};
 use syntax::ast::{
@@ -50,11 +51,9 @@ fn get(
         Some(no) => {
           let mut else_vars = vars.clone();
           let ret = get_opt_or(cx, items, &mut else_vars, ret_ty, no.stmt());
-          for (name, data) in vars.iter_mut() {
-            let defined = if_vars[name].defined && else_vars[name].defined;
-            assert!(!data.defined || defined);
-            data.defined = defined;
-          }
+          define(vars, |name| {
+            if_vars[name].defined && else_vars[name].defined
+          });
           ret
         }
       };
@@ -96,19 +95,13 @@ fn get(
         (None, true) => {}
       }
       // demanded by the spec
-      for (_, data) in vars.iter_mut() {
-        data.defined = true;
-      }
+      define(vars, |_| true);
       true
     }
     Stmt::BlockStmt(stmt) => {
       let mut block_vars = vars.clone();
       let ret = get_block(cx, items, &mut block_vars, ret_ty, stmt);
-      for (name, data) in vars.iter_mut() {
-        let defined = block_vars[name].defined;
-        assert!(!data.defined || defined);
-        data.defined = defined;
-      }
+      define(vars, |name| block_vars[name].defined);
       ret
     }
     Stmt::AssertStmt(stmt) => {
@@ -121,6 +114,24 @@ fn get(
       unify(cx, Ty::String, ty);
       false
     }
+  }
+}
+
+/// for each (name, data) in vars, sets data.defined = f(name). but it must be
+/// the case either that before this, data.defined is already true, or f(name)
+/// is true.
+///
+/// this is used for when vars contains exactly the variables in scope after
+/// finishing processing a statement, and f contains information about what
+/// variables in vars are now defined after processing that statement.
+fn define<F>(vars: &mut VarDb, mut f: F)
+where
+  F: FnMut(&Name) -> bool,
+{
+  for (name, data) in vars.iter_mut() {
+    let defined = f(name);
+    assert!(!data.defined || defined);
+    data.defined = defined;
   }
 }
 
