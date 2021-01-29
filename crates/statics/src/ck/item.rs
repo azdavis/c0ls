@@ -50,23 +50,20 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let mut dup = items.type_defs.contains_key(ident.text());
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
-          let old_data = entry.get();
-          if old_data.params.len() != params.len() {
+          let old = entry.get();
+          if old.params.len() != params.len() {
             cx.error(
               ident.text_range(),
-              ErrorKind::MismatchedNumParams(
-                old_data.params.len(),
-                params.len(),
-              ),
+              ErrorKind::MismatchedNumParams(old.params.len(), params.len()),
             );
           }
-          let both_params = old_data.params.iter().zip(params.iter());
+          let both_params = old.params.iter().zip(params.iter());
           for (&(_, old_ty), &(_, new_ty)) in both_params {
             unify(cx, old_ty, Some(new_ty));
           }
-          unify(cx, old_data.ret_ty, ret_ty);
+          unify(cx, old.ret_ty, ret_ty);
           if tail.is_some() {
-            dup = dup || old_data.defined;
+            dup = dup || old.defined;
             entry.get_mut().defined = true;
           }
         }
