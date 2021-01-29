@@ -38,7 +38,8 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       }
     }
     Item::FnItem(item) => {
-      let new_data = get_fn(cx, items, &item);
+      let (new_data, mut vars) = get_fn(cx, items, &item);
+      let ret_ty = new_data.ret_ty;
       let ident = unwrap_or!(item.ident(), return);
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
@@ -67,6 +68,12 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
           entry.insert(new_data);
         }
       }
+      if let Some(FnTail::BlockStmt(block)) = item.tail() {
+        let range = block.syntax().text_range();
+        if !super::stmt::get_block(cx, items, &mut vars, ret_ty, block) {
+          cx.error(range, ErrorKind::InvalidNoReturn);
+        }
+      }
     }
     Item::TypedefItem(item) => {
       let ident = unwrap_or!(item.ident(), return);
@@ -84,7 +91,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
   }
 }
 
-fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
+fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> (FnData, VarDb) {
   let mut vars = VarDb::default();
   let mut params = Vec::new();
   for param in item.params() {
@@ -103,17 +110,12 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> FnData {
   };
   let defined = match item.tail() {
     None | Some(FnTail::SemicolonTail(_)) => false,
-    Some(FnTail::BlockStmt(block)) => {
-      let range = block.syntax().text_range();
-      if !super::stmt::get_block(cx, items, &mut vars, ret_ty, block) {
-        cx.error(range, ErrorKind::InvalidNoReturn);
-      }
-      true
-    }
+    Some(FnTail::BlockStmt(_)) => true,
   };
-  FnData {
+  let data = FnData {
     params,
     ret_ty,
     defined,
-  }
+  };
+  (data, vars)
 }
