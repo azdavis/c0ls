@@ -20,15 +20,6 @@ pub struct Config {
   pub source: Vec<String>,
 }
 
-fn main() {
-  let conf = Config::parse_args_default_or_exit();
-  match run(conf) {
-    Some(true) => eprintln!("no errors"),
-    Some(false) => process::exit(1),
-    None => process::exit(2),
-  }
-}
-
 macro_rules! show_errors {
   ($pass:expr, $name:expr, $errors:expr) => {
     if !$errors.is_empty() {
@@ -98,4 +89,13 @@ fn run(conf: Config) -> Option<bool> {
     cx.errors.clear();
   }
   Some(ok)
+}
+
+fn main() {
+  let conf = Config::parse_args_default_or_exit();
+  match run(conf) {
+    Some(true) => eprintln!("no errors"),
+    Some(false) => process::exit(1),
+    None => process::exit(2),
+  }
 }
