@@ -71,15 +71,15 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
       ret_ty
     }
     Expr::CallExpr(expr) => {
+      let arg_tys: Vec<_> = expr
+        .args()
+        .map(|arg| get_opt(cx, items, vars, arg.expr()))
+        .collect();
       let fn_ident = unwrap_or!(expr.ident(), return Ty::Error);
       let fn_name = fn_ident.text();
       if vars.contains_key(fn_name) {
         cx.error(fn_ident.text_range(), ErrorKind::ShadowedFunction);
       }
-      let arg_tys: Vec<_> = expr
-        .args()
-        .map(|arg| get_opt(cx, items, vars, arg.expr()))
-        .collect();
       let fn_data = unwrap_or!(items.fns.get(fn_name), {
         cx.error(fn_ident.text_range(), ErrorKind::Undefined(Thing::Function));
         return Ty::Error;
