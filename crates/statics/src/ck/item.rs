@@ -78,13 +78,15 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
           });
         }
       }
+      // put this here, and not in the `if let`, so we check the param types are
+      // valid even if this is just a decl.
+      let mut vars = VarDb::default();
+      for (ident, (range, ty)) in params {
+        add_var(cx, &mut vars, &items.type_defs, ident, range, ty, true);
+      }
       if let Some(block) = tail {
         let range = block.syntax().text_range();
         let ret_ty = ret_ty.map_or(Ty::Error, |x| x.1);
-        let mut vars = VarDb::default();
-        for (ident, (range, ty)) in params {
-          add_var(cx, &mut vars, &items.type_defs, ident, range, ty, true);
-        }
         let ret =
           super::stmt::get_block(cx, items, &mut vars, ret_ty, false, block);
         if ret_ty != Ty::Void && !ret {
