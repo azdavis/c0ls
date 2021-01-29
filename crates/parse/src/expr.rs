@@ -94,6 +94,9 @@ fn expr_prec(
       must(p, |p| expr_prec(p, tds, prec));
       p.exit(entered, SK::BinOpExpr)
     } else if p.at(SK::Question) {
+      if min_prec != 0 {
+        break;
+      }
       let entered = p.precede(exited);
       p.bump();
       expr(p, tds);
