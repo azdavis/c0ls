@@ -139,8 +139,6 @@ fn get(
   }
 }
 
-/// does NOT report an error if it is None, so only call this with optional
-/// things from the AST (that have a corresponding parse error).
 fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,
@@ -287,7 +285,7 @@ fn lv(expr: &Expr) -> Option<Lv> {
   match expr {
     Expr::IdentExpr(ident) => Some(ident.ident().map_or(Lv::Other, Lv::Var)),
     Expr::ParenExpr(expr) => lv_opt(&expr.expr()),
-    Expr::UnOpExpr(expr) => match unwrap_or!(expr.op(), return None).kind {
+    Expr::UnOpExpr(expr) => match expr.op()?.kind {
       UnOpKind::Star => lv_opt_other(&expr.expr()),
       UnOpKind::Bang | UnOpKind::Tilde | UnOpKind::Minus => None,
     },
@@ -314,5 +312,5 @@ fn lv_opt(expr: &Option<Expr>) -> Option<Lv> {
 }
 
 fn lv_opt_other(expr: &Option<Expr>) -> Option<Lv> {
-  expr.as_ref().and_then(lv).map(|_| Lv::Other)
+  lv_opt(expr).map(|_| Lv::Other)
 }

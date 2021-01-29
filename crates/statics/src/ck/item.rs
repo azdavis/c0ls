@@ -16,7 +16,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
       let mut fields = NameToTy::default();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
-        let ty = super::ty::get_sized_opt_or(cx, items, field.ty());
+        let ty = super::ty::get_sized(cx, items, field.ty());
         if !insert_if_empty(&mut fields, Name::new(ident.text()), ty) {
           cx.error(
             field.syntax().text_range(),
@@ -127,7 +127,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
       }
     }
     Item::TypedefItem(item) => {
-      let ty = super::ty::get_opt_no_void(cx, &items.type_defs, item.ty());
+      let ty = super::ty::get_no_void(cx, &items.type_defs, item.ty());
       let ident = unwrap_or!(item.ident(), return);
       let text = ident.text();
       let dup = items.fns.contains_key(text)

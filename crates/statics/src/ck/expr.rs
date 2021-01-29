@@ -123,11 +123,11 @@ fn get_impl(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
       }
     }
     Expr::AllocExpr(expr) => {
-      let inner_ty = super::ty::get_sized_opt_or(cx, items, expr.ty());
+      let inner_ty = super::ty::get_sized(cx, items, expr.ty());
       cx.tys.mk(TyData::Ptr(inner_ty))
     }
     Expr::AllocArrayExpr(expr) => {
-      let inner_ty = super::ty::get_sized_opt_or(cx, items, expr.ty());
+      let inner_ty = super::ty::get_sized(cx, items, expr.ty());
       let len_ty = get_opt(cx, items, vars, expr.expr());
       unify(cx, Ty::Int, len_ty);
       cx.tys.mk(TyData::Array(inner_ty))
@@ -161,8 +161,6 @@ fn get_opt(
   expr.map(|expr| (expr.syntax().text_range(), get_impl(cx, items, vars, expr)))
 }
 
-/// does NOT report an error if it is None, so only call this with optional
-/// things from the AST (that have a corresponding parse error).
 fn get_opt_or(
   cx: &mut Cx,
   items: &ItemDb,

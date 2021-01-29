@@ -13,11 +13,11 @@ fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
     AstTy::CharTy(_) => Ty::Char,
     AstTy::VoidTy(_) => Ty::Void,
     AstTy::PtrTy(ty) => {
-      let inner = get_opt_no_void(cx, type_defs, ty.ty());
+      let inner = get_no_void(cx, type_defs, ty.ty());
       cx.tys.mk(TyData::Ptr(inner))
     }
     AstTy::ArrayTy(ty) => {
-      let inner = get_opt_no_void(cx, type_defs, ty.ty());
+      let inner = get_no_void(cx, type_defs, ty.ty());
       cx.tys.mk(TyData::Array(inner))
     }
     AstTy::StructTy(ty) => ty.ident().map_or(Ty::Error, |ident| {
@@ -45,10 +45,8 @@ pub(crate) fn get_opt(
   ty.map(|ty| (ty.syntax().text_range(), get(cx, type_defs, ty)))
 }
 
-/// does NOT report an error if it is None, so only call this with optional
-/// things from the AST (that have a corresponding parse error). also errors if
-/// the ty is void.
-pub(crate) fn get_opt_no_void(
+/// errors if the ty is void.
+pub(crate) fn get_no_void(
   cx: &mut Cx,
   type_defs: &NameToTy,
   ty: Option<AstTy>,
@@ -62,11 +60,7 @@ pub(crate) fn get_opt_no_void(
 /// use this when we would need to know the size of a type on the stack. this
 /// does extra checks to make sure we know the size of the type that would be
 /// returned.
-pub(crate) fn get_sized_opt_or(
-  cx: &mut Cx,
-  items: &ItemDb,
-  ty: Option<AstTy>,
-) -> Ty {
+pub(crate) fn get_sized(cx: &mut Cx, items: &ItemDb, ty: Option<AstTy>) -> Ty {
   get_opt(cx, &items.type_defs, ty).map_or(Ty::Error, |(range, ty)| {
     no_void(cx, range, ty);
     if let TyData::Struct(name) = cx.tys.get(ty) {
