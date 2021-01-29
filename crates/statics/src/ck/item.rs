@@ -2,14 +2,14 @@ use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{
-  add_var, insert_if_empty, no_struct, no_void, unify, Cx, FnData, ItemDb,
-  NameToTy, VarDb,
+  add_var, insert_if_empty, no_struct, no_void, unify, Cx, FileKind, FnData,
+  ItemDb, NameToTy, VarDb,
 };
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
 
-pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
+pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
   match item {
     Item::StructItem(item) => {
       let fs = unwrap_or!(item.fields(), return);
@@ -74,7 +74,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
               .map(|&(ref n, (_, t))| (Name::new(n.text()), t))
               .collect(),
             ret_ty: ret_ty.map_or(Ty::Error, |x| x.1),
-            defined: tail.is_some(),
+            defined: tail.is_some() || matches!(kind, FileKind::Header),
           });
         }
       }
@@ -89,6 +89,9 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
           super::stmt::get_block(cx, items, &mut vars, ret_ty, false, block);
         if ret_ty != Ty::Void && !ret {
           cx.error(range, ErrorKind::InvalidNoReturn);
+        }
+        if matches!(kind, FileKind::Header) {
+          cx.error(range, ErrorKind::DefnInHeader);
         }
       }
       if dup {

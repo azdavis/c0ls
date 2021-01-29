@@ -5,7 +5,7 @@ use lex::LexError;
 use parse::Parse;
 use statics::name::Name;
 use statics::ty::Ty;
-use statics::util::{Cx, FnData, ItemDb};
+use statics::util::{Cx, FileKind, FnData, ItemDb};
 use syntax::ast::{Cast as _, Root};
 use syntax::SyntaxNode;
 
@@ -68,7 +68,7 @@ fn run(conf: Config) -> Option<bool> {
   if let Some(header) = conf.header {
     let (header_lex_errors, header_parse) = parse_one(&header)?;
     let header_root = root(header_parse.tree);
-    statics::get(&mut cx, &mut items, header_root);
+    statics::get(&mut cx, &mut items, FileKind::Header, header_root);
     show_errors!("statics", header, cx.errors);
     ok = ok
       && header_lex_errors.is_empty()
@@ -79,7 +79,7 @@ fn run(conf: Config) -> Option<bool> {
   for source in conf.source {
     let (source_lex_errors, source_parse) = parse_one(&source)?;
     let source_root = root(source_parse.tree);
-    statics::get(&mut cx, &mut items, source_root);
+    statics::get(&mut cx, &mut items, FileKind::Source, source_root);
     show_errors!("statics", source, cx.errors);
     ok = ok
       && source_lex_errors.is_empty()

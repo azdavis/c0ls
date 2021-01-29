@@ -6,6 +6,12 @@ use std::collections::hash_map::Entry;
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
 
+#[derive(Debug, Clone, Copy)]
+pub enum FileKind {
+  Header,
+  Source,
+}
+
 /// The context. This information is always mutable as we check the various
 /// constructs, and is always needed.
 ///

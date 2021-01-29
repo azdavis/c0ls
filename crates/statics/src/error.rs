@@ -34,6 +34,7 @@ pub enum ErrorKind {
   BreakOutsideLoop,
   ContinueOutsideLoop,
   DerefIncDec(IncDec),
+  DefnInHeader,
 }
 
 #[derive(Debug, Clone, Copy)]
