@@ -39,8 +39,8 @@ impl<'input, K> Parser<'input, K> {
 
   /// Starts parsing a syntax construct.
   ///
-  /// The returned [`Entered`] must eventually be passed to [`Parser::exit`] or
-  /// [`Parser::abandon`]. If it is not, it will panic when dropped.
+  /// The returned [`Entered`] must eventually be passed to [`Self::exit`] or
+  /// [`Self::abandon`]. If it is not, it will panic when dropped.
   pub fn enter(&mut self) -> Entered {
     let idx = self.events.len();
     self.events.push(None);
@@ -100,9 +100,9 @@ where
   /// `false`.
   ///
   /// Note that it is not recommended to match on the `K` inside to e.g.
-  /// determine what syntax construct to parse next. Using [`Parser::at`] is
+  /// determine what syntax construct to parse next. Using [`Self::at`] is
   /// better for this task since it keeps track of the `K`s that have been tried
-  /// and will report them from [`Parser::error`].
+  /// and will report them from [`Self::error`].
   pub fn peek(&mut self) -> Option<Token<'input, K>> {
     while let Some(tok) = self.tokens.get(self.idx) {
       if !tok.kind.is_trivia() {
@@ -116,7 +116,7 @@ where
   /// Consumes and returns the current token, and clears the set of expected
   /// tokens.
   ///
-  /// Panics if there are no more tokens, i.e. if [`Parser::peek`] would return
+  /// Panics if there are no more tokens, i.e. if [`Self::peek`] would return
   /// `None` just prior to calling this.
   pub fn bump(&mut self) -> Token<'input, K> {
     let ret = self.peek().expect("bump with no tokens");
@@ -187,7 +187,7 @@ where
   /// Returns whether the current token has the given `kind`.
   ///
   /// Also records that `kind` was one of the expected kinds, to be used if
-  /// [`Parser::error`] is called later.
+  /// [`Self::error`] is called later.
   pub fn at(&mut self, kind: K) -> bool {
     self.expected.push(kind);
     self.peek().map_or(false, |tok| tok.kind == kind)
