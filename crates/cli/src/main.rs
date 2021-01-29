@@ -14,10 +14,10 @@ use syntax::SyntaxNode;
 pub struct Config {
   #[options(help = "print this help")]
   pub help: bool,
-  #[options(help = "header file")]
+  #[options(short = "l", help = "header file")]
   pub header: Option<String>,
-  #[options(help = "source file")]
-  pub source: Option<String>,
+  #[options(free, help = "source files")]
+  pub source: Vec<String>,
 }
 
 fn main() {
@@ -64,13 +64,6 @@ fn root(node: SyntaxNode) -> Root {
 }
 
 fn run(conf: Config) -> Option<bool> {
-  let source_name = match conf.source {
-    Some(x) => x,
-    None => {
-      eprintln!("no source file");
-      return None;
-    }
-  };
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
   items.fns.insert(
@@ -81,27 +74,28 @@ fn run(conf: Config) -> Option<bool> {
       defined: false,
     },
   );
-  let header_ok = match conf.header {
-    Some(header_name) => {
-      let (header_lex_errors, header_parse) = parse_one(&header_name)?;
-      let header_root = root(header_parse.tree);
-      statics::get(&mut cx, &mut items, header_root);
-      show_errors!("statics", header_name, cx.errors);
-      let ret = header_lex_errors.is_empty()
-        && header_parse.errors.is_empty()
-        && cx.errors.is_empty();
-      cx.errors.clear();
-      ret
-    }
-    None => true,
-  };
-  let (source_lex_errors, source_parse) = parse_one(&source_name)?;
-  let source_root = root(source_parse.tree);
-  statics::get(&mut cx, &mut items, source_root);
-  show_errors!("statics", source_name, cx.errors);
-  let source_ok = source_lex_errors.is_empty()
-    && source_parse.errors.is_empty()
-    && cx.errors.is_empty();
-  cx.errors.clear();
-  Some(header_ok && source_ok)
+  let mut ok = true;
+  if let Some(header) = conf.header {
+    let (header_lex_errors, header_parse) = parse_one(&header)?;
+    let header_root = root(header_parse.tree);
+    statics::get(&mut cx, &mut items, header_root);
+    show_errors!("statics", header, cx.errors);
+    ok = ok
+      && header_lex_errors.is_empty()
+      && header_parse.errors.is_empty()
+      && cx.errors.is_empty();
+    cx.errors.clear();
+  }
+  for source in conf.source {
+    let (source_lex_errors, source_parse) = parse_one(&source)?;
+    let source_root = root(source_parse.tree);
+    statics::get(&mut cx, &mut items, source_root);
+    show_errors!("statics", source, cx.errors);
+    ok = ok
+      && source_lex_errors.is_empty()
+      && source_parse.errors.is_empty()
+      && cx.errors.is_empty();
+    cx.errors.clear();
+  }
+  Some(ok)
 }
