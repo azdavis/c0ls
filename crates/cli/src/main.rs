@@ -14,6 +14,8 @@ use syntax::SyntaxNode;
 pub struct Config {
   #[options(help = "print this help")]
   pub help: bool,
+  #[options(help = "header file")]
+  pub header: Option<String>,
   #[options(help = "source file")]
   pub source: Option<String>,
 }
@@ -69,7 +71,6 @@ fn run(conf: Config) -> Option<bool> {
       return None;
     }
   };
-  let (source_lex_errors, source_parse) = parse_one(&source_name)?;
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
   items.fns.insert(
@@ -80,12 +81,27 @@ fn run(conf: Config) -> Option<bool> {
       defined: false,
     },
   );
+  let header_ok = match conf.header {
+    Some(header_name) => {
+      let (header_lex_errors, header_parse) = parse_one(&header_name)?;
+      let header_root = root(header_parse.tree);
+      statics::get(&mut cx, &mut items, header_root);
+      show_errors!("statics", header_name, cx.errors);
+      let ret = header_lex_errors.is_empty()
+        && header_parse.errors.is_empty()
+        && cx.errors.is_empty();
+      cx.errors.clear();
+      ret
+    }
+    None => true,
+  };
+  let (source_lex_errors, source_parse) = parse_one(&source_name)?;
   let source_root = root(source_parse.tree);
   statics::get(&mut cx, &mut items, source_root);
   show_errors!("statics", source_name, cx.errors);
-  Some(
-    source_lex_errors.is_empty()
-      && source_parse.errors.is_empty()
-      && cx.errors.is_empty(),
-  )
+  let source_ok = source_lex_errors.is_empty()
+    && source_parse.errors.is_empty()
+    && cx.errors.is_empty();
+  cx.errors.clear();
+  Some(header_ok && source_ok)
 }
