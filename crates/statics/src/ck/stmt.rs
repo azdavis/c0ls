@@ -242,8 +242,7 @@ fn get_simp(
 }
 
 /// for each (name, data) in vars, sets data.defined = f(name). but it must be
-/// the case either that before this, data.defined is already true, or f(name)
-/// is true.
+/// that either data.defined was already true, or f(name) is true.
 ///
 /// this is used for when vars contains exactly the variables in scope after
 /// finishing processing a statement, and f contains information about what
