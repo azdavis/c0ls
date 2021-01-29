@@ -35,7 +35,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
       let (params, ret) = bin_op_ty(op.kind);
       if let Some((range, lhs_ty)) = lhs_ty {
         for &param in params {
-          if unify_impl(cx, param, lhs_ty).is_some() {
+          if let Some(param) = unify_impl(cx, param, lhs_ty) {
             unify(cx, param, rhs_ty);
             return ret;
           }
