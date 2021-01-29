@@ -100,6 +100,7 @@ pub(crate) fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
 pub(crate) fn add_var(
   cx: &mut Cx,
   vars: &mut VarDb,
+  type_defs: &NameToTy,
   ident: SyntaxToken,
   ty_range: TextRange,
   ty: Ty,
@@ -107,12 +108,16 @@ pub(crate) fn add_var(
 ) {
   no_struct(cx, ty_range, ty);
   no_void(cx, ty_range, ty);
-  match vars.entry(Name::new(ident.text())) {
-    Entry::Occupied(_) => {
-      cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
-    }
-    Entry::Vacant(entry) => {
-      entry.insert(VarData { ty, defined });
-    }
+  let text = ident.text();
+  let dup = type_defs.contains_key(text)
+    || match vars.entry(Name::new(text)) {
+      Entry::Occupied(_) => true,
+      Entry::Vacant(entry) => {
+        entry.insert(VarData { ty, defined });
+        false
+      }
+    };
+  if dup {
+    cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Variable));
   }
 }

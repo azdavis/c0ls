@@ -206,7 +206,7 @@ fn get_simp(
         }
       };
       if let (Some(ident), Some((ty_range, ty))) = (simp.ident(), ty) {
-        add_var(cx, vars, ident, ty_range, ty, defined);
+        add_var(cx, vars, &items.type_defs, ident, ty_range, ty, defined);
       }
     }
     Simp::ExprSimp(simp) => {

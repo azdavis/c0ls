@@ -109,7 +109,7 @@ fn get_fn(
     if let (Some(ident), Some((ty_range, ty))) = (param.ident(), ty) {
       params.push((Name::new(ident.text()), ty));
       ranges.push(ty_range);
-      add_var(cx, &mut vars, ident, ty_range, ty, true);
+      add_var(cx, &mut vars, &items.type_defs, ident, ty_range, ty, true);
     }
   }
   let ret_ty = match super::ty::get_opt(cx, &items.type_defs, item.ret_ty()) {
