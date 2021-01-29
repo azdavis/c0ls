@@ -46,7 +46,7 @@ fn get(
       false
     }
     Stmt::IfStmt(stmt) => {
-      let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
+      let cond_ty = super::expr::get(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       let mut if_vars = vars.clone();
       let if_end =
@@ -66,7 +66,7 @@ fn get(
       if_end && else_end
     }
     Stmt::WhileStmt(stmt) => {
-      let cond_ty = super::expr::get_opt(cx, items, vars, stmt.cond());
+      let cond_ty = super::expr::get(cx, items, vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       get_opt_or(cx, items, &mut vars.clone(), ret_ty, true, stmt.body());
       false
@@ -77,7 +77,7 @@ fn get(
       if let Some(var) = get_simp(cx, items, &mut body_vars, init) {
         vars.get_mut(var.text()).unwrap().defined = true;
       }
-      let cond_ty = super::expr::get_opt(cx, items, &body_vars, stmt.cond());
+      let cond_ty = super::expr::get(cx, items, &body_vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
       let mut step_vars = body_vars.clone();
       get_opt_or(cx, items, &mut body_vars, ret_ty, true, stmt.body());
@@ -91,7 +91,7 @@ fn get(
       false
     }
     Stmt::ReturnStmt(stmt) => {
-      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get(cx, items, vars, stmt.expr());
       match (ty, ret_ty == Ty::Void) {
         (Some((range, _)), true) => cx.error(range, ErrorKind::ReturnExprVoid),
         (None, false) => {
@@ -113,12 +113,12 @@ fn get(
       ret
     }
     Stmt::AssertStmt(stmt) => {
-      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get(cx, items, vars, stmt.expr());
       unify(cx, Ty::Bool, ty);
       false
     }
     Stmt::ErrorStmt(stmt) => {
-      let ty = super::expr::get_opt(cx, items, vars, stmt.expr());
+      let ty = super::expr::get(cx, items, vars, stmt.expr());
       unify(cx, Ty::String, ty);
       false
     }
@@ -164,7 +164,7 @@ fn get_simp(
   let simp = unwrap_or!(simp, return ret);
   match simp {
     Simp::AsgnSimp(simp) => {
-      let rhs_ty = super::expr::get_opt(cx, items, vars, simp.rhs());
+      let rhs_ty = super::expr::get(cx, items, vars, simp.rhs());
       let lhs = simp.lhs();
       let var = lv_var(cx, None, &lhs);
       let want_lhs_ty = match simp.op() {
@@ -194,7 +194,7 @@ fn get_simp(
           }
         },
       };
-      let lhs_ty = super::expr::get_opt(cx, items, vars, lhs);
+      let lhs_ty = super::expr::get(cx, items, vars, lhs);
       if let Some(want_lhs_ty) = want_lhs_ty {
         unify(cx, want_lhs_ty, lhs_ty);
       }
@@ -217,7 +217,7 @@ fn get_simp(
       }
       // get the error if any, but ignore the var (this doesn't init it).
       lv_var(cx, Some(inc_dec), &expr);
-      let ty = super::expr::get_opt(cx, items, vars, expr);
+      let ty = super::expr::get(cx, items, vars, expr);
       unify(cx, Ty::Int, ty);
     }
     Simp::DeclSimp(simp) => {
@@ -225,7 +225,7 @@ fn get_simp(
       let defined = match simp.defn_tail() {
         None => false,
         Some(defn_tail) => {
-          let expr_ty = super::expr::get_opt(cx, items, vars, defn_tail.expr());
+          let expr_ty = super::expr::get(cx, items, vars, defn_tail.expr());
           if let Some((_, ty)) = ty {
             unify(cx, ty, expr_ty);
           }
@@ -237,7 +237,7 @@ fn get_simp(
       }
     }
     Simp::ExprSimp(simp) => {
-      super::expr::get_opt(cx, items, vars, simp.expr());
+      super::expr::get(cx, items, vars, simp.expr());
     }
   }
   ret

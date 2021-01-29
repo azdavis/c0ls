@@ -6,7 +6,7 @@ use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;
 
-fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
+fn get_impl(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
   match expr {
     Expr::DecExpr(_) | Expr::HexExpr(_) => Ty::Int,
     Expr::StringExpr(_) => Ty::String,
@@ -134,13 +134,30 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
   }
 }
 
-pub(crate) fn get_opt(
+/// also makes sure this isn't a struct type. we call this 'get' and not
+/// 'get_opt' or 'get_no_struct' because
+/// 1. it's the only function exported
+/// 2. i don't feel like renaming everything
+pub(crate) fn get(
   cx: &mut Cx,
   items: &ItemDb,
   vars: &VarDb,
   expr: Option<Expr>,
 ) -> Option<(TextRange, Ty)> {
-  expr.map(|expr| (expr.syntax().text_range(), get(cx, items, vars, expr)))
+  let ret = get_opt(cx, items, vars, expr);
+  if let Some((range, ty)) = ret {
+    no_struct(cx, range, ty);
+  }
+  ret
+}
+
+fn get_opt(
+  cx: &mut Cx,
+  items: &ItemDb,
+  vars: &VarDb,
+  expr: Option<Expr>,
+) -> Option<(TextRange, Ty)> {
+  expr.map(|expr| (expr.syntax().text_range(), get_impl(cx, items, vars, expr)))
 }
 
 /// does NOT report an error if it is None, so only call this with optional
@@ -151,7 +168,7 @@ fn get_opt_or(
   vars: &VarDb,
   expr: Option<Expr>,
 ) -> Ty {
-  expr.map_or(Ty::Error, |expr| get(cx, items, vars, expr))
+  expr.map_or(Ty::Error, |expr| get_impl(cx, items, vars, expr))
 }
 
 fn deref(cx: &mut Cx, range: TextRange, ty: Ty) -> Ty {
