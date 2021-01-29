@@ -27,15 +27,15 @@ pub enum ErrorKind {
   InvalidStepDecl,
   ReturnExprVoid,
   NoReturnExprNotVoid,
-  CannotAssign(Assignment),
+  /// None means it's just regular assignment (=, +=, etc).
+  CannotAssign(Option<IncDec>),
   UninitializedVar,
   BreakOutsideLoop,
   ContinueOutsideLoop,
 }
 
 #[derive(Debug)]
-pub enum Assignment {
-  Assign,
+pub enum IncDec {
   Inc,
   Dec,
 }

@@ -1,4 +1,4 @@
-use crate::error::{Assignment, ErrorKind};
+use crate::error::{ErrorKind, IncDec};
 use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{add_var, unify, Cx, ItemDb, VarDb};
@@ -182,7 +182,7 @@ fn get_simp(
     Simp::AsgnSimp(simp) => {
       let rhs_ty = super::expr::get_opt(cx, items, vars, simp.rhs());
       let lhs = simp.lhs();
-      let var = lv_var(cx, Assignment::Assign, &lhs);
+      let var = lv_var(cx, None, &lhs);
       let want_lhs_ty = match simp.op() {
         None => None,
         Some(op) => match op.kind {
@@ -216,13 +216,13 @@ fn get_simp(
       }
     }
     Simp::IncDecSimp(simp) => {
-      let asgn = match simp.inc_dec().unwrap().kind {
-        IncDecKind::PlusPlus => Assignment::Inc,
-        IncDecKind::MinusMinus => Assignment::Dec,
+      let inc_dec = match simp.inc_dec().unwrap().kind {
+        IncDecKind::PlusPlus => IncDec::Inc,
+        IncDecKind::MinusMinus => IncDec::Dec,
       };
       let expr = simp.expr();
       // get the error if any, but ignore the var (this doesn't init it).
-      lv_var(cx, asgn, &expr);
+      lv_var(cx, Some(inc_dec), &expr);
       let ty = super::expr::get_opt(cx, items, vars, expr);
       unify(cx, Ty::Int, ty);
     }
@@ -251,7 +251,7 @@ fn get_simp(
 
 fn lv_var(
   cx: &mut Cx,
-  asgn: Assignment,
+  asgn: Option<IncDec>,
   expr: &Option<Expr>,
 ) -> Option<SyntaxToken> {
   let expr = expr.as_ref()?;
