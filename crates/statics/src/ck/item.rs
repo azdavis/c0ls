@@ -64,6 +64,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
           for (&(_, old_ty), &(_, new_ty)) in both_params {
             unify(cx, old_ty, Some(new_ty));
           }
+          unify(cx, old_data.ret_ty, ret_ty);
           if tail.is_some() {
             dup = dup || old_data.defined;
             entry.get_mut().defined = true;
