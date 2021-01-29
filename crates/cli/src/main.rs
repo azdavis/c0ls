@@ -87,6 +87,12 @@ fn run(conf: Config) -> Option<bool> {
       && cx.errors.is_empty();
     cx.errors.clear();
   }
+  for name in cx.called.iter() {
+    if !items.fns[name].defined {
+      ok = false;
+      eprintln!("`{}` called but not defined", name);
+    }
+  }
   Some(ok)
 }
 
