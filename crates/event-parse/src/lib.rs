@@ -93,24 +93,33 @@ impl<'input, K> Parser<'input, K>
 where
   K: Copy + Triviable,
 {
-  /// Returns the current token, or `None` if the parser is out of tokens.
+  /// Returns the token `n` tokens in front of the "current" token, or `None` if
+  /// the parser is out of tokens.
   ///
-  /// This skips all token kinds for which [`Triviable::is_trivia`] returns
-  /// `true`; thus, if this returns `Some(tok)`, then `tok.kind.is_trivia()` is
-  /// `false`.
+  /// Equivalent to `self.peek_n(0)`. See [`Self::peek_n`].
+  pub fn peek(&mut self) -> Option<Token<'input, K>> {
+    self.peek_n(0)
+  }
+
+  /// Returns the token `n` tokens in front of the current token, or `None` if
+  /// there is no such token.
+  ///
+  /// The current token is the first token not yet consumed for which
+  /// [`Triviable::is_trivia`] returns `true`; thus, if this returns
+  /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
   ///
   /// Note that it is not recommended to match on the `K` inside to e.g.
   /// determine what syntax construct to parse next. Using [`Self::at`] is
   /// better for this task since it keeps track of the `K`s that have been tried
   /// and will report them from [`Self::error`].
-  pub fn peek(&mut self) -> Option<Token<'input, K>> {
+  pub fn peek_n(&mut self, n: usize) -> Option<Token<'input, K>> {
     while let Some(tok) = self.tokens.get(self.idx) {
       if !tok.kind.is_trivia() {
         break;
       }
       self.idx += 1;
     }
-    self.tokens.get(self.idx).copied()
+    self.tokens.get(self.idx + n).copied()
   }
 
   /// Consumes and returns the current token, and clears the set of expected
