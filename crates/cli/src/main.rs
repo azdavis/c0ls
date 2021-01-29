@@ -90,11 +90,24 @@ fn run(conf: Config) -> Option<bool> {
   Some(ok)
 }
 
+const BIG_STACK_SIZE: usize = 180 * 1024 * 1024;
+
 fn main() {
   let conf = Config::parse_args_default_or_exit();
-  match run(conf) {
-    Some(true) => eprintln!("no errors"),
-    Some(false) => std::process::exit(1),
-    None => std::process::exit(2),
-  }
+  let ec = match std::thread::Builder::new()
+    .name("run".to_owned())
+    .stack_size(BIG_STACK_SIZE)
+    .spawn(|| run(conf))
+    .expect("couldn't spawn")
+    .join()
+  {
+    Ok(Some(true)) => {
+      eprintln!("no errors");
+      0
+    }
+    Ok(Some(false)) => 1,
+    Ok(None) => 2,
+    Err(_) => 3,
+  };
+  std::process::exit(ec)
 }
