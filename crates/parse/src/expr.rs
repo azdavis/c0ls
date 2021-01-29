@@ -55,7 +55,8 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
   {
     let entered = p.enter();
     p.bump();
-    must(p, |p| expr_hd(p, tds));
+    // higher than any infix op prec
+    must(p, |p| expr_prec(p, tds, 11));
     Some(p.exit(entered, SK::UnOpExpr))
   } else if p.at(SK::AllocKw) {
     let entered = p.enter();
@@ -85,7 +86,7 @@ fn expr_prec(
 ) -> Option<Exited> {
   let mut exited = expr_hd(p, tds)?;
   loop {
-    exited = if let Some(prec) = op_prec(p) {
+    exited = if let Some(prec) = infix_prec(p) {
       if prec <= min_prec {
         break;
       }
@@ -126,7 +127,7 @@ fn expr_prec(
   Some(exited)
 }
 
-fn op_prec(p: &mut Parser<'_, SK>) -> Option<u8> {
+fn infix_prec(p: &mut Parser<'_, SK>) -> Option<u8> {
   if p.at(SK::Star) || p.at(SK::Slash) || p.at(SK::Percent) {
     Some(10)
   } else if p.at(SK::Plus) || p.at(SK::Minus) {
