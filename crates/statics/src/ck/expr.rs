@@ -134,6 +134,15 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
   }
 }
 
+pub(crate) fn get_opt(
+  cx: &mut Cx,
+  items: &ItemDb,
+  vars: &VarDb,
+  expr: Option<Expr>,
+) -> Option<(TextRange, Ty)> {
+  expr.map(|expr| (expr.syntax().text_range(), get(cx, items, vars, expr)))
+}
+
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
 fn get_opt_or(
@@ -143,15 +152,6 @@ fn get_opt_or(
   expr: Option<Expr>,
 ) -> Ty {
   expr.map_or(Ty::Error, |expr| get(cx, items, vars, expr))
-}
-
-pub(crate) fn get_opt(
-  cx: &mut Cx,
-  items: &ItemDb,
-  vars: &VarDb,
-  expr: Option<Expr>,
-) -> Option<(TextRange, Ty)> {
-  expr.map(|expr| (expr.syntax().text_range(), get(cx, items, vars, expr)))
 }
 
 fn deref(cx: &mut Cx, range: TextRange, ty: Ty) -> Ty {

@@ -37,6 +37,14 @@ fn get(cx: &mut Cx, type_defs: &NameToTy, ty: AstTy) -> Ty {
   }
 }
 
+pub(crate) fn get_opt(
+  cx: &mut Cx,
+  type_defs: &NameToTy,
+  ty: Option<AstTy>,
+) -> Option<(TextRange, Ty)> {
+  ty.map(|ty| (ty.syntax().text_range(), get(cx, type_defs, ty)))
+}
+
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error). also errors if
 /// the ty is void.
@@ -49,14 +57,6 @@ pub(crate) fn get_opt_no_void(
     no_void(cx, range, ty);
     ty
   })
-}
-
-pub(crate) fn get_opt(
-  cx: &mut Cx,
-  type_defs: &NameToTy,
-  ty: Option<AstTy>,
-) -> Option<(TextRange, Ty)> {
-  ty.map(|ty| (ty.syntax().text_range(), get(cx, type_defs, ty)))
 }
 
 /// use this when we would need to know the size of a type on the stack. this
