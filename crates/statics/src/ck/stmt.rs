@@ -268,7 +268,7 @@ fn lv_var(
   let expr = expr.as_ref()?;
   match lv(expr) {
     None => {
-      cx.error(expr.syntax().text_range(), ErrorKind::CannotAssign(asgn));
+      cx.error(expr.syntax().text_range(), ErrorKind::InvalidAssign(asgn));
       None
     }
     Some(lv) => match lv {

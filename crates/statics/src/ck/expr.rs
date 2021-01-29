@@ -41,7 +41,7 @@ fn get_impl(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
             return ret;
           }
         }
-        cx.error(range, ErrorKind::MismatchedTypesAny(params, lhs_ty));
+        cx.error(range, ErrorKind::MismatchedTysAny(params, lhs_ty));
       }
       ret
     }

@@ -94,7 +94,7 @@ pub(crate) fn unify(
 ) -> Ty {
   let (range, found) = unwrap_or!(found, return expected);
   unwrap_or!(unify_impl(cx, expected, found), {
-    cx.error(range, ErrorKind::MismatchedTypes(expected, found));
+    cx.error(range, ErrorKind::MismatchedTys(expected, found));
     Ty::Error
   })
 }
@@ -125,13 +125,13 @@ pub(crate) fn unify_impl(cx: &mut Cx, expected: Ty, found: Ty) -> Option<Ty> {
 
 pub(crate) fn no_void(cx: &mut Cx, range: TextRange, ty: Ty) {
   if ty == Ty::Void {
-    cx.error(range, ErrorKind::InvalidVoid);
+    cx.error(range, ErrorKind::InvalidVoidTy);
   }
 }
 
 pub(crate) fn no_struct(cx: &mut Cx, range: TextRange, ty: Ty) {
   if let TyData::Struct(_) = cx.tys.get(ty) {
-    cx.error(range, ErrorKind::InvalidStruct);
+    cx.error(range, ErrorKind::InvalidStructTy);
   }
 }
 
