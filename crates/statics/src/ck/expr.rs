@@ -90,7 +90,7 @@ fn get(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
           ErrorKind::MismatchedNumArgs(fn_data.params.len(), arg_tys.len()),
         );
       }
-      for (&(_, _, param_ty), arg_ty) in fn_data.params.iter().zip(arg_tys) {
+      for (&(_, param_ty), arg_ty) in fn_data.params.iter().zip(arg_tys) {
         unify(cx, param_ty, arg_ty);
       }
       fn_data.ret_ty

@@ -4,7 +4,7 @@ use std::borrow::Borrow;
 pub struct Name(String);
 
 impl Name {
-  pub(crate) fn new<S>(s: S) -> Self
+  pub fn new<S>(s: S) -> Self
   where
     S: Into<String>,
   {

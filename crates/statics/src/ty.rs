@@ -54,23 +54,25 @@ impl Default for TyDb {
   }
 }
 
-/// A type, issued by a [`TyDb`]. Do not mix [`Ty`]s issued by different
-/// [`TyDb`]s.
+/// A type, issued by a [`TyDb`].
+///
+/// Do not mix `Ty`s issued by different `TyDb`s. However, the associated
+/// constants on `impl Ty` will always be the same across different `TyDb`s.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ty(u32);
 
 /// keep in sync with `impl Default for TyDb`
 #[allow(non_upper_case_globals)]
 impl Ty {
-  pub(crate) const Error: Self = Self(0);
-  pub(crate) const Top: Self = Self(1);
-  pub(crate) const Int: Self = Self(2);
-  pub(crate) const Bool: Self = Self(3);
-  pub(crate) const String: Self = Self(4);
-  pub(crate) const Char: Self = Self(5);
-  pub(crate) const Void: Self = Self(6);
-  pub(crate) const PtrTop: Self = Self(7);
-  pub(crate) const ArrayTop: Self = Self(8);
+  pub const Error: Self = Self(0);
+  pub const Top: Self = Self(1);
+  pub const Int: Self = Self(2);
+  pub const Bool: Self = Self(3);
+  pub const String: Self = Self(4);
+  pub const Char: Self = Self(5);
+  pub const Void: Self = Self(6);
+  pub const PtrTop: Self = Self(7);
+  pub const ArrayTop: Self = Self(8);
   const LEN: usize = 9;
 }
 

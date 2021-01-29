@@ -6,6 +6,7 @@ use crate::util::{
 };
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnItem, FnTail, Item, Syntax};
+use syntax::rowan::TextRange;
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
@@ -38,7 +39,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       }
     }
     Item::FnItem(item) => {
-      let (new_data, mut vars) = get_fn(cx, items, &item);
+      let (new_data, ranges, mut vars) = get_fn(cx, items, &item);
       let ret_ty = new_data.ret_ty;
       let ident = unwrap_or!(item.ident(), return);
       match items.fns.entry(Name::new(ident.text())) {
@@ -56,8 +57,12 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
               ),
             );
           }
-          let params = old_data.params.iter().zip(new_data.params.iter());
-          for (&(_, _, old_ty), &(_, range, new_ty)) in params {
+          let params = old_data
+            .params
+            .iter()
+            .zip(new_data.params.iter())
+            .zip(ranges);
+          for ((&(_, old_ty), &(_, new_ty)), range) in params {
             unify(cx, old_ty, Some((range, new_ty)));
           }
           if new_data.defined {
@@ -91,13 +96,19 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
   }
 }
 
-fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> (FnData, VarDb) {
+fn get_fn(
+  cx: &mut Cx,
+  items: &ItemDb,
+  item: &FnItem,
+) -> (FnData, Vec<TextRange>, VarDb) {
   let mut vars = VarDb::default();
   let mut params = Vec::new();
+  let mut ranges = Vec::new();
   for param in item.params() {
     let ty = super::ty::get_opt(cx, &items.type_defs, param.ty());
     if let (Some(ident), Some((ty_range, ty))) = (param.ident(), ty) {
-      params.push((Name::new(ident.text()), ty_range, ty));
+      params.push((Name::new(ident.text()), ty));
+      ranges.push(ty_range);
       add_var(cx, &mut vars, ident, ty_range, ty, true);
     }
   }
@@ -117,5 +128,5 @@ fn get_fn(cx: &mut Cx, items: &ItemDb, item: &FnItem) -> (FnData, VarDb) {
     ret_ty,
     defined,
   };
-  (data, vars)
+  (data, ranges, vars)
 }

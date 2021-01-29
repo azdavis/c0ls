@@ -1,6 +1,8 @@
 #![deny(rust_2018_idioms)]
 
-use statics::util::{Cx, ItemDb};
+use statics::name::Name;
+use statics::ty::Ty;
+use statics::util::{Cx, FnData, ItemDb};
 use std::{env, error::Error, fs, process};
 use syntax::ast::{Cast as _, Root};
 
@@ -38,6 +40,14 @@ fn run() -> Result<bool, Box<dyn Error>> {
   show_errors!("parse", parse.errors);
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
+  items.fns.insert(
+    Name::new("main"),
+    FnData {
+      params: vec![],
+      ret_ty: Ty::Int,
+      defined: false,
+    },
+  );
   let root = Root::cast(parse.tree.into()).expect("parse didn't give a root");
   statics::get(&mut cx, &mut items, root);
   show_errors!("statics", cx.errors);

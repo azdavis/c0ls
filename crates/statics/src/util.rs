@@ -44,7 +44,7 @@ pub struct ItemDb {
 
 #[derive(Debug)]
 pub struct FnData {
-  pub params: Vec<(Name, TextRange, Ty)>,
+  pub params: Vec<(Name, Ty)>,
   pub ret_ty: Ty,
   pub defined: bool,
 }
