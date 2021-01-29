@@ -35,14 +35,11 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let (new_data, ranges, mut vars) = get_fn(cx, items, &item);
       let ret_ty = new_data.ret_ty;
       let ident = unwrap_or!(item.ident(), return);
+      let mut dup = items.type_defs.contains_key(ident.text());
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
           let old_data = entry.get();
-          if (old_data.defined && new_data.defined)
-            || items.type_defs.contains_key(ident.text())
-          {
-            cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
-          }
+          dup = dup || (old_data.defined && new_data.defined);
           if old_data.params.len() != new_data.params.len() {
             cx.error(
               ident.text_range(),
@@ -75,6 +72,9 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
         if ret_ty != Ty::Void && !ret {
           cx.error(range, ErrorKind::InvalidNoReturn);
         }
+      }
+      if dup {
+        cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
       }
     }
     Item::TypedefItem(item) => {
