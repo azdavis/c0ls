@@ -112,6 +112,7 @@ fn get_impl(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
       unify(cx, Ty::Int, idx_ty);
       match *cx.tys.get(array_ty) {
         TyData::Array(ty) => ty,
+        TyData::Error => Ty::Error,
         _ => {
           cx.error(
             expr.syntax().text_range(),
@@ -181,6 +182,7 @@ fn deref(cx: &mut Cx, range: TextRange, ty: Ty) -> Ty {
         inner
       }
     }
+    TyData::Error => Ty::Error,
     _ => {
       cx.error(range, ErrorKind::DerefNonPtr(ty));
       Ty::Error
@@ -198,6 +200,7 @@ fn struct_field(
   let field = unwrap_or!(field, return Ty::Error);
   let struct_name = match cx.tys.get(ty) {
     TyData::Struct(n) => n,
+    TyData::Error => return Ty::Error,
     _ => {
       cx.error(range, ErrorKind::FieldGetNonStruct(ty));
       return Ty::Error;
