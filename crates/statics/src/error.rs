@@ -32,15 +32,16 @@ pub enum ErrorKind {
   UninitializedVar,
   BreakOutsideLoop,
   ContinueOutsideLoop,
+  DerefIncDec(IncDec),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum IncDec {
   Inc,
   Dec,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Thing {
   Field,
   Struct,

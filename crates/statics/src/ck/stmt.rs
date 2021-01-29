@@ -221,6 +221,16 @@ fn get_simp(
         IncDecKind::MinusMinus => IncDec::Dec,
       };
       let expr = simp.expr();
+      let is_star = expr
+        .as_ref()
+        .and_then(|e| match e {
+          Expr::UnOpExpr(e) => e.op(),
+          _ => None,
+        })
+        .map_or(false, |op| matches!(op.kind, UnOpKind::Star));
+      if is_star {
+        cx.error(simp.syntax().text_range(), ErrorKind::DerefIncDec(inc_dec))
+      }
       // get the error if any, but ignore the var (this doesn't init it).
       lv_var(cx, Some(inc_dec), &expr);
       let ty = super::expr::get_opt(cx, items, vars, expr);
