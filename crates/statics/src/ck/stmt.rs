@@ -67,19 +67,20 @@ fn get(
       false
     }
     Stmt::ForStmt(stmt) => {
-      let mut for_vars = vars.clone();
-      if let Some(var) = get_simp(cx, items, &mut for_vars, stmt.init()) {
+      let mut body_vars = vars.clone();
+      if let Some(var) = get_simp(cx, items, &mut body_vars, stmt.init()) {
         vars.get_mut(var.text()).unwrap().defined = true;
       }
-      let cond_ty = super::expr::get_opt(cx, items, &for_vars, stmt.cond());
+      let cond_ty = super::expr::get_opt(cx, items, &body_vars, stmt.cond());
       unify(cx, Ty::Bool, cond_ty);
+      let mut step_vars = body_vars.clone();
+      get_opt_or(cx, items, &mut body_vars, ret_ty, stmt.body());
       if let Some(step) = stmt.step() {
         if let Simp::DeclSimp(ref decl) = step {
           cx.error(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
         }
-        get_simp(cx, items, &mut for_vars, Some(step));
+        get_simp(cx, items, &mut step_vars, Some(step));
       }
-      get_opt_or(cx, items, &mut for_vars, ret_ty, stmt.body());
       false
     }
     Stmt::ReturnStmt(stmt) => {
