@@ -78,6 +78,7 @@ fn get(
         if let Simp::DeclSimp(ref decl) = step {
           cx.error(decl.syntax().text_range(), ErrorKind::InvalidStepDecl);
         }
+        define(&mut step_vars, |name| body_vars[name].defined);
         get_simp(cx, items, &mut step_vars, Some(step));
       }
       false
