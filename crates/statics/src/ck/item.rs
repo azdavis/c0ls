@@ -2,8 +2,8 @@ use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
 use crate::util::{
-  add_var, insert_if_empty, no_struct, unify, Cx, FnData, ItemDb, NameToTy,
-  VarDb,
+  add_var, insert_if_empty, no_struct, no_void, unify, Cx, FnData, ItemDb,
+  NameToTy, VarDb,
 };
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnTail, Item, Syntax};
@@ -96,9 +96,15 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       }
     }
     Item::TypedefItem(item) => {
+      let ty = match super::ty::get_opt(cx, &items.type_defs, item.ty()) {
+        Some((range, ty)) => {
+          no_void(cx, range, ty);
+          ty
+        }
+        None => Ty::Error,
+      };
       let ident = unwrap_or!(item.ident(), return);
       let text = ident.text();
-      let ty = super::ty::get_opt_or(cx, &items.type_defs, item.ty());
       let dup = items.fns.contains_key(text)
         || !insert_if_empty(&mut items.type_defs, Name::new(text), ty);
       if dup {
