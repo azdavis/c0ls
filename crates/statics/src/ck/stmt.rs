@@ -137,24 +137,6 @@ fn get(
   }
 }
 
-/// for each (name, data) in vars, sets data.defined = f(name). but it must be
-/// the case either that before this, data.defined is already true, or f(name)
-/// is true.
-///
-/// this is used for when vars contains exactly the variables in scope after
-/// finishing processing a statement, and f contains information about what
-/// variables in vars are now defined after processing that statement.
-fn define<F>(vars: &mut VarDb, mut f: F)
-where
-  F: FnMut(&Name) -> bool,
-{
-  for (name, data) in vars.iter_mut() {
-    let defined = f(name);
-    assert!(!data.defined || defined);
-    data.defined = defined;
-  }
-}
-
 /// does NOT report an error if it is None, so only call this with optional
 /// things from the AST (that have a corresponding parse error).
 fn get_opt_or(
@@ -257,6 +239,24 @@ fn get_simp(
     }
   }
   ret
+}
+
+/// for each (name, data) in vars, sets data.defined = f(name). but it must be
+/// the case either that before this, data.defined is already true, or f(name)
+/// is true.
+///
+/// this is used for when vars contains exactly the variables in scope after
+/// finishing processing a statement, and f contains information about what
+/// variables in vars are now defined after processing that statement.
+fn define<F>(vars: &mut VarDb, mut f: F)
+where
+  F: FnMut(&Name) -> bool,
+{
+  for (name, data) in vars.iter_mut() {
+    let defined = f(name);
+    assert!(!data.defined || defined);
+    data.defined = defined;
+  }
 }
 
 fn lv_var(
