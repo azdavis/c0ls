@@ -2,7 +2,7 @@
 
 use gumdrop::Options;
 use lex::LexError;
-use parse::Parse;
+use parse::{Parse, TypeDefs};
 use statics::name::Name;
 use statics::ty::Ty;
 use statics::util::{Cx, FileKind, FnData, ItemDb};
@@ -40,11 +40,11 @@ fn read_file(name: &str) -> Option<String> {
   }
 }
 
-fn parse_one(name: &str) -> Option<(Vec<LexError>, Parse)> {
+fn parse_one(name: &str, tds: &mut TypeDefs) -> Option<(Vec<LexError>, Parse)> {
   let s = read_file(&name)?;
   let lex = lex::get(&s);
   show_errors!("lex", name, lex.errors);
-  let parse = parse::get(lex.tokens);
+  let parse = parse::get(lex.tokens, tds);
   show_errors!("parse", name, parse.errors);
   Some((lex.errors, parse))
 }
@@ -56,6 +56,7 @@ fn root(node: SyntaxNode) -> Root {
 fn run(conf: Config) -> Option<bool> {
   let mut cx = Cx::default();
   let mut items = ItemDb::default();
+  let mut tds = TypeDefs::default();
   items.fns.insert(
     Name::new("main"),
     FnData {
@@ -66,7 +67,7 @@ fn run(conf: Config) -> Option<bool> {
   );
   let mut ok = true;
   if let Some(header) = conf.header {
-    let (header_lex_errors, header_parse) = parse_one(&header)?;
+    let (header_lex_errors, header_parse) = parse_one(&header, &mut tds)?;
     let header_root = root(header_parse.tree);
     statics::get(&mut cx, &mut items, FileKind::Header, header_root);
     show_errors!("statics", header, cx.errors);
@@ -77,7 +78,7 @@ fn run(conf: Config) -> Option<bool> {
     cx.errors.clear();
   }
   for source in conf.source {
-    let (source_lex_errors, source_parse) = parse_one(&source)?;
+    let (source_lex_errors, source_parse) = parse_one(&source, &mut tds)?;
     let source_root = root(source_parse.tree);
     statics::get(&mut cx, &mut items, FileKind::Source, source_root);
     show_errors!("statics", source, cx.errors);

@@ -4,10 +4,7 @@ use crate::util::{comma_sep, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn item<'input>(
-  p: &mut Parser<'input, SK>,
-  tds: &mut TypeDefs<'input>,
-) {
+pub(crate) fn item(p: &mut Parser<'_, SK>, tds: &mut TypeDefs) {
   if p.at(SK::StructKw) {
     let entered = p.enter();
     p.bump();
@@ -48,7 +45,7 @@ pub(crate) fn item<'input>(
     ty(p, tds);
     if let Some(tok) = p.eat(SK::Ident) {
       // the one time we mutate `tds`
-      tds.insert(tok.text);
+      tds.insert(tok.text.to_owned());
     }
     p.eat(SK::Semicolon);
     p.exit(entered, SK::TypedefItem);
@@ -68,7 +65,7 @@ pub(crate) fn item<'input>(
   }
 }
 
-fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>, ty_hd_exited: Exited) {
+fn fn_tail(p: &mut Parser<'_, SK>, tds: &TypeDefs, ty_hd_exited: Exited) {
   let ty_exited = ty_tl(p, ty_hd_exited);
   p.eat(SK::Ident);
   p.eat(SK::LRound);

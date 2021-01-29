@@ -14,6 +14,8 @@ mod stmt;
 mod ty;
 mod util;
 
+pub use util::TypeDefs;
+
 #[derive(Debug)]
 pub struct Parse {
   pub tree: SyntaxNode,
@@ -26,9 +28,9 @@ pub struct Error {
   pub expected: Vec<SK>,
 }
 
-pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
+pub fn get(tokens: Vec<Token<'_, SK>>, tds: &mut TypeDefs) -> Parse {
   let mut p = Parser::new(tokens);
-  root::root(&mut p);
+  root::root(&mut p, tds);
   let mut sink = BuilderSink::default();
   p.finish(&mut sink);
   Parse {

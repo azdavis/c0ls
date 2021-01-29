@@ -3,13 +3,13 @@ use crate::util::{comma_sep, must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn expr(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) {
+pub(crate) fn expr(p: &mut Parser<'_, SK>, tds: &TypeDefs) {
   must(p, |p| expr_opt(p, tds))
 }
 
 pub(crate) fn expr_opt(
   p: &mut Parser<'_, SK>,
-  tds: &TypeDefs<'_>,
+  tds: &TypeDefs,
 ) -> Option<Exited> {
   expr_prec(p, tds, 0)
 }
@@ -24,7 +24,7 @@ const PRIM: [(SK, SK); 7] = [
   (SK::NullKw, SK::NullExpr),
 ];
 
-fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
+fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {
       let entered = p.enter();
@@ -81,7 +81,7 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
 
 fn expr_prec(
   p: &mut Parser<'_, SK>,
-  tds: &TypeDefs<'_>,
+  tds: &TypeDefs,
   min_prec: u8,
 ) -> Option<Exited> {
   let mut exited = expr_hd(p, tds)?;

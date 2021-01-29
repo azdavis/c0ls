@@ -4,7 +4,7 @@ use crate::util::{must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn stmt_block(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Exited {
+pub(crate) fn stmt_block(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Exited {
   let entered = p.enter();
   p.eat(SK::LCurly);
   loop {
@@ -20,11 +20,11 @@ pub(crate) fn stmt_block(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Exited {
   p.exit(entered, SK::BlockStmt)
 }
 
-fn stmt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) {
+fn stmt(p: &mut Parser<'_, SK>, tds: &TypeDefs) {
   must(p, |p| stmt_opt(p, tds))
 }
 
-fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
+fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   if p.at(SK::IfKw) {
     let entered = p.enter();
     p.bump();
@@ -108,10 +108,7 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) -> Option<Exited> {
   }
 }
 
-fn stmt_simple_opt(
-  p: &mut Parser<'_, SK>,
-  tds: &TypeDefs<'_>,
-) -> Option<Exited> {
+fn stmt_simple_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   if let Some(ty) = ty_opt(p, tds) {
     let entered = p.precede(ty);
     p.eat(SK::Ident);

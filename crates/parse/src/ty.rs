@@ -2,14 +2,11 @@ use crate::util::{must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn ty(p: &mut Parser<'_, SK>, tds: &TypeDefs<'_>) {
+pub(crate) fn ty(p: &mut Parser<'_, SK>, tds: &TypeDefs) {
   must(p, |p| ty_opt(p, tds))
 }
 
-pub(crate) fn ty_opt(
-  p: &mut Parser<'_, SK>,
-  tds: &TypeDefs<'_>,
-) -> Option<Exited> {
+pub(crate) fn ty_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   ty_hd_opt(p, tds).map(|e| ty_tl(p, e))
 }
 
@@ -23,7 +20,7 @@ const PRIM: [(SK, SK); 5] = [
 
 pub(crate) fn ty_hd_opt(
   p: &mut Parser<'_, SK>,
-  tds: &TypeDefs<'_>,
+  tds: &TypeDefs,
 ) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {

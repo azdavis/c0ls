@@ -1,7 +1,21 @@
+use std::collections::HashSet;
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) type TypeDefs<'a> = std::collections::HashSet<&'a str>;
+#[derive(Debug, Default)]
+pub struct TypeDefs {
+  store: HashSet<String>,
+}
+
+impl TypeDefs {
+  pub(crate) fn insert(&mut self, s: String) {
+    self.store.insert(s);
+  }
+
+  pub(crate) fn contains(&self, s: &str) -> bool {
+    self.store.contains(s)
+  }
+}
 
 pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F)
 where
