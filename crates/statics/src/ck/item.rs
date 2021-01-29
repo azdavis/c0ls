@@ -17,7 +17,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       let mut fields = NameToTy::default();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
-        let ty = super::ty::get_opt_or(cx, &items.type_defs, field.ty());
+        let ty = super::ty::get_sized_opt_or(cx, items, field.ty());
         if !insert_if_empty(&mut fields, Name::new(ident.text()), ty) {
           cx.error(
             field.syntax().text_range(),
