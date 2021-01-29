@@ -6,8 +6,7 @@ use crate::util::{
   VarDb,
 };
 use std::collections::hash_map::Entry;
-use syntax::ast::{FnItem, FnTail, Item, Syntax};
-use syntax::rowan::TextRange;
+use syntax::ast::{FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
@@ -32,41 +31,62 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
       }
     }
     Item::FnItem(item) => {
-      let (new_data, ranges, mut vars) = get_fn(cx, items, &item);
-      let ret_ty = new_data.ret_ty;
+      let params: Vec<_> = item
+        .params()
+        .flat_map(|param| {
+          let ty = super::ty::get_opt(cx, &items.type_defs, param.ty());
+          param.ident().zip(ty)
+        })
+        .collect();
+      let ret_ty = super::ty::get_opt(cx, &items.type_defs, item.ret_ty());
+      if let Some((range, ty)) = ret_ty {
+        no_struct(cx, range, ty);
+      }
+      let tail = match item.tail() {
+        None | Some(FnTail::SemicolonTail(_)) => None,
+        Some(FnTail::BlockStmt(block)) => Some(block),
+      };
       let ident = unwrap_or!(item.ident(), return);
       let mut dup = items.type_defs.contains_key(ident.text());
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
           let old_data = entry.get();
-          dup = dup || (old_data.defined && new_data.defined);
-          if old_data.params.len() != new_data.params.len() {
+          if old_data.params.len() != params.len() {
             cx.error(
               ident.text_range(),
               ErrorKind::MismatchedNumParams(
                 old_data.params.len(),
-                new_data.params.len(),
+                params.len(),
               ),
             );
           }
-          let params = old_data
-            .params
-            .iter()
-            .zip(new_data.params.iter())
-            .zip(ranges);
-          for ((&(_, old_ty), &(_, new_ty)), range) in params {
-            unify(cx, old_ty, Some((range, new_ty)));
+          let both_params = old_data.params.iter().zip(params.iter());
+          for (&(_, old_ty), &(_, new_ty)) in both_params {
+            unify(cx, old_ty, Some(new_ty));
           }
-          if new_data.defined {
-            entry.insert(new_data);
+          if tail.is_some() {
+            dup = dup || old_data.defined;
+            entry.get_mut().defined = true;
           }
         }
         Entry::Vacant(entry) => {
-          entry.insert(new_data);
+          entry.insert(FnData {
+            params: params
+              .iter()
+              .map(|&(ref n, (_, t))| (Name::new(n.text()), t))
+              .collect(),
+            ret_ty: ret_ty.map_or(Ty::Error, |x| x.1),
+            defined: tail.is_some(),
+          });
         }
       }
-      if let Some(FnTail::BlockStmt(block)) = item.tail() {
+      if let Some(block) = tail {
         let range = block.syntax().text_range();
+        let ret_ty = ret_ty.map_or(Ty::Error, |x| x.1);
+        let mut vars = VarDb::default();
+        for (ident, (range, ty)) in params {
+          add_var(cx, &mut vars, &items.type_defs, ident, range, ty, true);
+        }
         let ret =
           super::stmt::get_block(cx, items, &mut vars, ret_ty, false, block);
         if ret_ty != Ty::Void && !ret {
@@ -89,39 +109,4 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, item: Item) {
     }
     Item::UseItem(_) => todo!("#use and multiple files"),
   }
-}
-
-fn get_fn(
-  cx: &mut Cx,
-  items: &ItemDb,
-  item: &FnItem,
-) -> (FnData, Vec<TextRange>, VarDb) {
-  let mut vars = VarDb::default();
-  let mut params = Vec::new();
-  let mut ranges = Vec::new();
-  for param in item.params() {
-    let ty = super::ty::get_opt(cx, &items.type_defs, param.ty());
-    if let (Some(ident), Some((ty_range, ty))) = (param.ident(), ty) {
-      params.push((Name::new(ident.text()), ty));
-      ranges.push(ty_range);
-      add_var(cx, &mut vars, &items.type_defs, ident, ty_range, ty, true);
-    }
-  }
-  let ret_ty = match super::ty::get_opt(cx, &items.type_defs, item.ret_ty()) {
-    Some((range, ty)) => {
-      no_struct(cx, range, ty);
-      ty
-    }
-    None => Ty::Error,
-  };
-  let defined = match item.tail() {
-    None | Some(FnTail::SemicolonTail(_)) => false,
-    Some(FnTail::BlockStmt(_)) => true,
-  };
-  let data = FnData {
-    params,
-    ret_ty,
-    defined,
-  };
-  (data, ranges, vars)
 }
