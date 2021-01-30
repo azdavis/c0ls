@@ -145,10 +145,21 @@ where
     self.events.push(Some(Event::Error(expected)));
   }
 
+  fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
+    while let Some(&tok) = self.tokens.get(self.idx) {
+      if !tok.kind.is_trivia() {
+        break;
+      }
+      sink.token(tok);
+      self.idx += 1;
+    }
+  }
+
   /// Finishes parsing, and writes the parsed tree into the `sink`.
   pub fn finish(mut self, sink: &mut dyn Sink<K>) {
     self.idx = 0;
     let mut kinds = Vec::new();
+    let mut levels: usize = 0;
     for idx in 0..self.events.len() {
       let ev = match self.events[idx].take() {
         Some(ev) => ev,
@@ -168,24 +179,29 @@ where
             }
           }
           for kind in kinds.drain(..).rev() {
+            if levels != 0 {
+              self.eat_trivia(sink);
+            }
             sink.enter(kind);
+            levels += 1;
           }
         }
-        Event::Exit => sink.exit(),
+        Event::Exit => {
+          sink.exit();
+          levels -= 1;
+          if levels != 0 {
+            self.eat_trivia(sink);
+          }
+        }
         Event::Token => {
+          self.eat_trivia(sink);
           sink.token(self.tokens[self.idx]);
           self.idx += 1;
         }
         Event::Error(expected) => sink.error(expected),
       }
-      while let Some(&tok) = self.tokens.get(self.idx) {
-        if !tok.kind.is_trivia() {
-          break;
-        }
-        sink.token(tok);
-        self.idx += 1;
-      }
     }
+    assert_eq!(levels, 0);
   }
 }
 
