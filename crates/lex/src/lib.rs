@@ -17,7 +17,7 @@ use std::convert::TryInto;
 use std::fmt;
 use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
-use syntax::SyntaxKind as SK;
+use syntax::{SyntaxKind as SK, Use, UseKind};
 
 #[derive(Debug)]
 pub struct Lex<'input> {
@@ -29,19 +29,6 @@ pub struct Lex<'input> {
   /// for that long.
   pub uses: Vec<Use>,
   pub errors: Vec<LexError>,
-}
-
-#[derive(Debug)]
-pub struct Use {
-  pub kind: UseKind,
-  pub range: TextRange,
-  pub path: String,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum UseKind {
-  Local,
-  Lib,
 }
 
 #[derive(Debug)]
