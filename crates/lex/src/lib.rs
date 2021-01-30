@@ -18,7 +18,12 @@ pub enum UseKind {
 #[derive(Debug)]
 pub struct Lex<'input> {
   pub tokens: Vec<Token<'input, SK>>,
-  pub uses: Vec<(UseKind, &'input str)>,
+  /// although the tokens returned borrow the input string, for the uses, we
+  /// take ownership. this is because the tokens are going right to the parser
+  /// (which end the borrow on the input string) but the uses are sticking
+  /// around longer, and we don't want to have to hold on to the input string
+  /// for that long.
+  pub uses: Vec<(UseKind, String)>,
   pub errors: Vec<LexError>,
 }
 
@@ -82,10 +87,10 @@ pub fn get(s: &str) -> Lex<'_> {
 }
 
 #[derive(Default)]
-struct Cx<'a> {
+struct Cx {
   errors: Vec<LexError>,
   i: usize,
-  uses: Vec<(UseKind, &'a str)>,
+  uses: Vec<(UseKind, String)>,
 }
 
 const MAX: u32 = 1 << 31;
@@ -93,7 +98,7 @@ const MAX: u32 = 1 << 31;
 /// requires bs is a valid &str. returns sk and updates cx.i from start to end
 /// such that bs[start..end] is a str and sk is the kind for that str.
 #[inline]
-fn go<'a>(cx: &mut Cx<'a>, bs: &'a [u8]) -> SK {
+fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
   // comments
@@ -191,7 +196,7 @@ fn go<'a>(cx: &mut Cx<'a>, bs: &'a [u8]) -> SK {
     match end_lit {
       Some(end_lit) => {
         let use_str = std::str::from_utf8(&bs[start_lit..end_lit]).unwrap();
-        cx.uses.push((kind, use_str));
+        cx.uses.push((kind, use_str.to_owned()));
       }
       None => err(cx, start, LexErrorKind::UnclosedPragmaLit),
     }
@@ -328,7 +333,7 @@ fn go<'a>(cx: &mut Cx<'a>, bs: &'a [u8]) -> SK {
   SK::Invalid
 }
 
-fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
+fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
   while let Some(b) = bs.get(cx.i) {
     if p(b) {
       cx.i += 1;
@@ -338,7 +343,7 @@ fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
   }
 }
 
-fn err(cx: &mut Cx<'_>, start: usize, kind: LexErrorKind) {
+fn err(cx: &mut Cx, start: usize, kind: LexErrorKind) {
   cx.errors.push(LexError {
     range: TextRange::new(text_size(start), text_size(cx.i)),
     kind,
