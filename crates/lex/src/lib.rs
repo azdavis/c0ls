@@ -4,6 +4,7 @@
 #![deny(rust_2018_idioms)]
 
 use std::convert::TryInto;
+use std::fmt;
 use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::SyntaxKind as SK;
@@ -31,6 +32,25 @@ pub enum LexErrorKind {
   InvalidEscape,
   IntLitTooLarge,
   InvalidSource,
+}
+
+impl fmt::Display for LexErrorKind {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match *self {
+      LexErrorKind::UnclosedBlockComment => write!(f, "unclosed block comment"),
+      LexErrorKind::EmptyHexLit => write!(f, "empty hex literal"),
+      LexErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
+      LexErrorKind::UnclosedCharLit => write!(f, "unclosed char literal"),
+      LexErrorKind::UnclosedLibLit => write!(f, "unclosed library literal"),
+      LexErrorKind::WrongLenCharLit(n) => match n {
+        0 => write!(f, "empty char literal"),
+        _ => write!(f, "char literal too long"),
+      },
+      LexErrorKind::InvalidEscape => write!(f, "invalid escape"),
+      LexErrorKind::IntLitTooLarge => write!(f, "integer literal too large"),
+      LexErrorKind::InvalidSource => write!(f, "invalid source character"),
+    }
+  }
 }
 
 pub fn get(s: &str) -> Lex<'_> {

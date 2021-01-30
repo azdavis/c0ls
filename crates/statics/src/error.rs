@@ -43,6 +43,15 @@ pub enum IncDec {
   Dec,
 }
 
+impl IncDec {
+  pub fn display(&self) -> &'static str {
+    match *self {
+      IncDec::Inc => "increment",
+      IncDec::Dec => "decrement",
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Thing {
   Field,
@@ -50,4 +59,16 @@ pub enum Thing {
   Variable,
   Function,
   Typedef,
+}
+
+impl Thing {
+  pub fn display(&self) -> &'static str {
+    match *self {
+      Thing::Field => "field",
+      Thing::Struct => "struct",
+      Thing::Variable => "variable",
+      Thing::Function => "function",
+      Thing::Typedef => "typedef",
+    }
+  }
 }
