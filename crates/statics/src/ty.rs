@@ -1,6 +1,7 @@
 use crate::name::Name;
 use core::hash::BuildHasherDefault;
 use rustc_hash::FxHashMap;
+use std::fmt;
 
 /// A type store. Do not pass [`Ty`]s returned by one `TyDb` to another `TyDb`.
 #[derive(Debug)]
@@ -74,6 +75,33 @@ impl Ty {
   pub const PtrTop: Self = Self(7);
   pub const ArrayTop: Self = Self(8);
   const LEN: usize = 9;
+
+  pub fn display(self, tys: &TyDb) -> TyDisplay<'_> {
+    TyDisplay { ty: self, tys }
+  }
+}
+
+#[derive(Debug)]
+pub struct TyDisplay<'a> {
+  ty: Ty,
+  tys: &'a TyDb,
+}
+
+impl fmt::Display for TyDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match *self.tys.get(self.ty) {
+      TyData::Error => write!(f, "<error>"),
+      TyData::Top => write!(f, "<any>"),
+      TyData::Int => write!(f, "int"),
+      TyData::Bool => write!(f, "bool"),
+      TyData::String => write!(f, "string"),
+      TyData::Char => write!(f, "char"),
+      TyData::Void => write!(f, "void"),
+      TyData::Ptr(t) => write!(f, "{}*", t.display(self.tys)),
+      TyData::Array(t) => write!(f, "{}[]", t.display(self.tys)),
+      TyData::Struct(ref name) => write!(f, "struct {}", name),
+    }
+  }
 }
 
 /// Data about a type. Give this to a [`TyDb`] to get back a corresponding

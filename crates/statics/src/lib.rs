@@ -4,7 +4,6 @@
 #![deny(rust_2018_idioms)]
 
 mod ck;
-pub mod display;
 pub mod error;
 pub mod name;
 pub mod ty;

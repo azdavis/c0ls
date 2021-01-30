@@ -7,7 +7,6 @@ use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use gumdrop::Options;
 use lex::Error as LexError;
 use parse::{Error as ParseError, TypeDefs};
-use statics::display::error_kind;
 use statics::error::Error as StaticsError;
 use statics::name::Name;
 use statics::ty::Ty;
@@ -110,7 +109,7 @@ fn run(conf: Config) -> Option<bool> {
     }
     for e in es.statics.iter() {
       ok = false;
-      let msg = error_kind(e.kind, &cx.statics.tys).to_string();
+      let msg = e.kind.display(&cx.statics.tys).to_string();
       let d = err(id, msg, e.range);
       emit(&mut writer.lock(), &config, &cx.files, &d).unwrap();
     }
