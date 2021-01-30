@@ -3,6 +3,7 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
+use std::fmt;
 use syntax::event_parse::{Parser, Sink, Token};
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::{SyntaxKind as SK, SyntaxNode};
@@ -25,7 +26,25 @@ pub struct Parse {
 #[derive(Debug)]
 pub struct Error {
   pub range: TextRange,
-  pub expected: Vec<SK>,
+  pub expected: Expected,
+}
+
+#[derive(Debug)]
+pub struct Expected {
+  pub kinds: Vec<SK>,
+}
+
+impl fmt::Display for Expected {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let mut iter = self.kinds.iter();
+    if let Some(kind) = iter.next() {
+      write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
+    }
+    for kind in iter {
+      write!(f, ", {}", kind.token_desc().unwrap_or("<non-token>"))?;
+    }
+    Ok(())
+  }
 }
 
 pub fn get(tokens: Vec<Token<'_, SK>>, tds: &mut TypeDefs) -> Parse {
@@ -62,10 +81,10 @@ impl Sink<SK> for BuilderSink {
     self.builder.finish_node();
   }
 
-  fn error(&mut self, expected: Vec<SK>) {
+  fn error(&mut self, kinds: Vec<SK>) {
     self.errors.push(Error {
       range: self.range.clone().expect("error with no tokens"),
-      expected,
+      expected: Expected { kinds },
     });
   }
 }
