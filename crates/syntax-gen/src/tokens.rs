@@ -60,6 +60,7 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
     };
     assert!(map.insert(token, ins).is_none());
   }
+  assert_eq!(CONTENT.len() + 2, special.len());
   Tokens {
     punctuation,
     keywords,
