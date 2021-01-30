@@ -28,7 +28,7 @@ pub enum LexErrorKind {
   UnclosedCharLit,
   UnclosedLibLit,
   WrongLenCharLit(usize),
-  InvalidCharEscape,
+  InvalidEscape,
   IntLitTooLarge,
   InvalidSource,
 }
@@ -182,7 +182,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           Some(&b) => {
             cx.i += 1;
             if !is_esc(b) {
-              err(cx, cx.i - 2, LexErrorKind::InvalidCharEscape);
+              err(cx, cx.i - 2, LexErrorKind::InvalidEscape);
             }
           }
         },
@@ -211,7 +211,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           Some(&b) => {
             cx.i += 1;
             if !is_esc(b) && b != b'0' {
-              err(cx, cx.i - 2, LexErrorKind::InvalidCharEscape);
+              err(cx, cx.i - 2, LexErrorKind::InvalidEscape);
             }
           }
         },
