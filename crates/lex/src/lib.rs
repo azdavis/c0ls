@@ -55,7 +55,7 @@ pub fn get(s: &str) -> Lex<'_> {
 struct Cx {
   errors: Vec<LexError>,
   i: usize,
-  saw_use: bool,
+  lib_lit_ok: bool,
 }
 
 const MAX: u32 = 1 << 31;
@@ -115,7 +115,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     while let Some(w) = bs.get(cx.i).copied().and_then(whitespace) {
       cx.i += 1;
       if matches!(w, Whitespace::Newline) {
-        cx.saw_use = false;
+        cx.lib_lit_ok = false;
       }
     }
     return SK::Whitespace;
@@ -221,7 +221,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     return SK::CharLit;
   }
   // lib lit
-  if b == b'<' && cx.saw_use {
+  if b == b'<' && cx.lib_lit_ok {
     cx.i += 1;
     let closed = loop {
       let b = match bs.get(cx.i) {
@@ -248,7 +248,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   // #use
   if bs.get(cx.i..cx.i + USE.len()) == Some(USE) {
     cx.i += USE.len();
-    cx.saw_use = true;
+    cx.lib_lit_ok = true;
     return SK::UseKw;
   }
   // invalid char. go until we find a valid str. this should terminate before
