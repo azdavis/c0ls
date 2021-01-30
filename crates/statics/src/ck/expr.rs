@@ -78,8 +78,8 @@ fn get_impl(cx: &mut Cx, items: &ItemDb, vars: &VarDb, expr: Expr) -> Ty {
         .collect();
       let fn_ident = unwrap_or!(expr.ident(), return Ty::Error);
       let fn_name = fn_ident.text();
-      if vars.contains_key(fn_name) {
-        cx.error(fn_ident.text_range(), ErrorKind::ShadowedFunction);
+      if let Some(data) = vars.get(fn_name) {
+        cx.error(fn_ident.text_range(), ErrorKind::CallNonFn(data.ty));
       }
       let fn_data = unwrap_or!(items.fns.get(fn_name), {
         cx.error(fn_ident.text_range(), ErrorKind::Undefined(Thing::Function));

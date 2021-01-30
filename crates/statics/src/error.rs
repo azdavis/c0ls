@@ -18,7 +18,7 @@ pub enum ErrorKind {
   SubscriptNonArray(Ty),
   FieldGetNonStruct(Ty),
   MismatchedTys(Ty, Ty),
-  ShadowedFunction,
+  CallNonFn(Ty),
   MismatchedTysAny(&'static [Ty], Ty),
   InvalidVoidTy,
   InvalidStructTy,
