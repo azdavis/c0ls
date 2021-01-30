@@ -2,15 +2,11 @@ use identifier_case::snake_to_pascal;
 use rustc_hash::FxHashMap;
 use ungrammar::{Grammar, Token};
 
-const CONTENT_SIGIL: char = '$';
-
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub(crate) struct Tokens {
   pub(crate) punctuation: FxHashMap<Token, String>,
   pub(crate) keywords: FxHashMap<Token, String>,
-  pub(crate) content: FxHashMap<Token, String>,
-  use_token: Option<Token>,
-  ref_token: Option<Token>,
+  pub(crate) special: FxHashMap<Token, String>,
 }
 
 impl Tokens {
@@ -21,50 +17,54 @@ impl Tokens {
     if let Some(x) = self.keywords.get(&token) {
       return x;
     }
-    if let Some(x) = self.content.get(&token) {
+    if let Some(x) = self.special.get(&token) {
       return x;
-    }
-    if Some(token) == self.use_token {
-      return "UseKw";
-    }
-    if Some(token) == self.ref_token {
-      return "RefKw";
     }
     panic!("{:?} does not have a name", token)
   }
 }
 
+pub const CONTENT: [&str; 6] = [
+  "Ident",
+  "LibLit",
+  "DecLit",
+  "HexLit",
+  "StringLit",
+  "CharLit",
+];
+
 pub(crate) fn get(grammar: &Grammar) -> Tokens {
-  let mut ret = Tokens::default();
+  let mut punctuation = FxHashMap::default();
+  let mut keywords = FxHashMap::default();
+  let mut special = FxHashMap::default();
   for token in grammar.tokens() {
     let name = &grammar[token].name;
-    if name == "#use" {
-      ret.use_token = Some(token);
-      continue;
-    }
-    if name == "//@ref" {
-      ret.ref_token = Some(token);
-      continue;
-    }
-    let mut cs = name.chars();
-    let (map, ins) = if cs.next().unwrap() == CONTENT_SIGIL {
-      (&mut ret.content, cs.as_str().to_owned())
+    let (map, ins) = if name == "#use" {
+      (&mut special, "UseKw".to_owned())
+    } else if name == "//@ref" {
+      (&mut special, "RefKw".to_owned())
+    } else if CONTENT.iter().any(|&n| n == name) {
+      (&mut special, name.to_owned())
     } else if name == "->" {
-      (&mut ret.punctuation, "Arrow".to_owned())
+      (&mut punctuation, "Arrow".to_owned())
     } else if name.chars().any(|c| c.is_ascii_alphabetic()) {
       let mut ins = snake_to_pascal(name);
       ins.push_str("Kw");
-      (&mut ret.keywords, ins)
+      (&mut keywords, ins)
     } else {
       let mut ins = String::new();
       for c in name.chars() {
         ins.push_str(char_name(c));
       }
-      (&mut ret.punctuation, ins)
+      (&mut punctuation, ins)
     };
     assert!(map.insert(token, ins).is_none());
   }
-  ret
+  Tokens {
+    punctuation,
+    keywords,
+    special,
+  }
 }
 
 fn char_name(c: char) -> &'static str {

@@ -1,5 +1,5 @@
 use crate::tokens::Tokens;
-use proc_macro2::{Ident, Literal};
+use proc_macro2::Ident;
 use quote::format_ident;
 use rustc_hash::FxHashMap;
 use std::cmp::Reverse;
@@ -32,12 +32,11 @@ pub(crate) fn unwrap_token(rule: &Rule) -> Token {
 pub(crate) fn sort_tokens(
   grammar: &Grammar,
   m: FxHashMap<Token, String>,
-) -> impl Iterator<Item = (Literal, Ident)> + '_ {
+) -> Vec<(&str, Ident)> {
   let mut xs: Vec<_> = m
     .into_iter()
-    .map(|(tok, s)| (grammar[tok].name.as_bytes(), s))
+    .map(|(tok, s)| (grammar[tok].name.as_str(), ident(&s)))
     .collect();
   xs.sort_unstable_by_key(|&(name, _)| (Reverse(name.len()), name));
-  xs.into_iter()
-    .map(|(bs, s)| (Literal::byte_string(bs), ident(&s)))
+  xs
 }

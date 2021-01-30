@@ -1,5 +1,4 @@
-// not 100% accurate (note the commas in e.g. FnDeclItem). prefix 'content'
-// tokens with '$'.
+// not 100% accurate (note the commas in e.g. FnDeclItem).
 
 Root = Item*
 
@@ -9,18 +8,18 @@ Item =
 | TypedefItem
 | UseItem
 
-StructItem = 'struct' '$Ident' Fields? ';'
-FnItem = ret_ty:Ty '$Ident' '(' Param* ')' tail:FnTail
-TypedefItem = 'typedef' Ty '$Ident'
+StructItem = 'struct' 'Ident' Fields? ';'
+FnItem = ret_ty:Ty 'Ident' '(' Param* ')' tail:FnTail
+TypedefItem = 'typedef' Ty 'Ident'
 UseItem = UseSigil UseLit
 
 Fields = '{' Field* '}'
-Field = Ty '$Ident' ';'
-Param = Ty '$Ident' ','
+Field = Ty 'Ident' ';'
+Param = Ty 'Ident' ','
 FnTail = SemicolonTail | BlockStmt
 SemicolonTail = ';'
 UseSigil = '#use' | '//@ref'
-UseLit = '$LibLit' | '$StringLit'
+UseLit = 'LibLit' | 'StringLit'
 
 Stmt =
   SimpStmt
@@ -60,7 +59,7 @@ Simp =
 AsgnSimp = lhs:Expr op:AsgnOp rhs:Expr
 IncDecSimp = Expr IncDec
 IncDec = '++' | '--'
-DeclSimp = Ty '$Ident' DefnTail?
+DeclSimp = Ty 'Ident' DefnTail?
 DefnTail = '=' Expr
 ExprSimp = Expr
 
@@ -82,8 +81,8 @@ CharTy = 'char'
 VoidTy = 'void'
 PtrTy = Ty '*'
 ArrayTy = Ty '[' ']'
-StructTy = 'struct' '$Ident'
-IdentTy = '$Ident'
+StructTy = 'struct' 'Ident'
+IdentTy = 'Ident'
 
 Expr =
   DecExpr
@@ -105,21 +104,21 @@ Expr =
 | AllocExpr
 | AllocArrayExpr
 
-DecExpr = '$DecLit'
-HexExpr = '$HexLit'
-StringExpr = '$StringLit'
-CharExpr = '$CharLit'
+DecExpr = 'DecLit'
+HexExpr = 'HexLit'
+StringExpr = 'StringLit'
+CharExpr = 'CharLit'
 TrueExpr = 'true'
 FalseExpr = 'false'
 NullExpr = 'NULL'
-IdentExpr = '$Ident'
+IdentExpr = 'Ident'
 ParenExpr = '(' Expr ')'
 BinOpExpr = lhs:Expr op:BinOp rhs:Expr
 UnOpExpr = op:UnOp Expr
 TernaryExpr = cond:Expr '?' yes:Expr ':' no:Expr
-CallExpr = '$Ident' '(' Arg* ')'
-DotExpr = Expr '.' '$Ident'
-ArrowExpr = Expr '->' '$Ident'
+CallExpr = 'Ident' '(' Arg* ')'
+DotExpr = Expr '.' 'Ident'
+ArrowExpr = Expr '->' 'Ident'
 SubscriptExpr = array:Expr '[' idx:Expr ']'
 AllocExpr = 'alloc' '(' Ty ')'
 AllocArrayExpr = 'alloc_array' '(' Ty ',' Expr ')'

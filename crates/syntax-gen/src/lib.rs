@@ -10,6 +10,7 @@ mod tokens;
 mod util;
 
 use crate::util::{ident, sort_tokens, Cx};
+use proc_macro2::Literal;
 use quote::quote;
 use ungrammar::{Grammar, Rule};
 
@@ -43,19 +44,23 @@ pub fn gen() -> String {
     types.push(ty);
   }
   let Cx { grammar, tokens } = cx;
-  let keywords: Vec<_> = sort_tokens(&grammar, tokens.keywords).collect();
-  let keyword_arms = keywords
-    .iter()
-    .map(|(bs, kind)| quote! { #bs => Self::#kind });
-  let punctuation: Vec<_> = sort_tokens(&grammar, tokens.punctuation).collect();
+  let keywords = sort_tokens(&grammar, tokens.keywords);
+  let keyword_arms = keywords.iter().map(|(name, kind)| {
+    let bs = Literal::byte_string(name.as_bytes());
+    quote! { #bs => Self::#kind }
+  });
+  let punctuation = sort_tokens(&grammar, tokens.punctuation);
   let punctuation_len = punctuation.len();
-  let punctuation_elements = punctuation
+  let punctuation_elements = punctuation.iter().map(|(name, kind)| {
+    let bs = Literal::byte_string(name.as_bytes());
+    quote! { (#bs, Self::#kind) }
+  });
+  let new_syntax_kinds = keywords
     .iter()
-    .map(|(bs, kind)| quote! { (#bs, Self::#kind) });
-  let new_syntax_kinds = sort_tokens(&grammar, tokens.content)
-    .chain(keywords.iter().cloned())
+    .cloned()
     .chain(punctuation.iter().cloned())
-    .map(|x| x.1);
+    .map(|x| x.1)
+    .chain(tokens::CONTENT.iter().map(|&n| util::ident(n)));
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let ret = quote! {
