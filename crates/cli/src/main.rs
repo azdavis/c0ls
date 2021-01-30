@@ -110,7 +110,7 @@ fn run(conf: Config) -> Option<bool> {
     }
     for e in es.statics.iter() {
       ok = false;
-      let msg = error_kind(&e.kind, &cx.statics.tys).to_string();
+      let msg = error_kind(e.kind, &cx.statics.tys).to_string();
       let d = err(id, msg, e.range);
       emit(&mut writer.lock(), &config, &cx.files, &d).unwrap();
     }

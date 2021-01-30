@@ -7,7 +7,7 @@ pub struct Error {
   pub kind: ErrorKind,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ErrorKind {
   Duplicate(Thing),
   Undefined(Thing),

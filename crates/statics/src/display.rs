@@ -2,22 +2,19 @@ use crate::error::ErrorKind;
 use crate::ty::{Ty, TyData, TyDb};
 use std::fmt;
 
-pub fn error_kind<'a>(
-  kind: &'a ErrorKind,
-  tys: &'a TyDb,
-) -> ErrorKindDisplay<'a> {
+pub fn error_kind(kind: ErrorKind, tys: &TyDb) -> ErrorKindDisplay<'_> {
   ErrorKindDisplay { kind, tys }
 }
 
 #[derive(Debug)]
 pub struct ErrorKindDisplay<'a> {
-  kind: &'a ErrorKind,
+  kind: ErrorKind,
   tys: &'a TyDb,
 }
 
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match *self.kind {
+    match self.kind {
       ErrorKind::Duplicate(thing) => {
         write!(f, "duplicate definitions for {}", thing.display())
       }
