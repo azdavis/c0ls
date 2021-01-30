@@ -1,4 +1,14 @@
-//! Lexes a string into tokens.
+//! Lexes a string into tokens, and parses pragmas.
+//!
+//! We parse pragmas here because we need to know a file's dependencies before
+//! we can parse it. This is because in order to parse a file correctly, we need
+//! to know which typedefs are in scope, because of the typedef-name: identifier
+//! problem.
+//!
+//! Pragmas are also problematic (and thus handled here) because of library
+//! literals. Namely, if we see `<`, some characters, and `>`, this might be a
+//! library literal, but only if we just saw `#use` and didn't yet see a
+//! newline.
 
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]

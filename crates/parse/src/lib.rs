@@ -1,4 +1,8 @@
-//! Parses tokens into a concrete syntax tree.
+//! Parses tokens into a concrete syntax tree, while tracking typedefs.
+//!
+//! Because of the typedef-name: identifier problem, we need to know which
+//! typedefs are in scope in order to parse correctly. So, the parser takes in a
+//! set of in-scope typedefs and updates it as it parses.
 
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
