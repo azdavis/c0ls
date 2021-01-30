@@ -9,10 +9,17 @@ use std::collections::hash_map::Entry;
 use syntax::ast::{FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;
 
-pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
+/// returns whether we are allowed to see a pragma item after this item.
+pub(crate) fn get(
+  cx: &mut Cx,
+  items: &mut ItemDb,
+  pragma_ok: bool,
+  kind: FileKind,
+  item: Item,
+) -> bool {
   match item {
     Item::StructItem(item) => {
-      let fs = unwrap_or!(item.fields(), return);
+      let fs = unwrap_or!(item.fields(), return false);
       let mut fields = NameToTy::default();
       for field in fs.fields() {
         let ident = unwrap_or!(field.ident(), continue);
@@ -24,11 +31,12 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
           )
         }
       }
-      let ident = unwrap_or!(item.ident(), return);
+      let ident = unwrap_or!(item.ident(), return false);
       let name = Name::new(ident.text());
       if !insert_if_empty(&mut items.structs, name, fields) {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Struct))
       }
+      false
     }
     Item::FnItem(item) => {
       let params: Vec<_> = item
@@ -56,7 +64,7 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
         (false, FileKind::Source) => Defined::NotYet,
         (false, FileKind::Header) => Defined::MustNot,
       };
-      let ident = unwrap_or!(item.ident(), return);
+      let ident = unwrap_or!(item.ident(), return false);
       let mut error_dup = items.type_defs.contains_key(ident.text());
       match items.fns.entry(Name::new(ident.text())) {
         Entry::Occupied(mut entry) => {
@@ -125,17 +133,26 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
       if error_dup {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Function));
       }
+      false
     }
     Item::TypedefItem(item) => {
       let ty = super::ty::get_no_void(cx, &items.type_defs, item.ty());
-      let ident = unwrap_or!(item.ident(), return);
+      let ident = unwrap_or!(item.ident(), return false);
       let text = ident.text();
       let dup = items.fns.contains_key(text)
         || !insert_if_empty(&mut items.type_defs, Name::new(text), ty);
       if dup {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
       }
+      false
     }
-    Item::PragmaItem(_) => todo!("pragmas"),
+    Item::PragmaItem(item) => {
+      // bringing the right things into scope as a result of the pragma is
+      // handled elsewhere.
+      if !pragma_ok {
+        cx.error(item.syntax().text_range(), ErrorKind::PragmaNotFirst)
+      }
+      true
+    }
   }
 }

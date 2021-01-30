@@ -97,6 +97,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         x.display()
       ),
       ErrorKind::DefnOfHeaderFn => write!(f, "cannot define a header function"),
+      ErrorKind::PragmaNotFirst => {
+        write!(f, "pragmas must come before all other items")
+      }
     }
   }
 }

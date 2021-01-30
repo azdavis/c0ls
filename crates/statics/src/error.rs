@@ -35,6 +35,7 @@ pub enum ErrorKind {
   ContinueOutsideLoop,
   DerefIncDec(IncDec),
   DefnOfHeaderFn,
+  PragmaNotFirst,
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -2,7 +2,10 @@ use crate::util::{Cx, FileKind, ItemDb};
 use syntax::ast::Root;
 
 pub fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, root: Root) {
+  let mut pragma_ok = true;
   for item in root.items() {
-    super::item::get(cx, items, kind, item);
+    if !super::item::get(cx, items, pragma_ok, kind, item) {
+      pragma_ok = false;
+    }
   }
 }
