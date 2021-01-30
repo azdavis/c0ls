@@ -133,12 +133,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       // line comment
       Some(&b'/') => {
         cx.i += 2;
-        while let Some(&b) = bs.get(cx.i) {
-          cx.i += 1;
-          if b == b'\n' {
-            break;
-          }
-        }
+        advance_while(cx, bs, |&b| b != b'\n');
         return SK::LineComment;
       }
       // not a comment
@@ -151,13 +146,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     let old_i = cx.i;
     advance_while(cx, bs, u8::is_ascii_alphabetic);
     if !matches!(&bs[old_i..cx.i], b"use" | b"ref") {
-      // ignore until newline
-      while let Some(&b) = bs.get(cx.i) {
-        cx.i += 1;
-        if b == b'\n' {
-          break;
-        }
-      }
+      advance_while(cx, bs, |&b| b != b'\n');
       return SK::Pragma;
     }
     // #use (and #ref) pragma. first eat the non-newline whitespace after the
@@ -200,13 +189,10 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       }
       None => err(cx, start, LexErrorKind::UnclosedPragmaLit),
     }
-    // eat the rest of the whitespace
-    while let Some(w) = bs.get(cx.i).copied().and_then(whitespace) {
-      cx.i += 1;
-      if matches!(w, Whitespace::Newline) {
-        break;
-      }
-    }
+    // eat the rest of the non-newline whitespace
+    advance_while(cx, bs, |&b| {
+      matches!(whitespace(b), Some(Whitespace::Other))
+    });
     return SK::Pragma;
   }
   // whitespace
