@@ -9,12 +9,6 @@ use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::SyntaxKind as SK;
 
-#[derive(Debug, Clone, Copy)]
-pub enum UseKind {
-  Local,
-  Lib,
-}
-
 #[derive(Debug)]
 pub struct Lex<'input> {
   pub tokens: Vec<Token<'input, SK>>,
@@ -23,8 +17,21 @@ pub struct Lex<'input> {
   /// (which end the borrow on the input string) but the uses are sticking
   /// around longer, and we don't want to have to hold on to the input string
   /// for that long.
-  pub uses: Vec<(UseKind, String)>,
+  pub uses: Vec<Use>,
   pub errors: Vec<LexError>,
+}
+
+#[derive(Debug)]
+pub struct Use {
+  pub kind: UseKind,
+  pub range: TextRange,
+  pub path: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UseKind {
+  Local,
+  Lib,
 }
 
 #[derive(Debug)]
@@ -90,7 +97,7 @@ pub fn get(s: &str) -> Lex<'_> {
 struct Cx {
   errors: Vec<LexError>,
   i: usize,
-  uses: Vec<(UseKind, String)>,
+  uses: Vec<Use>,
 }
 
 const MAX: u32 = 1 << 31;
@@ -185,7 +192,11 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     match end_lit {
       Some(end_lit) => {
         let use_str = std::str::from_utf8(&bs[start_lit..end_lit]).unwrap();
-        cx.uses.push((kind, use_str.to_owned()));
+        cx.uses.push(Use {
+          kind,
+          range: range(start, cx.i),
+          path: use_str.to_owned(),
+        });
       }
       None => err(cx, start, LexErrorKind::UnclosedPragmaLit),
     }
@@ -331,9 +342,13 @@ fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
 
 fn err(cx: &mut Cx, start: usize, kind: LexErrorKind) {
   cx.errors.push(LexError {
-    range: TextRange::new(text_size(start), text_size(cx.i)),
+    range: range(start, cx.i),
     kind,
   });
+}
+
+fn range(start: usize, end: usize) -> TextRange {
+  TextRange::new(text_size(start), text_size(end))
 }
 
 fn text_size(n: usize) -> TextSize {
