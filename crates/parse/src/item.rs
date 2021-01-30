@@ -49,15 +49,10 @@ pub(crate) fn item(p: &mut Parser<'_, SK>, tds: &mut TypeDefs) {
     }
     p.eat(SK::Semicolon);
     p.exit(entered, SK::TypedefItem);
-  } else if p.at(SK::UseKw) || p.at(SK::RefKw) {
+  } else if p.at(SK::Pragma) {
     let entered = p.enter();
     p.bump();
-    if p.at(SK::LibLit) || p.at(SK::StringLit) {
-      p.bump();
-    } else {
-      p.error();
-    }
-    p.exit(entered, SK::UseItem);
+    p.exit(entered, SK::PragmaItem);
   } else if let Some(exited) = ty_hd_opt(p, tds) {
     fn_tail(p, tds, exited);
   } else {

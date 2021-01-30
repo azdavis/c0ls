@@ -9,9 +9,16 @@ use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::SyntaxKind as SK;
 
+#[derive(Debug, Clone, Copy)]
+pub enum UseKind {
+  Local,
+  Lib,
+}
+
 #[derive(Debug)]
 pub struct Lex<'input> {
   pub tokens: Vec<Token<'input, SK>>,
+  pub uses: Vec<(UseKind, &'input str)>,
   pub errors: Vec<LexError>,
 }
 
@@ -24,10 +31,11 @@ pub struct LexError {
 #[derive(Debug)]
 pub enum LexErrorKind {
   UnclosedBlockComment,
+  InvalidPragma,
+  UnclosedPragmaLit,
   EmptyHexLit,
   UnclosedStringLit,
   UnclosedCharLit,
-  UnclosedLibLit,
   WrongLenCharLit(usize),
   InvalidEscape,
   IntLitTooLarge,
@@ -38,10 +46,11 @@ impl fmt::Display for LexErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
       LexErrorKind::UnclosedBlockComment => write!(f, "unclosed block comment"),
+      LexErrorKind::InvalidPragma => write!(f, "invalid pragma"),
+      LexErrorKind::UnclosedPragmaLit => write!(f, "unclosed pragma literal"),
       LexErrorKind::EmptyHexLit => write!(f, "empty hex literal"),
       LexErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
       LexErrorKind::UnclosedCharLit => write!(f, "unclosed char literal"),
-      LexErrorKind::UnclosedLibLit => write!(f, "unclosed library literal"),
       LexErrorKind::WrongLenCharLit(n) => match n {
         0 => write!(f, "empty char literal"),
         _ => write!(f, "char literal too long"),
@@ -68,14 +77,15 @@ pub fn get(s: &str) -> Lex<'_> {
   Lex {
     tokens,
     errors: cx.errors,
+    uses: cx.uses,
   }
 }
 
 #[derive(Default)]
-struct Cx {
+struct Cx<'a> {
   errors: Vec<LexError>,
   i: usize,
-  lib_lit_ok: bool,
+  uses: Vec<(UseKind, &'a str)>,
 }
 
 const MAX: u32 = 1 << 31;
@@ -83,15 +93,9 @@ const MAX: u32 = 1 << 31;
 /// requires bs is a valid &str. returns sk and updates cx.i from start to end
 /// such that bs[start..end] is a str and sk is the kind for that str.
 #[inline]
-fn go(cx: &mut Cx, bs: &[u8]) -> SK {
+fn go<'a>(cx: &mut Cx<'a>, bs: &'a [u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
-  // ref
-  if bs.get(cx.i..cx.i + REF.len()) == Some(REF) {
-    cx.i += REF.len();
-    cx.lib_lit_ok = true;
-    return SK::RefKw;
-  }
   // comments
   if b == b'/' {
     match bs.get(cx.i + 1) {
@@ -136,14 +140,73 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       _ => {}
     }
   }
-  // whitespace
-  if whitespace(b).is_some() {
+  // pragmas. kind of gross: we end up doing a bit of parsing in the lexer.
+  if b == b'#' {
+    cx.i += 1;
+    let old_i = cx.i;
+    advance_while(cx, bs, u8::is_ascii_alphabetic);
+    if !matches!(&bs[old_i..cx.i], b"use" | b"ref") {
+      // ignore until newline
+      while let Some(&b) = bs.get(cx.i) {
+        cx.i += 1;
+        if b == b'\n' {
+          break;
+        }
+      }
+      return SK::Pragma;
+    }
+    // #use (and #ref) pragma. first eat the non-newline whitespace after the
+    // pragma starter.
+    advance_while(cx, bs, |&b| {
+      matches!(whitespace(b), Some(Whitespace::Other))
+    });
+    // should have either a double quote or < to start the literal.
+    let (end, kind) = match bs.get(cx.i) {
+      Some(&b'"') => (b'"', UseKind::Local),
+      Some(&b'<') => (b'>', UseKind::Lib),
+      _ => {
+        err(cx, start, LexErrorKind::InvalidPragma);
+        // give up
+        return SK::Pragma;
+      }
+    };
+    cx.i += 1;
+    let start_lit = cx.i;
+    // i think we're supposed to consider escapes here, but this doesn't. but
+    // honestly, what absolute madman using C0 is going around putting escapable
+    // characters in their filenames?
+    let end_lit = loop {
+      let b = match bs.get(cx.i) {
+        None => break None,
+        Some(&b) => b,
+      };
+      cx.i += 1;
+      if b == end {
+        break Some(cx.i - 1);
+      }
+      if b == b'\n' {
+        break None;
+      }
+    };
+    match end_lit {
+      Some(end_lit) => {
+        let use_str = std::str::from_utf8(&bs[start_lit..end_lit]).unwrap();
+        cx.uses.push((kind, use_str));
+      }
+      None => err(cx, start, LexErrorKind::UnclosedPragmaLit),
+    }
+    // eat the rest of the whitespace
     while let Some(w) = bs.get(cx.i).copied().and_then(whitespace) {
       cx.i += 1;
       if matches!(w, Whitespace::Newline) {
-        cx.lib_lit_ok = false;
+        break;
       }
     }
+    return SK::Pragma;
+  }
+  // whitespace
+  if whitespace(b).is_some() {
+    advance_while(cx, bs, |&b| whitespace(b).is_some());
     return SK::Whitespace;
   }
   // identifiers and keywords
@@ -246,36 +309,12 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     }
     return SK::CharLit;
   }
-  // lib lit
-  if b == b'<' && cx.lib_lit_ok {
-    cx.i += 1;
-    let closed = loop {
-      let b = match bs.get(cx.i) {
-        None => break false,
-        Some(&b) => b,
-      };
-      cx.i += 1;
-      if b == b'>' {
-        break true;
-      }
-    };
-    if !closed {
-      err(cx, start, LexErrorKind::UnclosedLibLit);
-    }
-    return SK::LibLit;
-  }
   // punctuation
   for &(sk_text, sk) in SK::PUNCTUATION.iter() {
     if bs.get(cx.i..cx.i + sk_text.len()) == Some(sk_text) {
       cx.i += sk_text.len();
       return sk;
     }
-  }
-  // #use
-  if bs.get(cx.i..cx.i + USE.len()) == Some(USE) {
-    cx.i += USE.len();
-    cx.lib_lit_ok = true;
-    return SK::UseKw;
   }
   // invalid char. go until we find a valid str. this should terminate before
   // cx.i goes past the end of bs because bs comes from a str.
@@ -289,7 +328,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
+fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
   while let Some(b) = bs.get(cx.i) {
     if p(b) {
       cx.i += 1;
@@ -299,7 +338,7 @@ fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
   }
 }
 
-fn err(cx: &mut Cx, start: usize, kind: LexErrorKind) {
+fn err(cx: &mut Cx<'_>, start: usize, kind: LexErrorKind) {
   cx.errors.push(LexError {
     range: TextRange::new(text_size(start), text_size(cx.i)),
     kind,
@@ -330,6 +369,3 @@ fn is_esc(b: u8) -> bool {
     b'n' | b't' | b'v' | b'b' | b'r' | b'f' | b'a' | b'\\' | b'\'' | b'"'
   )
 }
-
-const USE: &[u8] = b"#use";
-const REF: &[u8] = b"//@ref";

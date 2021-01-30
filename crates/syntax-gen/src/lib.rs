@@ -85,8 +85,6 @@ pub fn gen() -> String {
       LineComment,
       BlockComment,
       Invalid,
-      UseKw,
-      RefKw,
       #(#syntax_kinds ,)*
     }
 
@@ -106,8 +104,6 @@ pub fn gen() -> String {
       pub fn token_desc(&self) -> Option<&'static str> {
         let ret = match *self {
           #(#desc_arms ,)*
-          Self::UseKw => "`#use`",
-          Self::RefKw => "`//@ref`",
           _ => return None,
         };
         Some(ret)

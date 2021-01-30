@@ -6,20 +6,18 @@ Item =
   StructItem
 | FnItem
 | TypedefItem
-| UseItem
+| PragmaItem
 
 StructItem = 'struct' 'Ident' Fields? ';'
 FnItem = ret_ty:Ty 'Ident' '(' Param* ')' tail:FnTail
 TypedefItem = 'typedef' Ty 'Ident'
-UseItem = UseSigil UseLit
+PragmaItem = 'Pragma'
 
 Fields = '{' Field* '}'
 Field = Ty 'Ident' ';'
 Param = Ty 'Ident' ','
 FnTail = SemicolonTail | BlockStmt
 SemicolonTail = ';'
-UseSigil = '#use' | '//@ref'
-UseLit = 'LibLit' | 'StringLit'
 
 Stmt =
   SimpStmt

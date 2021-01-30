@@ -136,6 +136,6 @@ pub(crate) fn get(cx: &mut Cx, items: &mut ItemDb, kind: FileKind, item: Item) {
         cx.error(ident.text_range(), ErrorKind::Duplicate(Thing::Typedef))
       }
     }
-    Item::UseItem(_) => todo!("#use and multiple files"),
+    Item::PragmaItem(_) => todo!("pragmas"),
   }
 }
