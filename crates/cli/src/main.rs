@@ -1,16 +1,22 @@
 #![deny(rust_2018_idioms)]
 
+use codespan_reporting::diagnostic::{Diagnostic, Label};
+use codespan_reporting::files::SimpleFiles;
+use codespan_reporting::term::emit;
+use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use gumdrop::Options;
 use lex::LexError;
-use parse::{Parse, TypeDefs};
+use parse::{Error as ParseError, TypeDefs};
+use statics::display::error_kind;
+use statics::error::Error as StaticsError;
 use statics::name::Name;
 use statics::ty::Ty;
-use statics::util::{Cx, Defined, FileKind, FnData, ItemDb};
+use statics::util::{Cx as StaticsCx, Defined, FileKind, FnData, ItemDb};
 use syntax::ast::{Cast as _, Root};
-use syntax::SyntaxNode;
+use syntax::rowan::TextRange;
 
 #[derive(Debug, Options)]
-pub struct Config {
+struct Config {
   #[options(help = "print this help")]
   pub help: bool,
   #[options(short = "l", help = "header file")]
@@ -19,46 +25,62 @@ pub struct Config {
   pub source: Vec<String>,
 }
 
-macro_rules! show_errors {
-  ($pass:expr, $name:expr, $errors:expr) => {
-    if !$errors.is_empty() {
-      eprintln!("==> {} {} errors ({})", $pass, $name, $errors.len());
-    }
-    for e in $errors.iter() {
-      eprintln!("{:?}", e);
-    }
-  };
+struct Errors {
+  lex: Vec<LexError>,
+  parse: Vec<ParseError>,
+  statics: Vec<StaticsError>,
 }
 
-fn read_file(name: &str) -> Option<String> {
-  match std::fs::read_to_string(name) {
-    Ok(x) => Some(x),
+type FileId = usize;
+
+struct Cx {
+  files: SimpleFiles<String, String>,
+  errors: Vec<(FileId, Errors)>,
+  statics: StaticsCx,
+  type_defs: TypeDefs,
+  items: ItemDb,
+}
+
+fn add_file(cx: &mut Cx, name: String, kind: FileKind) -> Option<()> {
+  let contents = match std::fs::read_to_string(&name) {
+    Ok(x) => x,
     Err(e) => {
       eprintln!("{}: {}", name, e);
-      None
+      return None;
     }
-  }
+  };
+  let lex = lex::get(&contents);
+  let parse = parse::get(lex.tokens, &mut cx.type_defs);
+  let lex_errors = lex.errors;
+  let handle = cx.files.add(name, contents);
+  let root = Root::cast(parse.tree.into()).expect("parse didn't give a Root");
+  statics::get(&mut cx.statics, &mut cx.items, kind, root);
+  let errors = Errors {
+    lex: lex_errors,
+    parse: parse.errors,
+    statics: std::mem::take(&mut cx.statics.errors),
+  };
+  cx.errors.push((handle, errors));
+  Some(())
 }
 
-fn parse_one(name: &str, tds: &mut TypeDefs) -> Option<(Vec<LexError>, Parse)> {
-  let s = read_file(&name)?;
-  let lex = lex::get(&s);
-  show_errors!("lex", name, lex.errors);
-  let parse = parse::get(lex.tokens, tds);
-  show_errors!("parse", name, parse.errors);
-  Some((lex.errors, parse))
-}
-
-fn root(node: SyntaxNode) -> Root {
-  Root::cast(node.into()).expect("parse didn't give a Root")
+fn err(id: FileId, msg: String, range: TextRange) -> Diagnostic<FileId> {
+  let label = Label::primary(id, range.start().into()..range.end().into());
+  Diagnostic::error()
+    .with_message(msg)
+    .with_labels(vec![label])
 }
 
 fn run(conf: Config) -> Option<bool> {
-  let mut cx = Cx::default();
-  cx.called.insert(Name::new("main"));
-  let mut items = ItemDb::default();
-  let mut tds = TypeDefs::default();
-  items.fns.insert(
+  let mut cx = Cx {
+    files: SimpleFiles::new(),
+    errors: Vec::default(),
+    statics: StaticsCx::default(),
+    type_defs: TypeDefs::default(),
+    items: ItemDb::default(),
+  };
+  cx.statics.called.insert(Name::new("main"));
+  cx.items.fns.insert(
     Name::new("main"),
     FnData {
       params: vec![],
@@ -66,31 +88,37 @@ fn run(conf: Config) -> Option<bool> {
       defined: Defined::NotYet,
     },
   );
-  let mut ok = true;
   if let Some(header) = conf.header {
-    let (header_lex_errors, header_parse) = parse_one(&header, &mut tds)?;
-    let header_root = root(header_parse.tree);
-    statics::get(&mut cx, &mut items, FileKind::Header, header_root);
-    show_errors!("statics", header, cx.errors);
-    ok = ok
-      && header_lex_errors.is_empty()
-      && header_parse.errors.is_empty()
-      && cx.errors.is_empty();
-    cx.errors.clear();
+    add_file(&mut cx, header, FileKind::Header)?;
   }
   for source in conf.source {
-    let (source_lex_errors, source_parse) = parse_one(&source, &mut tds)?;
-    let source_root = root(source_parse.tree);
-    statics::get(&mut cx, &mut items, FileKind::Source, source_root);
-    show_errors!("statics", source, cx.errors);
-    ok = ok
-      && source_lex_errors.is_empty()
-      && source_parse.errors.is_empty()
-      && cx.errors.is_empty();
-    cx.errors.clear();
+    add_file(&mut cx, source, FileKind::Source)?;
   }
-  for name in cx.called.iter() {
-    let this_ok = match items.fns[name].defined {
+  let mut ok = true;
+  let writer = StandardStream::stderr(ColorChoice::Auto);
+  let config = codespan_reporting::term::Config::default();
+  for &(id, ref es) in cx.errors.iter() {
+    for e in es.lex.iter() {
+      ok = false;
+      let d = err(id, e.kind.to_string(), e.range);
+      emit(&mut writer.lock(), &config, &cx.files, &d).unwrap();
+    }
+    for e in es.parse.iter() {
+      ok = false;
+      let d = err(id, e.expected.to_string(), e.range);
+      emit(&mut writer.lock(), &config, &cx.files, &d).unwrap();
+    }
+    for e in es.statics.iter() {
+      ok = false;
+      let msg = error_kind(&e.kind, &cx.statics.tys).to_string();
+      let d = err(id, msg, e.range);
+      emit(&mut writer.lock(), &config, &cx.files, &d).unwrap();
+    }
+  }
+  // TODO move this into statics? at the very least we need better location
+  // information.
+  for name in cx.statics.called.iter() {
+    let this_ok = match cx.items.fns[name].defined {
       // special case for main
       Defined::MustNot => name != "main",
       Defined::NotYet => false,
