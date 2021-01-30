@@ -66,6 +66,12 @@ const MAX: u32 = 1 << 31;
 fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
+  // ref
+  if bs.get(cx.i..cx.i + REF.len()) == Some(REF) {
+    cx.i += REF.len();
+    cx.lib_lit_ok = true;
+    return SK::RefKw;
+  }
   // comments
   if b == b'/' {
     match bs.get(cx.i + 1) {
@@ -306,3 +312,4 @@ fn is_esc(b: u8) -> bool {
 }
 
 const USE: &[u8] = b"#use";
+const REF: &[u8] = b"//@ref";

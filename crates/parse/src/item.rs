@@ -49,7 +49,7 @@ pub(crate) fn item(p: &mut Parser<'_, SK>, tds: &mut TypeDefs) {
     }
     p.eat(SK::Semicolon);
     p.exit(entered, SK::TypedefItem);
-  } else if p.at(SK::UseKw) {
+  } else if p.at(SK::UseKw) || p.at(SK::RefKw) {
     let entered = p.enter();
     p.bump();
     if p.at(SK::LibLit) || p.at(SK::StringLit) {

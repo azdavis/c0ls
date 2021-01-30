@@ -70,6 +70,7 @@ pub fn gen() -> String {
       BlockComment,
       Invalid,
       UseKw,
+      RefKw,
       #(#syntax_kinds ,)*
     }
 

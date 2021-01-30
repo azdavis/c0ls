@@ -10,6 +10,7 @@ pub(crate) struct Tokens {
   pub(crate) keywords: FxHashMap<Token, String>,
   pub(crate) content: FxHashMap<Token, String>,
   use_token: Option<Token>,
+  ref_token: Option<Token>,
 }
 
 impl Tokens {
@@ -26,6 +27,9 @@ impl Tokens {
     if Some(token) == self.use_token {
       return "UseKw";
     }
+    if Some(token) == self.ref_token {
+      return "RefKw";
+    }
     panic!("{:?} does not have a name", token)
   }
 }
@@ -36,6 +40,10 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
     let name = &grammar[token].name;
     if name == "#use" {
       ret.use_token = Some(token);
+      continue;
+    }
+    if name == "//@ref" {
+      ret.ref_token = Some(token);
       continue;
     }
     let mut cs = name.chars();
