@@ -37,6 +37,7 @@ pub struct Expected {
 impl fmt::Display for Expected {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let mut iter = self.kinds.iter();
+    write!(f, "expected any of ")?;
     if let Some(kind) = iter.next() {
       write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
     }
