@@ -55,12 +55,23 @@ pub fn gen() -> String {
     let bs = Literal::byte_string(name.as_bytes());
     quote! { (#bs, Self::#kind) }
   });
+  let desc_arms = punctuation
+    .iter()
+    .chain(keywords.iter())
+    .map(|&(name, ref kind)| {
+      let name = format!("`{}`", name);
+      quote! { Self::#kind => #name }
+    })
+    .chain(tokens::CONTENT.iter().map(|&(name, desc)| {
+      let kind = util::ident(name);
+      quote! { Self::#kind => #desc }
+    }));
   let new_syntax_kinds = keywords
     .iter()
     .cloned()
     .chain(punctuation.iter().cloned())
     .map(|x| x.1)
-    .chain(tokens::CONTENT.iter().map(|&n| util::ident(n)));
+    .chain(tokens::CONTENT.iter().map(|&(n, _)| util::ident(n)));
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let ret = quote! {
@@ -87,6 +98,16 @@ pub fn gen() -> String {
       pub fn keyword(bs: &[u8]) -> Option<Self> {
         let ret = match bs {
           #(#keyword_arms ,)*
+          _ => return None,
+        };
+        Some(ret)
+      }
+
+      pub fn token_desc(&self) -> Option<&'static str> {
+        let ret = match *self {
+          #(#desc_arms ,)*
+          Self::UseKw => "`#use`",
+          Self::RefKw => "`//@ref`",
           _ => return None,
         };
         Some(ret)

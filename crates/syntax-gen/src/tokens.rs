@@ -24,13 +24,13 @@ impl Tokens {
   }
 }
 
-pub const CONTENT: [&str; 6] = [
-  "Ident",
-  "LibLit",
-  "DecLit",
-  "HexLit",
-  "StringLit",
-  "CharLit",
+pub const CONTENT: [(&str, &str); 6] = [
+  ("Ident", "an identifier"),
+  ("LibLit", "a library literal"),
+  ("DecLit", "an integer literal"),
+  ("HexLit", "a hexadecimal integer literal"),
+  ("StringLit", "a string literal"),
+  ("CharLit", "a char literal"),
 ];
 
 pub(crate) fn get(grammar: &Grammar) -> Tokens {
@@ -43,7 +43,7 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
       (&mut special, "UseKw".to_owned())
     } else if name == "//@ref" {
       (&mut special, "RefKw".to_owned())
-    } else if CONTENT.iter().any(|&n| n == name) {
+    } else if CONTENT.iter().any(|&(n, _)| n == name) {
       (&mut special, name.to_owned())
     } else if name == "->" {
       (&mut punctuation, "Arrow".to_owned())
