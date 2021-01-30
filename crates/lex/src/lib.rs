@@ -28,17 +28,17 @@ pub struct Lex<'input> {
   /// around longer, and we don't want to have to hold on to the input string
   /// for that long.
   pub uses: Vec<Use>,
-  pub errors: Vec<LexError>,
+  pub errors: Vec<Error>,
 }
 
 #[derive(Debug)]
-pub struct LexError {
+pub struct Error {
   pub range: TextRange,
-  pub kind: LexErrorKind,
+  pub kind: ErrorKind,
 }
 
 #[derive(Debug)]
-pub enum LexErrorKind {
+pub enum ErrorKind {
   UnclosedBlockComment,
   InvalidPragma,
   UnclosedPragmaLit,
@@ -51,22 +51,22 @@ pub enum LexErrorKind {
   InvalidSource,
 }
 
-impl fmt::Display for LexErrorKind {
+impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match *self {
-      LexErrorKind::UnclosedBlockComment => write!(f, "unclosed block comment"),
-      LexErrorKind::InvalidPragma => write!(f, "invalid pragma"),
-      LexErrorKind::UnclosedPragmaLit => write!(f, "unclosed pragma literal"),
-      LexErrorKind::EmptyHexLit => write!(f, "empty hex literal"),
-      LexErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
-      LexErrorKind::UnclosedCharLit => write!(f, "unclosed char literal"),
-      LexErrorKind::WrongLenCharLit(n) => match n {
+      ErrorKind::UnclosedBlockComment => write!(f, "unclosed block comment"),
+      ErrorKind::InvalidPragma => write!(f, "invalid pragma"),
+      ErrorKind::UnclosedPragmaLit => write!(f, "unclosed pragma literal"),
+      ErrorKind::EmptyHexLit => write!(f, "empty hex literal"),
+      ErrorKind::UnclosedStringLit => write!(f, "unclosed string literal"),
+      ErrorKind::UnclosedCharLit => write!(f, "unclosed char literal"),
+      ErrorKind::WrongLenCharLit(n) => match n {
         0 => write!(f, "empty char literal"),
         _ => write!(f, "char literal too long"),
       },
-      LexErrorKind::InvalidEscape => write!(f, "invalid escape"),
-      LexErrorKind::IntLitTooLarge => write!(f, "integer literal too large"),
-      LexErrorKind::InvalidSource => write!(f, "invalid source character"),
+      ErrorKind::InvalidEscape => write!(f, "invalid escape"),
+      ErrorKind::IntLitTooLarge => write!(f, "integer literal too large"),
+      ErrorKind::InvalidSource => write!(f, "invalid source character"),
     }
   }
 }
@@ -92,7 +92,7 @@ pub fn get(s: &str) -> Lex<'_> {
 
 #[derive(Default)]
 struct Cx {
-  errors: Vec<LexError>,
+  errors: Vec<Error>,
   i: usize,
   uses: Vec<Use>,
 }
@@ -126,7 +126,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
               }
             }
             (None, None) => {
-              err(cx, start, LexErrorKind::UnclosedBlockComment);
+              err(cx, start, ErrorKind::UnclosedBlockComment);
               break;
             }
             _ => cx.i += 1,
@@ -163,7 +163,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       Some(&b'"') => (b'"', UseKind::Local),
       Some(&b'<') => (b'>', UseKind::Lib),
       _ => {
-        err(cx, start, LexErrorKind::InvalidPragma);
+        err(cx, start, ErrorKind::InvalidPragma);
         // give up
         return SK::Pragma;
       }
@@ -195,7 +195,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           path: use_str.to_owned(),
         });
       }
-      None => err(cx, start, LexErrorKind::UnclosedPragmaLit),
+      None => err(cx, start, ErrorKind::UnclosedPragmaLit),
     }
     // eat the rest of the non-newline whitespace
     advance_while(cx, bs, |&b| {
@@ -223,12 +223,12 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         let old_i = cx.i;
         advance_while(cx, bs, u8::is_ascii_hexdigit);
         if old_i == cx.i {
-          err(cx, start, LexErrorKind::EmptyHexLit);
+          err(cx, start, ErrorKind::EmptyHexLit);
         } else {
           let digits = std::str::from_utf8(&bs[old_i..cx.i]).unwrap();
           // this is different from dec lit, not sure why.
           if u32::from_str_radix(digits, 16).is_err() {
-            err(cx, start, LexErrorKind::IntLitTooLarge);
+            err(cx, start, ErrorKind::IntLitTooLarge);
           }
         }
         SK::HexLit
@@ -243,7 +243,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
         Err(_) => true,
       };
       if too_large {
-        err(cx, start, LexErrorKind::IntLitTooLarge);
+        err(cx, start, ErrorKind::IntLitTooLarge);
       }
       SK::DecLit
     };
@@ -264,7 +264,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           Some(&b) => {
             cx.i += 1;
             if !is_esc(b) {
-              err(cx, cx.i - 2, LexErrorKind::InvalidEscape);
+              err(cx, cx.i - 2, ErrorKind::InvalidEscape);
             }
           }
         },
@@ -272,7 +272,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       }
     };
     if !closed {
-      err(cx, start, LexErrorKind::UnclosedStringLit);
+      err(cx, start, ErrorKind::UnclosedStringLit);
     }
     return SK::StringLit;
   }
@@ -293,7 +293,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
           Some(&b) => {
             cx.i += 1;
             if !is_esc(b) && b != b'0' {
-              err(cx, cx.i - 2, LexErrorKind::InvalidEscape);
+              err(cx, cx.i - 2, ErrorKind::InvalidEscape);
             }
           }
         },
@@ -302,9 +302,9 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       len += 1;
     };
     if !closed {
-      err(cx, start, LexErrorKind::UnclosedCharLit);
+      err(cx, start, ErrorKind::UnclosedCharLit);
     } else if len != 1 {
-      err(cx, start, LexErrorKind::WrongLenCharLit(len));
+      err(cx, start, ErrorKind::WrongLenCharLit(len));
     }
     return SK::CharLit;
   }
@@ -323,7 +323,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
       break;
     }
   }
-  err(cx, start, LexErrorKind::InvalidSource);
+  err(cx, start, ErrorKind::InvalidSource);
   SK::Invalid
 }
 
@@ -337,8 +337,8 @@ fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
   }
 }
 
-fn err(cx: &mut Cx, start: usize, kind: LexErrorKind) {
-  cx.errors.push(LexError {
+fn err(cx: &mut Cx, start: usize, kind: ErrorKind) {
+  cx.errors.push(Error {
     range: range(start, cx.i),
     kind,
   });

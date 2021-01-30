@@ -5,7 +5,7 @@ use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term::emit;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use gumdrop::Options;
-use lex::LexError;
+use lex::Error as LexError;
 use parse::{Error as ParseError, TypeDefs};
 use statics::display::error_kind;
 use statics::error::Error as StaticsError;
