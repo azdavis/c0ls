@@ -1,10 +1,8 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::Ty;
-use crate::util::{
-  add_var, insert_if_empty, no_struct, unify, Cx, Defined, FileKind, FnData,
-  ItemDb, NameToTy, VarDb,
-};
+use crate::types::{Cx, Defined, FileKind, FnData, ItemDb, NameToTy, VarDb};
+use crate::util::{add_var, insert_if_empty, no_struct, unify};
 use std::collections::hash_map::Entry;
 use syntax::ast::{FnTail, Item, Syntax};
 use unwrap_or::unwrap_or;

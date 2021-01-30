@@ -11,7 +11,7 @@ use statics::display::error_kind;
 use statics::error::Error as StaticsError;
 use statics::name::Name;
 use statics::ty::Ty;
-use statics::util::{Cx as StaticsCx, Defined, FileKind, FnData, ItemDb};
+use statics::types::{Cx as StaticsCx, Defined, FileKind, FnData, ItemDb};
 use syntax::ast::{Cast as _, Root};
 use syntax::rowan::TextRange;
 

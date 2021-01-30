@@ -1,7 +1,8 @@
 use crate::error::{ErrorKind, IncDec};
 use crate::name::Name;
 use crate::ty::Ty;
-use crate::util::{add_var, unify, Cx, ItemDb, VarDb};
+use crate::types::{Cx, ItemDb, VarDb};
+use crate::util::{add_var, unify};
 use syntax::ast::{
   AsgnOpKind, BlockStmt, Expr, IncDecKind, Simp, Stmt, Syntax, UnOpKind,
 };

@@ -1,7 +1,8 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::{Ty, TyData};
-use crate::util::{no_struct, no_void, unify, unify_impl, Cx, ItemDb, VarDb};
+use crate::types::{Cx, ItemDb, VarDb};
+use crate::util::{no_struct, no_void, unify, unify_impl};
 use syntax::ast::{BinOpKind, Expr, Syntax as _, UnOpKind};
 use syntax::{rowan::TextRange, SyntaxToken};
 use unwrap_or::unwrap_or;

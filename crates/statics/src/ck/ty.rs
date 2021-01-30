@@ -1,7 +1,8 @@
 use crate::error::{ErrorKind, Thing};
 use crate::name::Name;
 use crate::ty::{Ty, TyData};
-use crate::util::{no_void, Cx, ItemDb, NameToTy};
+use crate::types::{Cx, ItemDb, NameToTy};
+use crate::util::no_void;
 use syntax::ast::{Syntax as _, Ty as AstTy};
 use syntax::rowan::TextRange;
 

@@ -8,6 +8,7 @@ pub mod display;
 pub mod error;
 pub mod name;
 pub mod ty;
+pub mod types;
 pub mod util;
 
 pub use ck::root::get;
