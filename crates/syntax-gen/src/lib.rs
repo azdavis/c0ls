@@ -22,7 +22,7 @@ enum Kind {
 /// Returns a string of Rust code to be used in the `syntax` crate.
 pub fn gen() -> String {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
-  let tokens = token::get(&grammar);
+  let tokens = token::TokenDb::new(&grammar);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
   let mut syntax_kinds = Vec::new();

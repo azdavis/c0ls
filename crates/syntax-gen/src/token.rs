@@ -10,6 +10,37 @@ pub(crate) struct TokenDb {
 }
 
 impl TokenDb {
+  pub(crate) fn new(grammar: &Grammar) -> Self {
+    let mut punctuation = FxHashMap::default();
+    let mut keywords = FxHashMap::default();
+    let mut special = FxHashMap::default();
+    for token in grammar.tokens() {
+      let name = &grammar[token].name;
+      let (map, ins) = if CONTENT.iter().any(|&(n, _)| n == name) {
+        (&mut special, name.to_owned())
+      } else if name == "->" {
+        (&mut punctuation, "Arrow".to_owned())
+      } else if name.chars().any(|c| c.is_ascii_alphabetic()) {
+        let mut ins = snake_to_pascal(name);
+        ins.push_str("Kw");
+        (&mut keywords, ins)
+      } else {
+        let mut ins = String::new();
+        for c in name.chars() {
+          ins.push_str(char_name(c));
+        }
+        (&mut punctuation, ins)
+      };
+      assert!(map.insert(token, ins).is_none());
+    }
+    assert_eq!(CONTENT.len(), special.len());
+    Self {
+      punctuation,
+      keywords,
+      special,
+    }
+  }
+
   pub(crate) fn name(&self, token: Token) -> &str {
     if let Some(x) = self.punctuation.get(&token) {
       return x;
@@ -32,37 +63,6 @@ pub const CONTENT: [(&str, &str); 6] = [
   ("CharLit", "a char literal"),
   ("Pragma", "a pragma"),
 ];
-
-pub(crate) fn get(grammar: &Grammar) -> TokenDb {
-  let mut punctuation = FxHashMap::default();
-  let mut keywords = FxHashMap::default();
-  let mut special = FxHashMap::default();
-  for token in grammar.tokens() {
-    let name = &grammar[token].name;
-    let (map, ins) = if CONTENT.iter().any(|&(n, _)| n == name) {
-      (&mut special, name.to_owned())
-    } else if name == "->" {
-      (&mut punctuation, "Arrow".to_owned())
-    } else if name.chars().any(|c| c.is_ascii_alphabetic()) {
-      let mut ins = snake_to_pascal(name);
-      ins.push_str("Kw");
-      (&mut keywords, ins)
-    } else {
-      let mut ins = String::new();
-      for c in name.chars() {
-        ins.push_str(char_name(c));
-      }
-      (&mut punctuation, ins)
-    };
-    assert!(map.insert(token, ins).is_none());
-  }
-  assert_eq!(CONTENT.len(), special.len());
-  TokenDb {
-    punctuation,
-    keywords,
-    special,
-  }
-}
 
 fn char_name(c: char) -> &'static str {
   match c {
