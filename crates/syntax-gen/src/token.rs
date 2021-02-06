@@ -43,15 +43,14 @@ impl TokenDb {
 
   pub(crate) fn name(&self, token: Token) -> &str {
     if let Some(x) = self.punctuation.get(&token) {
-      return x;
+      x
+    } else if let Some(x) = self.keywords.get(&token) {
+      x
+    } else if let Some(x) = self.special.get(&token) {
+      x
+    } else {
+      panic!("{:?} does not have a name", token)
     }
-    if let Some(x) = self.keywords.get(&token) {
-      return x;
-    }
-    if let Some(x) = self.special.get(&token) {
-      return x;
-    }
-    panic!("{:?} does not have a name", token)
   }
 }
 
