@@ -6,7 +6,7 @@
 
 mod alt;
 mod seq;
-mod tokens;
+mod token;
 mod util;
 
 use crate::util::{ident, sort_tokens, Cx};
@@ -22,7 +22,7 @@ enum Kind {
 /// Returns a string of Rust code to be used in the `syntax` crate.
 pub fn gen() -> String {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
-  let tokens = tokens::get(&grammar);
+  let tokens = token::get(&grammar);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
   let mut syntax_kinds = Vec::new();
@@ -62,7 +62,7 @@ pub fn gen() -> String {
       let name = format!("`{}`", name);
       quote! { Self::#kind => #name }
     })
-    .chain(tokens::CONTENT.iter().map(|&(name, desc)| {
+    .chain(token::CONTENT.iter().map(|&(name, desc)| {
       let kind = util::ident(name);
       quote! { Self::#kind => #desc }
     }));
@@ -71,7 +71,7 @@ pub fn gen() -> String {
     .cloned()
     .chain(punctuation.iter().cloned())
     .map(|x| x.1)
-    .chain(tokens::CONTENT.iter().map(|&(n, _)| util::ident(n)));
+    .chain(token::CONTENT.iter().map(|&(n, _)| util::ident(n)));
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let ret = quote! {

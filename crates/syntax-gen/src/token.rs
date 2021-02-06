@@ -3,13 +3,13 @@ use rustc_hash::FxHashMap;
 use ungrammar::{Grammar, Token};
 
 #[derive(Debug)]
-pub(crate) struct Tokens {
+pub(crate) struct TokenDb {
   pub(crate) punctuation: FxHashMap<Token, String>,
   pub(crate) keywords: FxHashMap<Token, String>,
   pub(crate) special: FxHashMap<Token, String>,
 }
 
-impl Tokens {
+impl TokenDb {
   pub(crate) fn name(&self, token: Token) -> &str {
     if let Some(x) = self.punctuation.get(&token) {
       return x;
@@ -33,7 +33,7 @@ pub const CONTENT: [(&str, &str); 6] = [
   ("Pragma", "a pragma"),
 ];
 
-pub(crate) fn get(grammar: &Grammar) -> Tokens {
+pub(crate) fn get(grammar: &Grammar) -> TokenDb {
   let mut punctuation = FxHashMap::default();
   let mut keywords = FxHashMap::default();
   let mut special = FxHashMap::default();
@@ -57,7 +57,7 @@ pub(crate) fn get(grammar: &Grammar) -> Tokens {
     assert!(map.insert(token, ins).is_none());
   }
   assert_eq!(CONTENT.len(), special.len());
-  Tokens {
+  TokenDb {
     punctuation,
     keywords,
     special,

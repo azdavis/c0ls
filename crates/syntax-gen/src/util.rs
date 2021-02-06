@@ -1,4 +1,4 @@
-use crate::tokens::Tokens;
+use crate::token::TokenDb;
 use proc_macro2::Ident;
 use quote::format_ident;
 use rustc_hash::FxHashMap;
@@ -8,7 +8,7 @@ use ungrammar::{Grammar, Node, Rule, Token};
 #[derive(Debug)]
 pub(crate) struct Cx {
   pub(crate) grammar: Grammar,
-  pub(crate) tokens: Tokens,
+  pub(crate) tokens: TokenDb,
 }
 
 pub(crate) fn ident(s: &str) -> Ident {
