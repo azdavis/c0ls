@@ -1,5 +1,5 @@
 use crate::expr::{expr, expr_opt};
-use crate::ty::ty_opt;
+use crate::simp::simp_opt;
 use crate::util::{must, TypeDefs};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
@@ -53,15 +53,15 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
     let entered = p.enter();
     p.bump();
     p.eat(SK::LRound);
-    let simp_opt = p.enter();
-    stmt_simple_opt(p, tds);
-    p.exit(simp_opt, SK::SimpOpt);
+    let simp_opt_entered = p.enter();
+    simp_opt(p, tds);
+    p.exit(simp_opt_entered, SK::SimpOpt);
     p.eat(SK::Semicolon);
     expr(p, tds);
     p.eat(SK::Semicolon);
-    let simp_opt = p.enter();
-    stmt_simple_opt(p, tds);
-    p.exit(simp_opt, SK::SimpOpt);
+    let simp_opt_entered = p.enter();
+    simp_opt(p, tds);
+    p.exit(simp_opt_entered, SK::SimpOpt);
     p.eat(SK::RRound);
     stmt(p, tds);
     Some(p.exit(entered, SK::ForStmt))
@@ -99,50 +99,11 @@ fn stmt_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
     p.bump();
     p.eat(SK::Semicolon);
     Some(p.exit(entered, SK::ContinueStmt))
-  } else if let Some(exited) = stmt_simple_opt(p, tds) {
+  } else if let Some(exited) = simp_opt(p, tds) {
     let entered = p.precede(exited);
     p.eat(SK::Semicolon);
     Some(p.exit(entered, SK::SimpStmt))
   } else {
     None
   }
-}
-
-fn stmt_simple_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
-  if let Some(ty) = ty_opt(p, tds) {
-    let entered = p.precede(ty);
-    p.eat(SK::Ident);
-    if p.at(SK::Eq) {
-      let entered = p.enter();
-      p.bump();
-      expr(p, tds);
-      p.exit(entered, SK::DefnTail);
-    }
-    return Some(p.exit(entered, SK::DeclSimp));
-  }
-  let exited = expr_opt(p, tds)?;
-  let entered = p.precede(exited);
-  // reject non-lv expr with assignment op semantically, not syntactically
-  let completed = if p.at(SK::Eq)
-    || p.at(SK::PlusEq)
-    || p.at(SK::MinusEq)
-    || p.at(SK::StarEq)
-    || p.at(SK::SlashEq)
-    || p.at(SK::PercentEq)
-    || p.at(SK::LtLtEq)
-    || p.at(SK::GtGtEq)
-    || p.at(SK::AndEq)
-    || p.at(SK::CaratEq)
-    || p.at(SK::BarEq)
-  {
-    p.bump();
-    expr(p, tds);
-    p.exit(entered, SK::AsgnSimp)
-  } else if p.at(SK::PlusPlus) || p.at(SK::MinusMinus) {
-    p.bump();
-    p.exit(entered, SK::IncDecSimp)
-  } else {
-    p.exit(entered, SK::ExprSimp)
-  };
-  Some(completed)
 }

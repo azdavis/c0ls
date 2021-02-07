@@ -15,6 +15,7 @@ use syntax::{SyntaxKind as SK, SyntaxNode};
 mod expr;
 mod item;
 mod root;
+mod simp;
 mod stmt;
 mod ty;
 mod util;
