@@ -14,9 +14,8 @@ use topo_sort::{topological_sort, Graph};
 
 pub struct Db {
   uris: Map,
-  lines: FxHashMap<FileId, Lines>,
-  errors: FxHashMap<FileId, Errors>,
   ordering: Vec<FileId>,
+  syntax_data: FxHashMap<FileId, SyntaxData>,
   kind: Kind,
 }
 
@@ -55,12 +54,9 @@ impl Db {
     // - lex, parse, lower
     // - process uses to resolve libraries/files
     // - calculate line ending information
-    let mut errors = map_with_capacity(num_files);
-    let mut ast_roots = map_with_capacity(num_files);
-    let mut ptrs = map_with_capacity(num_files);
+    let mut syntax_data = map_with_capacity(num_files);
     let mut hir_roots = map_with_capacity(num_files);
     let mut uses = map_with_capacity(num_files);
-    let mut lines = map_with_capacity(num_files);
     for (id, contents) in id_and_contents {
       let lexed = lex::get(&contents);
       let parsed = parse::get(lexed.tokens);
@@ -82,19 +78,22 @@ impl Db {
           Err(e) => uses_errors.push(e),
         }
       }
-      let es = Errors {
-        lex: lexed.errors,
-        uses: uses_errors,
-        parse: parsed.errors,
-        lower: lowered.errors,
-        statics: vec![],
-      };
-      errors.insert(id, es);
-      ast_roots.insert(id, AstRoot::cast(parsed.tree.clone().into()).unwrap());
-      ptrs.insert(id, lowered.ptrs);
       hir_roots.insert(id, lowered.root);
       uses.insert(id, us);
-      lines.insert(id, Lines::new(&contents));
+      syntax_data.insert(
+        id,
+        SyntaxData {
+          lines: Lines::new(&contents),
+          ast_root: AstRoot::cast(parsed.tree.clone().into()).unwrap(),
+          ptrs: lowered.ptrs,
+          errors: SyntaxErrors {
+            lex: lexed.errors,
+            uses: uses_errors,
+            parse: parsed.errors,
+            lower: lowered.errors,
+          },
+        },
+      );
     }
     // determine a topo ordering of the file dependencies
     let graph: Graph<_> = uses
@@ -119,8 +118,7 @@ impl Db {
         ordering.sort_unstable();
         return Self {
           uris,
-          errors,
-          lines,
+          syntax_data,
           ordering,
           kind: Kind::CycleError(e.witness()),
         };
@@ -129,11 +127,12 @@ impl Db {
     // run statics in the order of the topo order, update errors. TODO this
     // should detect duplicate/incompatible declarations across imports
     let mut cx = Cx::default();
-    let mut envs = map_with_capacity::<FileId, Env>(num_files);
+    let mut semantic_data =
+      map_with_capacity::<FileId, SemanticData>(num_files);
     for &id in ordering.iter() {
       let mut import = Import::default();
       for &id in graph[&id].iter() {
-        let env = &envs[&id];
+        let env = &semantic_data[&id].env;
         for (name, data) in env.fns.iter() {
           // TODO this should actually be the logic that checks for compatible
           // function declarations
@@ -149,22 +148,20 @@ impl Db {
         }
       }
       let env = get_statics(&mut cx, &import, id, &hir_roots[&id]);
-      envs.insert(id, env);
-      let es = errors.get_mut(&id).unwrap();
-      es.statics = std::mem::take(&mut cx.errors);
+      semantic_data.insert(
+        id,
+        SemanticData {
+          env,
+          errors: std::mem::take(&mut cx.errors),
+        },
+      );
     }
     // return
     Self {
       uris,
-      lines,
-      errors,
+      syntax_data,
       ordering,
-      kind: Kind::Done(Box::new(Done {
-        ast_roots,
-        ptrs,
-        cx,
-        envs,
-      })),
+      kind: Kind::Done(Box::new(Done { cx, semantic_data })),
     }
   }
 
@@ -175,10 +172,8 @@ impl Db {
         .iter()
         .map(|&id| {
           let ds = get_diagnostics(
-            &self.errors[&id],
-            &self.lines[&id],
-            &done.ptrs[&id],
-            &done.ast_roots[&id],
+            &self.syntax_data[&id],
+            &done.semantic_data[&id],
             &done.cx.tys,
           );
           (self.uris.get(id), ds)
@@ -188,12 +183,8 @@ impl Db {
         .ordering
         .iter()
         .map(|&id| {
-          let ds = get_diagnostics_cycle_error(
-            &self.errors[&id],
-            &self.lines[&id],
-            id,
-            witness,
-          );
+          let ds =
+            get_diagnostics_cycle_error(&self.syntax_data[&id], id, witness);
           (self.uris.get(id), ds)
         })
         .collect(),
@@ -208,18 +199,19 @@ impl Db {
   pub fn hover(&self, uri: &Uri, pos: Position) -> Option<Hover> {
     let done = self.kind.done()?;
     let id = self.uris.get_id(uri)?;
-    let lines = &self.lines[&id];
-    let idx = lines.text_size(pos);
-    let tok = done.ast_roots[&id]
+    let syntax_data = &self.syntax_data[&id];
+    let idx = syntax_data.lines.text_size(pos);
+    let tok = syntax_data
+      .ast_root
       .syntax()
       .token_at_offset(idx)
       .left_biased()?;
     let node = Expr::cast(tok.parent().into())?;
-    let expr = *done.ptrs[&id].expr.get(&AstPtr::new(&node))?;
-    let ty = *done.envs[&id].expr_tys.get(expr)?;
+    let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&node))?;
+    let ty = *done.semantic_data[&id].env.expr_tys.get(expr)?;
     let ty = ty.display(&done.cx.tys).to_string();
     let contents = Markdown::new(format!("```c0\n{}\n```", ty));
-    let range = lines.range(node.syntax().text_range());
+    let range = syntax_data.lines.range(node.syntax().text_range());
     Some(Hover { contents, range })
   }
 }
@@ -239,52 +231,63 @@ fn get_text_range(ptrs: &Ptrs, ast_root: &AstRoot, id: Id) -> TextRange {
   }
 }
 
-fn get_diagnostics(
-  errors: &Errors,
-  lines: &Lines,
-  ptrs: &Ptrs,
-  ast_root: &AstRoot,
-  tys: &TyDb,
-) -> Vec<Diagnostic> {
-  errors
+fn get_syntax_diagnostics(
+  syntax_data: &SyntaxData,
+) -> impl Iterator<Item = (TextRange, String)> + '_ {
+  syntax_data
+    .errors
     .lex
     .iter()
     .map(|x| (x.range, x.kind.to_string()))
-    .chain(errors.uses.iter().map(|x| (x.range, x.kind.to_string())))
     .chain(
-      errors
+      syntax_data
+        .errors
+        .uses
+        .iter()
+        .map(|x| (x.range, x.kind.to_string())),
+    )
+    .chain(
+      syntax_data
+        .errors
         .parse
         .iter()
         .map(|x| (x.range, x.expected.to_string())),
     )
-    .chain(errors.lower.iter().map(|x| (x.range, x.to_string())))
-    .chain(errors.statics.iter().map(|x| {
-      let range = get_text_range(ptrs, ast_root, x.id);
+    .chain(
+      syntax_data
+        .errors
+        .lower
+        .iter()
+        .map(|x| (x.range, x.to_string())),
+    )
+}
+
+fn get_diagnostics(
+  syntax_data: &SyntaxData,
+  semantic_data: &SemanticData,
+  tys: &TyDb,
+) -> Vec<Diagnostic> {
+  get_syntax_diagnostics(syntax_data)
+    .chain(semantic_data.errors.iter().map(|x| {
+      let range =
+        get_text_range(&syntax_data.ptrs, &syntax_data.ast_root, x.id);
       (range, x.kind.display(tys).to_string())
     }))
     .map(|(rng, message)| Diagnostic {
-      range: lines.range(rng),
+      range: syntax_data.lines.range(rng),
       message,
     })
     .collect()
 }
 
 fn get_diagnostics_cycle_error(
-  errors: &Errors,
-  lines: &Lines,
+  syntax_data: &SyntaxData,
   id: FileId,
   witness: FileId,
 ) -> Vec<Diagnostic> {
-  assert!(errors.parse.is_empty());
-  assert!(errors.lower.is_empty());
-  assert!(errors.statics.is_empty());
-  let mut ret: Vec<_> = errors
-    .lex
-    .iter()
-    .map(|x| (x.range, x.kind.to_string()))
-    .chain(errors.uses.iter().map(|x| (x.range, x.kind.to_string())))
+  let mut ret: Vec<_> = get_syntax_diagnostics(syntax_data)
     .map(|(rng, message)| Diagnostic {
-      range: lines.range(rng),
+      range: syntax_data.lines.range(rng),
       message,
     })
     .collect();
@@ -320,16 +323,26 @@ impl Kind {
 }
 
 struct Done {
-  ast_roots: FxHashMap<FileId, AstRoot>,
-  ptrs: FxHashMap<FileId, Ptrs>,
   cx: Cx,
-  envs: FxHashMap<FileId, Env>,
+  semantic_data: FxHashMap<FileId, SemanticData>,
 }
 
-struct Errors {
+/// not really 'syntax', but more in contrast to semantic info from statics.
+struct SyntaxData {
+  lines: Lines,
+  ast_root: AstRoot,
+  ptrs: Ptrs,
+  errors: SyntaxErrors,
+}
+
+struct SyntaxErrors {
   lex: Vec<lex::Error>,
   uses: Vec<crate::uses::Error>,
   parse: Vec<parse::Error>,
   lower: Vec<lower::PragmaError>,
-  statics: Vec<statics::Error>,
+}
+
+struct SemanticData {
+  env: Env,
+  errors: Vec<statics::Error>,
 }
