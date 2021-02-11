@@ -1,4 +1,4 @@
-use statics_neue::{FileId, FileKind};
+use statics::{FileId, FileKind};
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::hash::Hash;

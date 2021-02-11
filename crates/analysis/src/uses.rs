@@ -1,7 +1,7 @@
 //! TODO make this its own crate?
 
 use crate::uri::Map;
-use statics_neue::FileId;
+use statics::FileId;
 use std::fmt;
 use std::path::{Component, PathBuf};
 

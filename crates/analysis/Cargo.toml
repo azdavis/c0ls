@@ -11,6 +11,6 @@ lex = { path = "../lex" }
 lower = { path = "../lower" }
 parse = { path = "../parse" }
 rustc-hash = "1"
-statics-neue = { path = "../statics-neue" }
+statics = { path = "../statics" }
 syntax = { path = "../syntax" }
 topo-sort = { path = "../topo-sort" }

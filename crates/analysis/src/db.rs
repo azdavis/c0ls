@@ -4,7 +4,7 @@ use crate::uri::{Map, Uri};
 use crate::uses::{get as get_use, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics_neue::{
+use statics::{
   get as get_statics, Cx, Env, FileId, FileKind, Id, Import, TyDb,
 };
 use std::hash::{BuildHasher, BuildHasherDefault};
@@ -340,5 +340,5 @@ struct Errors {
   uses: Vec<crate::uses::Error>,
   parse: Vec<parse::Error>,
   lower: Vec<lower::PragmaError>,
-  statics: Vec<statics_neue::Error>,
+  statics: Vec<statics::Error>,
 }

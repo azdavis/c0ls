@@ -9,7 +9,7 @@ dependencies = [
  "lower",
  "parse",
  "rustc-hash",
- "statics-neue",
+ "statics",
  "syntax",
  "topo-sort",
 ]
@@ -21,7 +21,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
-name = "cli-neue"
+name = "cli"
 version = "0.1.0"
 dependencies = [
  "analysis",
@@ -174,7 +174,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ca0f7ce3a29234210f0f4f0b56f8be2e722488b95cb522077943212da3b32eb"
 
 [[package]]
-name = "statics-neue"
+name = "statics"
 version = "0.1.0"
 dependencies = [
  "hir",

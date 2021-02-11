@@ -1,5 +1,5 @@
 [package]
-name = "statics-neue"
+name = "statics"
 version = "0.1.0"
 authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
 edition = "2018"
