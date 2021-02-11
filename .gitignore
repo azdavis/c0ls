@@ -1,7 +1,8 @@
 *.tmp
 /.vscode/cspell.json
 /compiler
-/crates/syntax/src/generated.rs
+/crates/syntax/src/ast.rs
+/crates/syntax/src/kind.rs
 /pdf
 /target
 /thoughts.md

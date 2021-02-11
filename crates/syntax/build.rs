@@ -3,9 +3,7 @@ use std::io::Write as _;
 use std::process::{Command, Stdio};
 use syntax_gen::gen;
 
-const OUT_FILE: &str = "src/generated.rs";
-
-fn main() {
+fn write_rust_file(name: &str, contents: &str) {
   let mut proc = Command::new("rustfmt")
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
@@ -15,7 +13,7 @@ fn main() {
     .stdin
     .take()
     .unwrap()
-    .write_all(gen().as_bytes())
+    .write_all(contents.as_bytes())
     .unwrap();
   assert!(proc.wait().unwrap().success());
   let mut stdout = proc.stdout.take().unwrap();
@@ -23,7 +21,13 @@ fn main() {
     .write(true)
     .create(true)
     .truncate(true)
-    .open(OUT_FILE)
+    .open(name)
     .unwrap();
   std::io::copy(&mut stdout, &mut out_file).unwrap();
+}
+
+fn main() {
+  let g = gen();
+  write_rust_file("src/kind.rs", &g.kind);
+  write_rust_file("src/ast.rs", &g.ast);
 }

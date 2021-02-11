@@ -1,7 +1,6 @@
 //! Generates the Rust code for the `syntax` crate.
 
 #![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 mod alt;
@@ -19,8 +18,13 @@ enum Kind {
   Alt,
 }
 
-/// Returns a string of Rust code to be used in the `syntax` crate.
-pub fn gen() -> String {
+#[derive(Debug)]
+pub struct Gen {
+  pub kind: String,
+  pub ast: String,
+}
+
+pub fn gen() -> Gen {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
   let tokens = token::TokenDb::new(&grammar);
   let cx = Cx { grammar, tokens };
@@ -74,7 +78,7 @@ pub fn gen() -> String {
     .chain(token::CONTENT.iter().map(|&(n, _)| util::ident(n)));
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
-  let ret = quote! {
+  let kind = quote! {
     pub use event_parse;
     pub use rowan;
 
@@ -147,42 +151,44 @@ pub fn gen() -> String {
     pub type SyntaxNode = rowan::SyntaxNode<C0>;
     pub type SyntaxToken = rowan::SyntaxToken<C0>;
     pub type SyntaxElement = rowan::SyntaxElement<C0>;
-
-    pub mod ast {
-      #![allow(clippy::iter_nth_zero)]
-
-      use super::{SyntaxElement, SyntaxKind as SK, SyntaxNode, SyntaxToken};
-
-      pub trait Cast: Sized {
-        fn cast(elem: SyntaxElement) -> Option<Self>;
-      }
-
-      pub trait Syntax {
-        fn syntax(&self) -> &SyntaxNode;
-      }
-
-      fn token<P>(parent: &P, kind: SK, idx: usize) -> Option<SyntaxToken>
-      where
-        P: Syntax,
-      {
-        parent
-          .syntax()
-          .children_with_tokens()
-          .filter_map(rowan::NodeOrToken::into_token)
-          .filter(move |tok| tok.kind() == kind)
-          .nth(idx)
-      }
-
-      fn children<P, C>(parent: &P) -> impl Iterator<Item = C>
-      where
-        P: Syntax,
-        C: Cast,
-      {
-        parent.syntax().children_with_tokens().filter_map(C::cast)
-      }
-
-      #(#types)*
-    }
   };
-  ret.to_string()
+  let ast = quote! {
+    #![allow(clippy::iter_nth_zero)]
+
+    use crate::kind::{SyntaxElement, SyntaxKind as SK, SyntaxNode, SyntaxToken};
+
+    pub trait Cast: Sized {
+      fn cast(elem: SyntaxElement) -> Option<Self>;
+    }
+
+    pub trait Syntax {
+      fn syntax(&self) -> &SyntaxNode;
+    }
+
+    fn token<P>(parent: &P, kind: SK, idx: usize) -> Option<SyntaxToken>
+    where
+      P: Syntax,
+    {
+      parent
+        .syntax()
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter(move |tok| tok.kind() == kind)
+        .nth(idx)
+    }
+
+    fn children<P, C>(parent: &P) -> impl Iterator<Item = C>
+    where
+      P: Syntax,
+      C: Cast,
+    {
+      parent.syntax().children_with_tokens().filter_map(C::cast)
+    }
+
+    #(#types)*
+  };
+  Gen {
+    kind: kind.to_string(),
+    ast: ast.to_string(),
+  }
 }

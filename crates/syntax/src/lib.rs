@@ -2,8 +2,10 @@
 
 #![deny(rust_2018_idioms)]
 
-mod generated;
-pub use generated::*;
+pub mod ast;
+mod kind;
+
+pub use kind::*;
 
 #[derive(Debug)]
 pub struct Use {
