@@ -216,13 +216,19 @@ impl Db {
       .ast_root
       .syntax()
       .token_at_offset(idx)
-      .left_biased()?;
-    let node = Expr::cast(tok.parent().into())?;
-    let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&node))?;
+      .right_biased()?;
+    let mut node = tok.parent();
+    let expr_node = loop {
+      match Expr::cast(node.clone().into()) {
+        Some(x) => break x,
+        None => node = node.parent()?,
+      }
+    };
+    let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&expr_node))?;
     let ty = *done.semantic_data[&id].env.expr_tys.get(expr)?;
     let ty = ty.display(&done.cx.tys).to_string();
     let contents = Markdown::new(format!("```c0\n{}\n```", ty));
-    let range = syntax_data.lines.range(node.syntax().text_range());
+    let range = syntax_data.lines.range(expr_node.syntax().text_range());
     Some(Hover { contents, range })
   }
 }
