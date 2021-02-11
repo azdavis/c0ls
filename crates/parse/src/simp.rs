@@ -4,16 +4,15 @@ use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn simp_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
-  let mut could_be_ty = true;
-  if p.at(SK::Ident) {
+  let could_be_ty = if p.at(SK::Ident) {
     match p.peek_n(1).map(|tok| tok.kind) {
-      // - `foo<EOF>` is definitely a parse error.
-      // - `foo(` is definitely the beginning of a function call.
-      // - `foo;` is definitely an identifier expr stmt.
-      //
-      // but if ty_opt sees an ident (which it will, because we are at one) it
-      // will consume it. stop that preemptively by not calling it.
-      None | Some(SK::LRound) | Some(SK::Semicolon) => could_be_ty = false,
+      // `foo bar;`
+      Some(SK::Ident) => true,
+      // `foo[] bar;`
+      Some(SK::LSquare) => {
+        // it actually _definitely_ is.
+        p.peek_n(2).map_or(false, |tok| tok.kind == SK::RSquare)
+      }
       Some(SK::Star) => {
         if p.peek_n(2).map_or(false, |tok| tok.kind == SK::Ident)
           && p.peek_n(3).map_or(false, |tok| tok.kind == SK::Semicolon)
@@ -40,11 +39,14 @@ pub(crate) fn simp_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
           return Some(p.exit(entered, SK::AmbiguousSimp));
         }
         // else, might be `foo ** bar;`, `foo*[] bar`, etc
+        true
       }
-      // else, might be `foo[] bar;`, `foo bar;`, etc
-      _ => {}
+      // else, might be `foo()`, `foo + bar`, `foo[bar]`, `foo.bar`, etc.
+      _ => false,
     }
-  }
+  } else {
+    true
+  };
   if could_be_ty {
     if let Some(ty) = ty_opt(p) {
       let entered = p.precede(ty);
