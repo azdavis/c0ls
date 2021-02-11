@@ -67,7 +67,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         "cannot dereference non-pointer type `{}`",
         t.display(self.tys)
       ),
-      ErrorKind::DerefNull => write!(f, "cannot dereference NULL"),
+      ErrorKind::DerefNull => write!(f, "cannot dereference `NULL`"),
       ErrorKind::Duplicate => write!(f, "duplicate definitions"),
       ErrorKind::FieldGetNonStructTy(t) => write!(
         f,
