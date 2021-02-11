@@ -24,6 +24,12 @@ impl Borrow<Path> for Uri {
   }
 }
 
+impl From<&str> for Uri {
+  fn from(val: &str) -> Self {
+    Self(PathBuf::from(val))
+  }
+}
+
 #[derive(Debug, Default)]
 pub(crate) struct Map {
   id_to_uri: HashMap<FileId, Uri>,
