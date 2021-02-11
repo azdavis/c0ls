@@ -45,6 +45,7 @@ pub(crate) fn item(p: &mut Parser<'_, SK>) {
     let entered = p.enter();
     p.bump();
     ty(p);
+    p.eat(SK::Ident);
     p.eat(SK::Semicolon);
     p.exit(entered, SK::TypedefItem);
   } else if p.at(SK::Pragma) {
