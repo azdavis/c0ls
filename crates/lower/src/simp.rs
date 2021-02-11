@@ -29,6 +29,11 @@ pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<hir::SimpId> {
       hir::Simp::Decl(name, ty, expr)
     }
     Simp::ExprSimp(simp) => hir::Simp::Expr(get_expr(cx, simp.expr())),
+    Simp::AmbiguousSimp(simp) => {
+      let lhs: Name = simp.lhs()?.text().into();
+      let rhs: Name = simp.rhs()?.text().into();
+      hir::Simp::Ambiguous(lhs, rhs)
+    }
   };
   let ret = cx.arenas.simp.alloc(data);
   cx.ptrs.simp.insert(ptr, ret);

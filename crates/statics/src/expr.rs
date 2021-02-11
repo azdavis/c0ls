@@ -1,9 +1,10 @@
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
+use crate::util::id::Id;
 use crate::util::ty::{Ty, TyData};
-use crate::util::types::{Cx, Env, FnCx};
+use crate::util::types::{Cx, Env, FnCx, Vars};
 use crate::util::{no_struct, no_unsized, no_void, unify, unify_impl};
-use hir::{BinOp, Expr, ExprId, UnOp};
+use hir::{BinOp, Expr, ExprId, Name, UnOp};
 
 pub(crate) fn get(
   cx: &mut Cx,
@@ -18,18 +19,7 @@ pub(crate) fn get(
     Expr::Char => Ty::Char,
     Expr::String => Ty::String,
     Expr::Null => Ty::PtrAny,
-    Expr::Name(ref name) => match fn_cx.vars.get(name) {
-      None => {
-        cx.err(expr, ErrorKind::UndefinedVar);
-        Ty::None
-      }
-      Some(var_data) => {
-        if !var_data.init {
-          cx.err(expr, ErrorKind::UninitializedVar);
-        }
-        var_data.ty
-      }
-    },
+    Expr::Name(ref name) => get_name(cx, &fn_cx.vars, expr, name),
     Expr::BinOp(lhs, op, rhs) => {
       let lhs_ty = get(cx, env, fn_cx, lhs);
       let rhs_ty = get(cx, env, fn_cx, rhs);
@@ -168,6 +158,27 @@ pub(crate) fn get(
   };
   env.expr_tys.insert(expr, ret);
   ret
+}
+
+/// only pub(crate) as its own function because of Simp::Ambiguous
+pub(crate) fn get_name<I: Into<Id>>(
+  cx: &mut Cx,
+  vars: &Vars,
+  id: I,
+  name: &Name,
+) -> Ty {
+  match vars.get(name) {
+    None => {
+      cx.err(id, ErrorKind::UndefinedVar);
+      Ty::None
+    }
+    Some(var_data) => {
+      if !var_data.init {
+        cx.err(id, ErrorKind::UninitializedVar);
+      }
+      var_data.ty
+    }
+  }
 }
 
 fn bin_op_ty(op: BinOp) -> (&'static [Ty], Ty) {

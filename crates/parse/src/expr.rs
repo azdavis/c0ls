@@ -1,17 +1,14 @@
 use crate::ty::ty;
-use crate::util::{comma_sep, must, TypeDefs};
+use crate::util::{comma_sep, must};
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn expr(p: &mut Parser<'_, SK>, tds: &TypeDefs) {
-  must(p, |p| expr_opt(p, tds))
+pub(crate) fn expr(p: &mut Parser<'_, SK>) {
+  must(p, expr_opt)
 }
 
-pub(crate) fn expr_opt(
-  p: &mut Parser<'_, SK>,
-  tds: &TypeDefs,
-) -> Option<Exited> {
-  expr_prec(p, tds, 0)
+pub(crate) fn expr_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+  expr_prec(p, 0)
 }
 
 const PRIM: [(SK, SK); 7] = [
@@ -24,7 +21,7 @@ const PRIM: [(SK, SK); 7] = [
   (SK::NullKw, SK::NullExpr),
 ];
 
-fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
+fn expr_hd(p: &mut Parser<'_, SK>) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {
       let entered = p.enter();
@@ -35,7 +32,7 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   if p.at(SK::LRound) {
     let entered = p.enter();
     p.bump();
-    expr(p, tds);
+    expr(p);
     p.eat(SK::RRound);
     Some(p.exit(entered, SK::ParenExpr))
   } else if p.at(SK::Ident) {
@@ -43,7 +40,7 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
     p.bump();
     if p.at(SK::LRound) {
       p.bump();
-      comma_sep(p, SK::RRound, SK::Arg, |p| expr(p, tds));
+      comma_sep(p, SK::RRound, SK::Arg, expr);
       Some(p.exit(entered, SK::CallExpr))
     } else {
       Some(p.exit(entered, SK::IdentExpr))
@@ -56,22 +53,22 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
     let entered = p.enter();
     p.bump();
     // higher than any infix op prec
-    must(p, |p| expr_prec(p, tds, 11));
+    must(p, |p| expr_prec(p, 11));
     Some(p.exit(entered, SK::UnOpExpr))
   } else if p.at(SK::AllocKw) {
     let entered = p.enter();
     p.bump();
     p.eat(SK::LRound);
-    ty(p, tds);
+    ty(p);
     p.eat(SK::RRound);
     Some(p.exit(entered, SK::AllocExpr))
   } else if p.at(SK::AllocArrayKw) {
     let entered = p.enter();
     p.bump();
     p.eat(SK::LRound);
-    ty(p, tds);
+    ty(p);
     p.eat(SK::Comma);
-    expr(p, tds);
+    expr(p);
     p.eat(SK::RRound);
     Some(p.exit(entered, SK::AllocArrayExpr))
   } else {
@@ -79,12 +76,8 @@ fn expr_hd(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
   }
 }
 
-fn expr_prec(
-  p: &mut Parser<'_, SK>,
-  tds: &TypeDefs,
-  min_prec: u8,
-) -> Option<Exited> {
-  let mut exited = expr_hd(p, tds)?;
+fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
+  let mut exited = expr_hd(p)?;
   loop {
     exited = if let Some(prec) = infix_prec(p) {
       if prec <= min_prec {
@@ -92,7 +85,7 @@ fn expr_prec(
       }
       let entered = p.precede(exited);
       p.bump();
-      must(p, |p| expr_prec(p, tds, prec));
+      must(p, |p| expr_prec(p, prec));
       p.exit(entered, SK::BinOpExpr)
     } else if p.at(SK::Question) {
       if min_prec != 0 {
@@ -100,9 +93,9 @@ fn expr_prec(
       }
       let entered = p.precede(exited);
       p.bump();
-      expr(p, tds);
+      expr(p);
       p.eat(SK::Colon);
-      expr(p, tds);
+      expr(p);
       p.exit(entered, SK::TernaryExpr)
     } else if p.at(SK::Dot) {
       let entered = p.precede(exited);
@@ -117,7 +110,7 @@ fn expr_prec(
     } else if p.at(SK::LSquare) {
       let entered = p.precede(exited);
       p.bump();
-      expr(p, tds);
+      expr(p);
       p.eat(SK::RSquare);
       p.exit(entered, SK::SubscriptExpr)
     } else {

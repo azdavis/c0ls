@@ -53,6 +53,7 @@ Simp =
 | IncDecSimp
 | DeclSimp
 | ExprSimp
+| AmbiguousSimp
 
 AsgnSimp = lhs:Expr op:AsgnOp rhs:Expr
 IncDecSimp = Expr IncDec
@@ -60,6 +61,7 @@ IncDec = '++' | '--'
 DeclSimp = Ty 'Ident' DefnTail?
 DefnTail = '=' Expr
 ExprSimp = Expr
+AmbiguousSimp = lhs:'Ident' '*' rhs:'Ident'
 
 Ty =
   IntTy

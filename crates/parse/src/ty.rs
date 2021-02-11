@@ -1,13 +1,13 @@
-use crate::util::{must, TypeDefs};
+use crate::util::must;
 use syntax::event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn ty(p: &mut Parser<'_, SK>, tds: &TypeDefs) {
-  must(p, |p| ty_opt(p, tds))
+pub(crate) fn ty(p: &mut Parser<'_, SK>) {
+  must(p, ty_opt)
 }
 
-pub(crate) fn ty_opt(p: &mut Parser<'_, SK>, tds: &TypeDefs) -> Option<Exited> {
-  ty_hd_opt(p, tds).map(|e| ty_tl(p, e))
+pub(crate) fn ty_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+  ty_hd_opt(p).map(|e| ty_tl(p, e))
 }
 
 const PRIM: [(SK, SK); 5] = [
@@ -18,10 +18,7 @@ const PRIM: [(SK, SK); 5] = [
   (SK::VoidKw, SK::VoidTy),
 ];
 
-pub(crate) fn ty_hd_opt(
-  p: &mut Parser<'_, SK>,
-  tds: &TypeDefs,
-) -> Option<Exited> {
+pub(crate) fn ty_hd_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {
       let entered = p.enter();
@@ -34,8 +31,8 @@ pub(crate) fn ty_hd_opt(
     p.bump();
     p.eat(SK::Ident);
     Some(p.exit(entered, SK::StructTy))
-  } else if p.at(SK::Ident) && tds.contains(p.peek().unwrap().text) {
-    // the one time we read from `tds`
+  } else if p.at(SK::Ident) {
+    // see `simp_opt`.
     let entered = p.enter();
     p.bump();
     Some(p.exit(entered, SK::IdentTy))

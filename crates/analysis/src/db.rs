@@ -120,13 +120,12 @@ impl Db {
       }
     };
     // parse + lower in the order of the topo order, update errors
-    let mut type_defs = parse::TypeDefs::default();
     let mut ast_roots = map_with_capacity(files.len());
     let mut ptrs = map_with_capacity(files.len());
     let mut hir_roots = map_with_capacity(files.len());
     for &id in ordering.iter() {
       let ts = tokens.remove(&id).unwrap();
-      let p = parse::get(ts, &mut type_defs);
+      let p = parse::get(ts);
       ast_roots.insert(id, AstRoot::cast(p.tree.clone().into()).unwrap());
       let lowered = lower::get(AstRoot::cast(p.tree.into()).unwrap());
       ptrs.insert(id, lowered.ptrs);

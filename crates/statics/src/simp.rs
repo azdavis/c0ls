@@ -1,7 +1,7 @@
-use crate::expr::get as get_expr;
+use crate::expr::{get as get_expr, get_name as get_name_expr};
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
-use crate::util::ty::Ty;
+use crate::util::ty::{Ty, TyData};
 use crate::util::types::{Cx, Env, FnCx, Import, VarData};
 use crate::util::{no_struct, no_void, unify};
 use hir::{Arenas, AssignOp, Expr, ExprId, Name, Simp, SimpId, UnOp};
@@ -76,6 +76,37 @@ pub(crate) fn get<'a>(
     }
     Simp::Expr(expr) => {
       get_expr(cx, env, fn_cx, expr);
+    }
+    // hacky. using `simp` as the ID for the error is not great.
+    Simp::Ambiguous(ref lhs, ref rhs) => {
+      let ty = env
+        .type_defs
+        .get(lhs)
+        .or_else(|| fn_cx.import.type_defs.get(lhs));
+      match ty {
+        // multiplication.
+        None => {
+          let lhs_ty = get_name_expr(cx, &fn_cx.vars, simp, lhs);
+          let rhs_ty = get_name_expr(cx, &fn_cx.vars, simp, rhs);
+          unify(cx, Ty::Int, lhs_ty, simp);
+          unify(cx, Ty::Int, rhs_ty, simp);
+        }
+        // declaration. largely duplicated from Simp::Decl.
+        Some(&ty) => {
+          let ty = cx.tys.mk(TyData::Ptr(ty));
+          no_void(cx, ty, simp);
+          no_struct(cx, ty, simp);
+          let data = VarData { ty, init: false };
+          let dup = fn_cx.vars.insert(rhs.clone(), data).is_some()
+            || env.type_defs.contains_key(rhs)
+            || fn_cx.import.type_defs.contains_key(rhs);
+          if dup {
+            cx.err(simp, ErrorKind::Duplicate);
+          }
+          env.decl_tys.insert(simp, ty);
+          ret = VarInfo::Decl;
+        }
+      }
     }
   }
   ret

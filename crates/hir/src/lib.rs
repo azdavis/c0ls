@@ -119,6 +119,12 @@ pub enum Simp {
   IncDec(ExprId, IncDec),
   Decl(Name, TyId, Option<ExprId>),
   Expr(ExprId),
+  /// Like `foo * bar;`, which might be
+  /// - a declaration of the variable `bar` of type pointer-to-`foo`, or
+  /// - an expression multiplying the variables `foo` and `bar`.
+  ///
+  /// We cannot know which it is without knowing what typedefs are in scope.
+  Ambiguous(Name, Name),
 }
 
 #[derive(Debug, Clone, Copy)]

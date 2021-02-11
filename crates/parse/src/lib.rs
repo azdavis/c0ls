@@ -20,8 +20,6 @@ mod stmt;
 mod ty;
 mod util;
 
-pub use util::TypeDefs;
-
 #[derive(Debug)]
 pub struct Parse {
   pub tree: SyntaxNode,
@@ -53,9 +51,9 @@ impl fmt::Display for Expected {
   }
 }
 
-pub fn get(tokens: Vec<Token<'_, SK>>, tds: &mut TypeDefs) -> Parse {
+pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
   let mut p = Parser::new(tokens);
-  root::root(&mut p, tds);
+  root::root(&mut p);
   let mut sink = BuilderSink::default();
   p.finish(&mut sink);
   Parse {
