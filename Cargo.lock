@@ -99,6 +99,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lower"
+version = "0.1.0"
+dependencies = [
+ "hir",
+ "rustc-hash",
+ "syntax",
+ "unwrap-or",
+]
+
+[[package]]
 name = "memoffset"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
