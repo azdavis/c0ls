@@ -79,9 +79,6 @@ pub fn gen() -> Gen {
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let kind = quote! {
-    pub use event_parse;
-    pub use rowan;
-
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(u16)]
     pub enum SyntaxKind {

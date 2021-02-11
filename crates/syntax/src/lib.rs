@@ -5,7 +5,9 @@
 pub mod ast;
 mod kind;
 
+pub use event_parse;
 pub use kind::*;
+pub use rowan;
 
 #[derive(Debug)]
 pub struct Use {
