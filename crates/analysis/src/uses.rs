@@ -67,13 +67,13 @@ pub(crate) struct Use {
   pub range: syntax::rowan::TextRange,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum UseKind {
   File(FileId),
   Lib(Lib),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum Lib {
   Args,
   Conio,

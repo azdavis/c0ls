@@ -113,7 +113,7 @@ impl Db {
       Ok(x) => x,
       Err(e) => {
         // give up on further processing. conjure up a stable but arbitrary
-        // ordering
+        // ordering.
         let mut ordering: Vec<_> = uris.iter().collect();
         ordering.sort_unstable();
         return Self {
