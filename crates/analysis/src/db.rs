@@ -60,8 +60,7 @@ impl Db {
     for (id, contents) in id_and_contents {
       let lexed = lex::get(&contents);
       let parsed = parse::get(lexed.tokens);
-      let lowered =
-        lower::get(AstRoot::cast(parsed.tree.clone().into()).unwrap());
+      let lowered = lower::get(parsed.root.clone());
       let mut us = Vec::with_capacity(lexed.uses.len());
       let mut uses_errors = Vec::new();
       if let Some(header_id) = header_id {
@@ -84,7 +83,7 @@ impl Db {
         id,
         SyntaxData {
           lines: Lines::new(&contents),
-          ast_root: AstRoot::cast(parsed.tree.clone().into()).unwrap(),
+          ast_root: parsed.root,
           ptrs: lowered.ptrs,
           errors: SyntaxErrors {
             lex: lexed.errors,

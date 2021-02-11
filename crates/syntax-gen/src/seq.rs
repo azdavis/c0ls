@@ -8,7 +8,13 @@ use ungrammar::{Node, Rule, Token};
 pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let mut counts = Counts::default();
   let fields = rules.iter().map(|rule| field(cx, &mut counts, rule));
+  let derives = if name == "Root" {
+    quote! { #[derive(Debug, Clone)] }
+  } else {
+    quote! {}
+  };
   quote! {
+    #derives
     pub struct #name(SyntaxNode);
     impl #name {
       #(#fields)*

@@ -8,6 +8,7 @@
 #![deny(rust_2018_idioms)]
 
 use std::fmt;
+use syntax::ast::{Cast as _, Root};
 use syntax::event_parse::{Parser, Sink, Token};
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::{SyntaxKind as SK, SyntaxNode};
@@ -22,7 +23,7 @@ mod util;
 
 #[derive(Debug)]
 pub struct Parse {
-  pub tree: SyntaxNode,
+  pub root: Root,
   pub errors: Vec<Error>,
 }
 
@@ -56,8 +57,9 @@ pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
   root::root(&mut p);
   let mut sink = BuilderSink::default();
   p.finish(&mut sink);
+  let node = SyntaxNode::new_root(sink.builder.finish());
   Parse {
-    tree: SyntaxNode::new_root(sink.builder.finish()),
+    root: Root::cast(node.into()).unwrap(),
     errors: sink.errors,
   }
 }
