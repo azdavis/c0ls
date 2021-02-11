@@ -183,6 +183,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "statics-neue"
+version = "0.1.0"
+dependencies = [
+ "hir",
+ "rustc-hash",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
