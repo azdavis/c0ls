@@ -80,7 +80,6 @@ mod tests {
   fn check_cycle(graph: Graph<u32>) {
     let err = topological_sort(&graph).unwrap_err();
     assert!(matches!(err, CycleError(_)));
-    todo!()
   }
 
   #[test]
