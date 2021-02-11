@@ -1,7 +1,7 @@
 use crate::uri::Uri;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position {
   /// zero-based
   pub line: u32,
@@ -14,7 +14,7 @@ impl fmt::Display for Position {
   }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Range {
   pub start: Position,
   pub end: Position,
@@ -32,7 +32,7 @@ pub struct Location {
   pub range: Range,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Diagnostic {
   pub range: Range,
   pub message: String,
@@ -44,7 +44,7 @@ impl fmt::Display for Diagnostic {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Markdown(String);
 
 impl Markdown {
@@ -57,7 +57,7 @@ impl Markdown {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Hover {
   pub contents: Markdown,
   pub range: Range,
