@@ -29,16 +29,16 @@ impl Db {
   where
     S: BuildHasher,
   {
-    // - assign file IDs
-    // - lex
-    // - calculate line ending information
+    // assign file IDs
+    let num_files = files.len();
     let mut uris = Map::default();
-    let mut lexes = map_with_capacity(files.len());
-    let mut lines = map_with_capacity(files.len());
-    for (uri, contents) in files
-      .iter()
-      .chain(header.as_ref().map(|&(ref u, ref c)| (u, c)))
-    {
+    let mut id_and_contents = map_with_capacity(num_files);
+    let header_id = header.map(|(uri, contents)| {
+      let id = uris.insert(uri, FileKind::Header);
+      id_and_contents.insert(id, contents);
+      id
+    });
+    for (uri, contents) in files {
       let ext = uri
         .as_path()
         .extension()
@@ -50,19 +50,23 @@ impl Db {
         _ => FileKind::Source,
       };
       let id = uris.insert(uri.clone(), kind);
-      lexes.insert(id, lex::get(contents));
-      lines.insert(id, Lines::new(contents));
+      id_and_contents.insert(id, contents);
     }
-    let header_id = header.as_ref().map(|&(ref u, _)| uris.get_id(u).unwrap());
-    // - separate each lex into (tokens, uses, errors)
+    // - lex, parse, lower
     // - process uses to resolve libraries/files
-    // - put tokens, processed uses, lex errors + resolution errors each into
-    //   separate maps
-    let mut tokens = map_with_capacity(files.len());
-    let mut uses = map_with_capacity(files.len());
-    let mut errors = map_with_capacity(files.len());
-    for (id, lex) in lexes {
-      let mut us = Vec::with_capacity(lex.uses.len());
+    // - calculate line ending information
+    let mut errors = map_with_capacity(num_files);
+    let mut ast_roots = map_with_capacity(num_files);
+    let mut ptrs = map_with_capacity(num_files);
+    let mut hir_roots = map_with_capacity(num_files);
+    let mut uses = map_with_capacity(num_files);
+    let mut lines = map_with_capacity(num_files);
+    for (id, contents) in id_and_contents {
+      let lexed = lex::get(&contents);
+      let parsed = parse::get(lexed.tokens);
+      let lowered =
+        lower::get(AstRoot::cast(parsed.tree.clone().into()).unwrap());
+      let mut us = Vec::with_capacity(lexed.uses.len());
       let mut uses_errors = Vec::new();
       if let Some(header_id) = header_id {
         if header_id != id {
@@ -72,22 +76,25 @@ impl Db {
           });
         }
       }
-      for u in lex.uses {
+      for u in lexed.uses {
         match get_use(&uris, id, u) {
           Ok(u) => us.push(u),
           Err(e) => uses_errors.push(e),
         }
       }
       let es = Errors {
-        lex: lex.errors,
+        lex: lexed.errors,
         uses: uses_errors,
-        parse: vec![],
-        lower: vec![],
+        parse: parsed.errors,
+        lower: lowered.errors,
         statics: vec![],
       };
-      tokens.insert(id, lex.tokens);
       errors.insert(id, es);
+      ast_roots.insert(id, AstRoot::cast(parsed.tree.clone().into()).unwrap());
+      ptrs.insert(id, lowered.ptrs);
+      hir_roots.insert(id, lowered.root);
       uses.insert(id, us);
+      lines.insert(id, Lines::new(&contents));
     }
     // determine a topo ordering of the file dependencies
     let graph: Graph<_> = uses
@@ -119,25 +126,10 @@ impl Db {
         };
       }
     };
-    // parse + lower in the order of the topo order, update errors
-    let mut ast_roots = map_with_capacity(files.len());
-    let mut ptrs = map_with_capacity(files.len());
-    let mut hir_roots = map_with_capacity(files.len());
-    for &id in ordering.iter() {
-      let ts = tokens.remove(&id).unwrap();
-      let p = parse::get(ts);
-      ast_roots.insert(id, AstRoot::cast(p.tree.clone().into()).unwrap());
-      let lowered = lower::get(AstRoot::cast(p.tree.into()).unwrap());
-      ptrs.insert(id, lowered.ptrs);
-      hir_roots.insert(id, lowered.root);
-      let es = errors.get_mut(&id).unwrap();
-      es.parse = p.errors;
-      es.lower = lowered.errors;
-    }
     // run statics in the order of the topo order, update errors. TODO this
     // should detect duplicate/incompatible declarations across imports
     let mut cx = Cx::default();
-    let mut envs = map_with_capacity::<FileId, Env>(files.len());
+    let mut envs = map_with_capacity::<FileId, Env>(num_files);
     for &id in ordering.iter() {
       let mut import = Import::default();
       for &id in graph[&id].iter() {
