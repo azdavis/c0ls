@@ -1,4 +1,8 @@
 {
+  "files.associations": {
+    "*.c0": "c",
+    "*.h0": "c"
+  },
   "files.exclude": {
     "crates/syntax/src/generated.rs": false,
     "compiler": true,
