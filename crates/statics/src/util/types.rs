@@ -30,17 +30,17 @@ pub struct Param {
   pub ty: Ty,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Import {
   pub fns: FxHashMap<Name, FnSig>,
   pub structs: FxHashMap<Name, NameToTy>,
   pub type_defs: FxHashMap<Name, Ty>,
 }
 
-impl Default for Import {
-  fn default() -> Self {
-    let mut fns = FxHashMap::default();
-    fns.insert(
+impl Import {
+  pub fn with_main() -> Self {
+    let mut ret = Self::default();
+    ret.fns.insert(
       "main".into(),
       FnSig {
         params: vec![],
@@ -48,11 +48,7 @@ impl Default for Import {
         defined: Defined::NotYet,
       },
     );
-    Self {
-      fns,
-      structs: FxHashMap::default(),
-      type_defs: FxHashMap::default(),
-    }
+    ret
   }
 }
 

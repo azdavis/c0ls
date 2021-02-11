@@ -130,7 +130,7 @@ impl Db {
     let mut semantic_data =
       map_with_capacity::<FileId, SemanticData>(num_files);
     for &id in ordering.iter() {
-      let mut import = Import::default();
+      let mut import = Import::with_main();
       for &id in graph[&id].iter() {
         let env = &semantic_data[&id].env;
         for (name, data) in env.fns.iter() {
