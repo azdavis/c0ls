@@ -147,7 +147,7 @@ impl Db {
           import.type_defs.insert(name.clone(), ty);
         }
       }
-      let env = get_statics(&mut cx, &import, id, &hir_roots[&id]);
+      let env = get_statics(&mut cx, &import, id.kind(), &hir_roots[&id]);
       semantic_data.insert(
         id,
         SemanticData {

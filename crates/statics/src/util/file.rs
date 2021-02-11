@@ -24,7 +24,7 @@ impl FileId {
 }
 
 impl FileId {
-  pub(crate) fn kind(&self) -> FileKind {
+  pub fn kind(&self) -> FileKind {
     if (self.raw & TOP) == TOP {
       FileKind::Source
     } else {
