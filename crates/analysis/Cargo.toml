@@ -1,0 +1,16 @@
+[package]
+name = "analysis"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+hir = { path = "../hir" }
+lex = { path = "../lex" }
+lower = { path = "../lower" }
+parse = { path = "../parse" }
+rustc-hash = "1"
+statics-neue = { path = "../statics-neue" }
+syntax = { path = "../syntax" }
+topo-sort = { path = "../topo-sort" }
