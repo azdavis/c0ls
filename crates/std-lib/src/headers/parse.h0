@@ -1,0 +1,6 @@
+bool* parse_bool(string s);
+int* parse_int(string s, int base);
+int num_tokens(string s);
+bool int_tokens(string s, int base);
+string[] parse_tokens(string s);
+int[] parse_ints(string s, int base);

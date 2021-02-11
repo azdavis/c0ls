@@ -1,0 +1,15 @@
+int string_length(string s);
+char string_charat(string s, int idx);
+string string_join(string a, string b);
+string string_sub(string a, int start, int end);
+bool string_equal(string a, string b);
+int string_compare(string a, string b);
+string string_fromint(int i);
+string string_frombool(bool b);
+string string_fromchar(char c);
+string string_tolower(string s);
+bool string_terminated(char[] A, int n);
+char[] string_to_chararray(string s);
+string string_from_chararray(char[] A);
+int char_ord(char c);
+char char_chr(int n);

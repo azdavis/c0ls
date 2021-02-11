@@ -1,0 +1,7 @@
+struct file {};
+typedef struct file* file_t;
+bool file_closed(file_t f);
+file_t file_read(string path);
+void file_close(file_t f);
+bool file_eof(file_t f);
+string file_readline(file_t f);

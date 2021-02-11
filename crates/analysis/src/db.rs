@@ -1,7 +1,7 @@
 use crate::lines::Lines;
 use crate::types::{Diagnostic, Hover, Location, Markdown, Position, Range};
 use crate::uri::{Map, Uri};
-use crate::uses::{get as get_use, Use, UseKind};
+use crate::uses::{get as get_use, Lib, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{
@@ -125,13 +125,25 @@ impl Db {
     };
     // run statics in the order of the topo order, update errors. TODO this
     // should detect duplicate/incompatible declarations across imports
-    let mut cx = Cx::default();
+    let (mut cx, std_lib) = std_lib::get();
     let mut semantic_data =
       map_with_capacity::<FileId, SemanticData>(num_files);
     for &id in ordering.iter() {
       let mut import = Import::with_main();
-      for &id in graph[&id].iter() {
-        let env = &semantic_data[&id].env;
+      for u in uses[&id].iter() {
+        let env = match u.kind {
+          UseKind::File(id) => &semantic_data[&id].env,
+          UseKind::Lib(lib) => match lib {
+            Lib::Args => &std_lib.args,
+            Lib::Conio => &std_lib.conio,
+            Lib::File => &std_lib.file,
+            Lib::Img => &std_lib.img,
+            Lib::Parse => &std_lib.parse,
+            Lib::Rand => &std_lib.rand,
+            Lib::String => &std_lib.string,
+            Lib::Util => &std_lib.util,
+          },
+        };
         for (name, data) in env.fns.iter() {
           // TODO this should actually be the logic that checks for compatible
           // function declarations

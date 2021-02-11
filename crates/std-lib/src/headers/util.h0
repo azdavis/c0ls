@@ -1,0 +1,7 @@
+int int_size();
+int int_max();
+int int_min();
+int abs(int x);
+int max(int x, int y);
+int min(int x, int y);
+string int2hex(int x);

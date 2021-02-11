@@ -1,0 +1,8 @@
+void print(string s);
+void println(string s);
+void printint(int i);
+void printbool(bool b);
+void printchar(char c);
+void flush();
+bool eof();
+string readline();
