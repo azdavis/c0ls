@@ -1,0 +1,8 @@
+bool coin() {
+  return 1 < 2;
+}
+
+void foo() {
+  int* x = *(coin() ? NULL : NULL);
+  //       ^^^^^^^^^^^^^^^^^^^^^^^ error: cannot dereference `NULL`
+}

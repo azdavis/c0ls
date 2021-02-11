@@ -1,0 +1,4 @@
+void foo() {
+  int a =             123;
+  int x = a / 456; // ^^^ hover: int
+}

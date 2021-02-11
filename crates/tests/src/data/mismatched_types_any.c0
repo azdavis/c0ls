@@ -1,0 +1,6 @@
+void foo() {
+  bool x = true < false;
+  //       ^^^^ error: mismatched types
+  bool y = foo() == foo();
+  //       ^^^^^ error: mismatched types
+}

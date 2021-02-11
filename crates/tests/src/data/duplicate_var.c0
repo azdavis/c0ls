@@ -1,0 +1,13 @@
+void foo() {
+  int x;
+  {
+    int x;
+//  ^^^^^ error: duplicate
+  }
+  int x;
+//^^^^^ error: duplicate
+  int y;
+  int z;
+  int x;
+//^^^^^ error: duplicate
+}

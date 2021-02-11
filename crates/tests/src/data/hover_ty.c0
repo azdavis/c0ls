@@ -1,0 +1,33 @@
+struct s {
+  int x;
+  bool y;
+  struct s* next;
+};
+
+struct s* mk(int x) {
+  struct s* ret = alloc(struct s);
+  //              ^^^^^^^^^^^^^^^ hover: struct s*
+  ret->x = x;
+  //       ^ hover: int
+  ret->y = false;
+  //       ^^^^^ hover: bool
+  return ret;
+}
+
+int consume(struct s* guy) {
+  if (guy == NULL) {
+  //  ^^^ hover: struct s*
+    return 123;
+  //       ^^^ hover: int
+  }
+  int ret = guy->x;
+  //        ^^^ hover: struct s*
+  if (guy->y) {
+    ret += 1;
+  //       ^ hover: int
+  }
+  ret += consume(guy->next);
+  //     ^^^^^^^^^^^^^^^^^^ hover: int
+  return ret;
+  //     ^^^ hover: int
+}
