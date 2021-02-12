@@ -22,12 +22,7 @@ use syntax::{SyntaxKind as SK, Use, UseKind};
 #[derive(Debug)]
 pub struct Lex<'input> {
   pub tokens: Vec<Token<'input, SK>>,
-  /// although the tokens returned borrow the input string, for the uses, we
-  /// take ownership. this is because the tokens are going right to the parser
-  /// (which end the borrow on the input string) but the uses are sticking
-  /// around longer, and we don't want to have to hold on to the input string
-  /// for that long.
-  pub uses: Vec<Use>,
+  pub uses: Vec<Use<'input>>,
   pub errors: Vec<Error>,
 }
 
@@ -91,10 +86,10 @@ pub fn get(s: &str) -> Lex<'_> {
 }
 
 #[derive(Default)]
-struct Cx {
+struct Cx<'input> {
   errors: Vec<Error>,
   i: usize,
-  uses: Vec<Use>,
+  uses: Vec<Use<'input>>,
 }
 
 const MAX: u32 = 1 << 31;
@@ -102,7 +97,7 @@ const MAX: u32 = 1 << 31;
 /// requires bs is a valid &str. returns sk and updates cx.i from start to end
 /// such that bs[start..end] is a str and sk is the kind for that str.
 #[inline]
-fn go(cx: &mut Cx, bs: &[u8]) -> SK {
+fn go<'input>(cx: &mut Cx<'input>, bs: &'input [u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
   // comments
@@ -188,11 +183,10 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     };
     match end_lit {
       Some(end_lit) => {
-        let use_str = std::str::from_utf8(&bs[start_lit..end_lit]).unwrap();
         cx.uses.push(Use {
           kind,
           range: range(start, cx.i),
-          path: use_str.to_owned(),
+          path: std::str::from_utf8(&bs[start_lit..end_lit]).unwrap(),
         });
       }
       None => err(cx, start, ErrorKind::UnclosedPragmaLit),
@@ -327,7 +321,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   SK::Invalid
 }
 
-fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
+fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
   while let Some(b) = bs.get(cx.i) {
     if p(b) {
       cx.i += 1;
@@ -337,7 +331,7 @@ fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
   }
 }
 
-fn err(cx: &mut Cx, start: usize, kind: ErrorKind) {
+fn err(cx: &mut Cx<'_>, start: usize, kind: ErrorKind) {
   cx.errors.push(Error {
     range: range(start, cx.i),
     kind,

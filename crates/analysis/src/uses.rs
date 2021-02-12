@@ -3,7 +3,11 @@ use statics::FileId;
 use std::fmt;
 use std::path::{Component, PathBuf};
 
-pub(crate) fn get(map: &Map, id: FileId, u: syntax::Use) -> Result<Use, Error> {
+pub(crate) fn get(
+  map: &Map,
+  id: FileId,
+  u: syntax::Use<'_>,
+) -> Result<Use, Error> {
   match get_impl(map, id, u.path, u.kind) {
     Ok(kind) => Ok(Use {
       range: u.range,
@@ -19,7 +23,7 @@ pub(crate) fn get(map: &Map, id: FileId, u: syntax::Use) -> Result<Use, Error> {
 fn get_impl(
   map: &Map,
   id: FileId,
-  path: String,
+  path: &str,
   kind: syntax::UseKind,
 ) -> Result<UseKind, ErrorKind> {
   match kind {
@@ -45,7 +49,7 @@ fn get_impl(
         None => Err(ErrorKind::NoSuchPath),
       }
     }
-    syntax::UseKind::Lib => match path.as_str() {
+    syntax::UseKind::Lib => match path {
       "args" => Ok(UseKind::Lib(Lib::Args)),
       "conio" => Ok(UseKind::Lib(Lib::Conio)),
       "file" => Ok(UseKind::Lib(Lib::File)),

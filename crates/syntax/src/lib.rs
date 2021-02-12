@@ -10,10 +10,10 @@ pub use kind::*;
 pub use rowan;
 
 #[derive(Debug)]
-pub struct Use {
+pub struct Use<'a> {
   pub kind: UseKind,
   pub range: rowan::TextRange,
-  pub path: String,
+  pub path: &'a str,
 }
 
 #[derive(Debug, Clone, Copy)]
