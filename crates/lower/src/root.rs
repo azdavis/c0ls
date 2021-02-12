@@ -11,6 +11,11 @@ pub fn get(root: Root) -> Lowered {
       items.push(item)
     }
   }
+  cx.arenas.item.shrink_to_fit();
+  cx.arenas.expr.shrink_to_fit();
+  cx.arenas.ty.shrink_to_fit();
+  cx.arenas.stmt.shrink_to_fit();
+  cx.arenas.simp.shrink_to_fit();
   Lowered {
     root: hir::Root {
       arenas: cx.arenas,

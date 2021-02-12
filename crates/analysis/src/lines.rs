@@ -37,6 +37,7 @@ impl Lines {
       col += ts;
     }
     lines.push(Line { end, non_ascii });
+    lines.shrink_to_fit();
     Self { lines }
   }
 
