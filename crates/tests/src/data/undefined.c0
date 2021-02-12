@@ -1,0 +1,15 @@
+struct unit {};
+
+int main() {
+  struct unit *u = alloc(struct unit);
+  u->foo;
+//^^^^^^ error: undefined field
+  bar();
+//^^^^^ error: undefined function
+  quz y;
+//^^^ error: undefined typedef
+  alloc(struct what);
+//      ^^^^^^^^^^^ error: undefined struct
+  return x;
+  //     ^ error: undefined variable
+}

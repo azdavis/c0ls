@@ -37,6 +37,6 @@ fn mismatched_types_any() {
 }
 
 #[test]
-fn undefined_var() {
-  check(include_str!("data/undefined_var.c0"))
+fn undefined() {
+  check(include_str!("data/undefined.c0"))
 }
