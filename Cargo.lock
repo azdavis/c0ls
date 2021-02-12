@@ -31,9 +31,9 @@ dependencies = [
 
 [[package]]
 name = "countme"
-version = "2.0.1"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aa2b26822354da8572983762d79a7ba55981b3fbbc612164a0dbbd0213df7fe"
+checksum = "328b822bdcba4d4e402be8d9adb6eebf269f969f8eadef977a553ff3c4fbcb58"
 
 [[package]]
 name = "drop_bomb"
@@ -151,9 +151,9 @@ dependencies = [
 
 [[package]]
 name = "rowan"
-version = "0.12.2"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e05df24c035422fb2b845d66ef3542d6c4f8572eafe077175a30787b0254207"
+checksum = "e29b035c9f476b43074a36257464c487788a0a1b9aaf427b068dc147135eb1ab"
 dependencies = [
  "countme",
  "hashbrown",
@@ -245,9 +245,9 @@ dependencies = [
 
 [[package]]
 name = "ungrammar"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce24866975a8858d3a35eba845efc6b42962c5067afd2bc1a07b9ce0108d335c"
+checksum = "84c629795d377049f2a1dc5f42cf505dc5ba8b28a5df0a03f4183a24480e4a6a"
 
 [[package]]
 name = "unicode-xid"
