@@ -1,0 +1,7 @@
+int foo() {
+  break;
+//^^^^^^ error: cannot use this statement outside of a loop
+  continue;
+//^^^^^^^^^ error: cannot use this statement outside of a loop
+  return 3;
+}

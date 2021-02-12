@@ -1,0 +1,11 @@
+void x(int y) {}
+
+void foo() {
+  int x = 3;
+  x[3];
+//^^^^ error: cannot subscript
+  x.foo;
+//^^^^^ error: cannot get field
+  x(3);
+//^^^^ error: cannot call
+}

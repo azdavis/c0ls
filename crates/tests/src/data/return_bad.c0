@@ -1,0 +1,12 @@
+void foo() {
+  return 3;
+//^^^^^^^^^ error: cannot return a value
+}
+
+int bar() {
+  return;
+//^^^^^^^ error: cannot return without a value
+}
+
+int quz() {}
+//        ^^ error: cannot reach end of function

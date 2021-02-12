@@ -7,6 +7,16 @@ mod support;
 use support::check;
 
 #[test]
+fn bad_op() {
+  check(include_str!("data/bad_op.c0"))
+}
+
+#[test]
+fn cond() {
+  check(include_str!("data/cond.c0"))
+}
+
+#[test]
 fn decl_in_for() {
   check(include_str!("data/decl_in_for.c0"))
 }
@@ -34,6 +44,16 @@ fn hover_ty() {
 #[test]
 fn mismatched_types_any() {
   check(include_str!("data/mismatched_types_any.c0"))
+}
+
+#[test]
+fn not_in_loop() {
+  check(include_str!("data/not_in_loop.c0"))
+}
+
+#[test]
+fn return_bad() {
+  check(include_str!("data/return_bad.c0"))
 }
 
 #[test]

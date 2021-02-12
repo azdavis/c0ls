@@ -1,0 +1,10 @@
+void foo() {
+  if (0) {}
+  //  ^ error: mismatched types
+  if ("nope") {}
+  //  ^^^^^^ error: mismatched types
+  while (foo()) {}
+  //     ^^^^^ error: mismatched types
+  for (int i = 0; NULL; i++) {}
+  //              ^^^^ error: mismatched types
+}
