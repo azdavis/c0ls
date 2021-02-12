@@ -5,6 +5,7 @@ struct s {
 };
 
 struct s* mk(int x) {
+  //                ^ hover: <none>
   struct s* ret = alloc(struct s);
   //              ^^^^^^^^^^^^^^^ hover: struct s*
   ret->x = x;
@@ -15,7 +16,9 @@ struct s* mk(int x) {
 }
 
 int consume(struct s* guy) {
-  if (guy == NULL) {
+  struct s* nil = NULL;
+  //              ^^^^ hover: <any>*
+  if (guy == nil) {
   //  ^^^ hover: struct s*
     return 123;
   //       ^^^ hover: int

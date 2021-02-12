@@ -4,9 +4,11 @@
 
 string foo(int x, int y) {
   string s = readline();
+//         ^ hover: <none>
   if (eof()) {
 //    ^^^^^ hover: bool
     return s;
+//  ^^^^^^ hover: <none>
   }
   printint(x);
 //^^^^^^^^^^^ hover: void

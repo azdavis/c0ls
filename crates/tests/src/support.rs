@@ -7,7 +7,6 @@ pub(crate) fn check(s: &str) {
   files.insert(uri.clone(), s.to_owned());
   let db = Db::new(files);
   let want = parse_expected(s);
-  // diagnostics
   let mut got_all = db.all_diagnostics();
   let (got_uri, mut got) = got_all.pop().unwrap();
   assert!(got_all.is_empty());
@@ -30,15 +29,23 @@ pub(crate) fn check(s: &str) {
     );
   }
   assert_eq!(want.diagnostics.len(), got.len());
-  // hovers
   for hover in want.hovers.iter() {
-    assert_eq!(*hover, db.hover(&uri, hover.range.start).unwrap())
+    let got_hover = match db.hover(&uri, hover.range.start) {
+      None => panic!("no hover at {}", hover.range.start),
+      Some(x) => x,
+    };
+    assert_eq!(*hover, got_hover);
+  }
+  for no_hover in want.no_hovers.iter() {
+    assert!(db.hover(&uri, no_hover.start).is_none());
+    assert!(db.hover(&uri, no_hover.end).is_none());
   }
 }
 
 struct Expectations {
   diagnostics: Vec<Diagnostic>,
   hovers: Vec<Hover>,
+  no_hovers: Vec<Range>,
 }
 
 /// only supports ascii files, and treats all line comments as expectations.
@@ -65,6 +72,7 @@ fn parse_expected(s: &str) -> Expectations {
   let mut col: u32 = 0;
   let mut diagnostics = Vec::new();
   let mut hovers = Vec::new();
+  let mut no_hovers = Vec::new();
   while let Some(c) = cs.next() {
     if c == '\n' {
       line += 1;
@@ -133,10 +141,16 @@ fn parse_expected(s: &str) -> Expectations {
         range,
         message: content,
       }),
-      "hover" => hovers.push(Hover {
-        range,
-        contents: CodeBlock::new(content),
-      }),
+      "hover" => {
+        if content == "<none>" {
+          no_hovers.push(range)
+        } else {
+          hovers.push(Hover {
+            range,
+            contents: CodeBlock::new(content),
+          })
+        }
+      }
       bad => panic!("unknown expectation kind: {}", bad),
     }
   }
@@ -145,5 +159,6 @@ fn parse_expected(s: &str) -> Expectations {
   Expectations {
     diagnostics,
     hovers,
+    no_hovers,
   }
 }
