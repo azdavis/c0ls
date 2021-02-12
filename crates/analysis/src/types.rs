@@ -45,20 +45,22 @@ impl fmt::Display for Diagnostic {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Markdown(String);
+pub struct CodeBlock(String);
 
-impl Markdown {
+impl CodeBlock {
   pub fn new(s: String) -> Self {
     Self(s)
   }
+}
 
-  pub fn into_string(self) -> String {
-    self.0
+impl fmt::Display for CodeBlock {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "```c0\n{}\n```", self.0)
   }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Hover {
-  pub contents: Markdown,
+  pub contents: CodeBlock,
   pub range: Range,
 }

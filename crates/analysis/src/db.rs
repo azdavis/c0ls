@@ -1,5 +1,5 @@
 use crate::lines::Lines;
-use crate::types::{Diagnostic, Hover, Location, Markdown, Position, Range};
+use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uri::{Map, Uri};
 use crate::uses::{get as get_use, Lib, UseKind};
 use lower::{AstPtr, Ptrs};
@@ -210,8 +210,7 @@ impl Db {
     };
     let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&expr_node))?;
     let ty = *done.semantic_data[&id].env.expr_tys.get(expr)?;
-    let ty = ty.display(&done.cx.tys).to_string();
-    let contents = Markdown::new(format!("```c0\n{}\n```", ty));
+    let contents = CodeBlock::new(ty.display(&done.cx.tys).to_string());
     let range = syntax_data.lines.range(expr_node.syntax().text_range());
     Some(Hover { contents, range })
   }

@@ -1,4 +1,4 @@
-use analysis::{Db, Diagnostic, Hover, Markdown, Position, Range, Uri};
+use analysis::{CodeBlock, Db, Diagnostic, Hover, Position, Range, Uri};
 use std::collections::HashMap;
 
 pub(crate) fn check(s: &str) {
@@ -135,7 +135,7 @@ fn parse_expected(s: &str) -> Expectations {
       }),
       "hover" => hovers.push(Hover {
         range,
-        contents: Markdown::new(format!("```c0\n{}\n```", content)),
+        contents: CodeBlock::new(content),
       }),
       bad => panic!("unknown expectation kind: {}", bad),
     }

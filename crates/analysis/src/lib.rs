@@ -13,5 +13,5 @@ mod uri;
 mod uses;
 
 pub use db::Db;
-pub use types::{Diagnostic, Hover, Location, Markdown, Position, Range};
+pub use types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 pub use uri::Uri;
