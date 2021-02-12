@@ -17,7 +17,9 @@ for f in data/*.c0; do
     ok=false
   fi
 done
-if ! "$ok"; then
+if "$ok"; then
+  echo "ok: all test data files are mentioned"
+else
   echo "error: missing a test for the above files"
   exit 1
 fi
