@@ -1,6 +1,6 @@
 #use <conio>
-#use <util>
 #use <string>
+#use <util>
 
 string foo(int x, int y) {
   string s = readline();
