@@ -107,6 +107,7 @@ impl Db {
         };
       }
     };
+    drop(graph);
     // run statics in the order of the topo order, update errors.
     let (mut cx, std_lib) = std_lib::get();
     let mut semantic_data =
