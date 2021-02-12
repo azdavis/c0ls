@@ -93,12 +93,19 @@ impl<'input, K> Parser<'input, K>
 where
   K: Copy + Triviable,
 {
-  /// Returns the token `n` tokens in front of the "current" token, or `None` if
-  /// the parser is out of tokens.
+  /// Returns the token after the "current" token, or `None` if the parser is
+  /// out of tokens.
   ///
   /// Equivalent to `self.peek_n(0)`. See [`Self::peek_n`].
   pub fn peek(&mut self) -> Option<Token<'input, K>> {
-    self.peek_n(0)
+    while let Some(&tok) = self.tokens.get(self.idx) {
+      if tok.kind.is_trivia() {
+        self.idx += 1;
+      } else {
+        return Some(tok);
+      }
+    }
+    None
   }
 
   /// Returns the token `n` tokens in front of the current token, or `None` if
@@ -113,13 +120,14 @@ where
   /// better for this task since it keeps track of the `K`s that have been tried
   /// and will report them from [`Self::error`].
   pub fn peek_n(&mut self, n: usize) -> Option<Token<'input, K>> {
-    while let Some(tok) = self.tokens.get(self.idx) {
-      if !tok.kind.is_trivia() {
-        break;
-      }
+    let mut ret = self.peek();
+    let idx = self.idx;
+    for _ in 0..n {
       self.idx += 1;
+      ret = self.peek();
     }
-    self.tokens.get(self.idx + n).copied()
+    self.idx = idx;
+    ret
   }
 
   /// Consumes and returns the current token, and clears the set of expected
