@@ -4,8 +4,8 @@
     "*.h0": "c"
   },
   "files.exclude": {
-    "crates/syntax/src/generated.rs": false,
     "compiler": true,
+    "pdf": true,
     "target": true
   },
   "rust-analyzer.checkOnSave.command": "clippy"
