@@ -27,6 +27,7 @@ version = "0.1.0"
 dependencies = [
  "analysis",
  "gumdrop",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -228,6 +229,7 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "analysis",
+ "rustc-hash",
 ]
 
 [[package]]

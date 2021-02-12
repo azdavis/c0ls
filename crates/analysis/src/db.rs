@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 use statics::{
   get as get_statics, Cx, Env, FileId, FileKind, Id, Import, TyDb,
 };
-use std::hash::{BuildHasher, BuildHasherDefault};
+use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use topo_sort::{topological_sort, Graph};
@@ -21,10 +21,7 @@ pub struct Db {
 }
 
 impl Db {
-  pub fn new<S>(files: std::collections::HashMap<Uri, String, S>) -> Self
-  where
-    S: BuildHasher,
-  {
+  pub fn new(files: FxHashMap<Uri, String>) -> Self {
     // assign file IDs.
     let num_files = files.len();
     let mut uris = Map::default();

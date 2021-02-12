@@ -1,8 +1,8 @@
 use analysis::{CodeBlock, Db, Diagnostic, Hover, Position, Range, Uri};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 pub(crate) fn check(s: &str) {
-  let mut files = HashMap::with_capacity(1);
+  let mut files = FxHashMap::default();
   let uri = Uri::from("main.c0");
   files.insert(uri.clone(), s.to_owned());
   let db = Db::new(files);

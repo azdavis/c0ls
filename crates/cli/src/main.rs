@@ -2,7 +2,7 @@
 
 use analysis::{Db, Uri};
 use gumdrop::Options;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 #[derive(Debug, Options)]
 struct Config {
@@ -23,7 +23,7 @@ fn read_file(s: &str) -> Option<String> {
 }
 
 fn run(conf: Config) -> Option<bool> {
-  let mut files = HashMap::new();
+  let mut files = FxHashMap::default();
   for file in conf.source {
     let contents = read_file(&file)?;
     files.insert(Uri::new(file.into()), contents);

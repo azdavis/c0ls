@@ -1,6 +1,6 @@
+use rustc_hash::FxHashMap;
 use statics::{FileId, FileKind};
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Index;
 use std::path::{Path, PathBuf};
@@ -32,8 +32,8 @@ impl From<&str> for Uri {
 
 #[derive(Debug, Default)]
 pub(crate) struct Map {
-  id_to_uri: HashMap<FileId, Uri>,
-  uri_to_id: HashMap<Uri, FileId>,
+  id_to_uri: FxHashMap<FileId, Uri>,
+  uri_to_id: FxHashMap<Uri, FileId>,
   next: u32,
 }
 
