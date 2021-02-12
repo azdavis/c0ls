@@ -26,7 +26,7 @@ impl Borrow<Path> for Uri {
 
 impl From<&str> for Uri {
   fn from(val: &str) -> Self {
-    Self(PathBuf::from(val))
+    Self::new(PathBuf::from(val))
   }
 }
 
