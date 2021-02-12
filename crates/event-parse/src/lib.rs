@@ -138,7 +138,6 @@ where
   /// Records an error at the current token.
   pub fn error(&mut self) {
     let expected = std::mem::take(&mut self.expected);
-    // TODO is this right?
     if self.peek().is_some() {
       self.bump();
     }

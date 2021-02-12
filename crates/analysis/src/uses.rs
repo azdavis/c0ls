@@ -1,5 +1,3 @@
-//! TODO make this its own crate?
-
 use crate::uri::Map;
 use statics::FileId;
 use std::fmt;

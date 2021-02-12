@@ -124,8 +124,7 @@ impl Db {
         };
       }
     };
-    // run statics in the order of the topo order, update errors. TODO this
-    // should detect duplicate/incompatible declarations across imports
+    // run statics in the order of the topo order, update errors.
     let (mut cx, std_lib) = std_lib::get();
     let mut semantic_data =
       map_with_capacity::<FileId, SemanticData>(num_files);
