@@ -16,9 +16,10 @@ pub(crate) fn check(s: &str) {
   for (want, got) in want.diagnostics.iter().zip(got.iter()) {
     assert!(
       want.range == got.range,
-      "mismatched ranges: want {}, got {}",
+      "mismatched ranges: want {}, got {} with message: '{}'",
       want.range,
-      got.range
+      got.range,
+      got.message,
     );
     assert!(
       got.message.starts_with(&want.message),
