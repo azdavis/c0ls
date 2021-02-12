@@ -16,7 +16,7 @@ fn read_file(s: &str) -> Option<String> {
   match std::fs::read_to_string(s) {
     Ok(x) => Some(x),
     Err(e) => {
-      eprintln!("{}: {}", s, e);
+      println!("{}: {}", s, e);
       None
     }
   }
@@ -32,7 +32,7 @@ fn run(conf: Config) -> Option<bool> {
   let diagnostics = ide.all_diagnostics();
   for &(uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
-      eprintln!("{}:{}", uri.as_path().display(), d);
+      println!("{}:{}", uri.as_path().display(), d);
     }
   }
   Some(diagnostics.iter().all(|&(_, ref ds)| ds.is_empty()))
@@ -50,7 +50,7 @@ fn main() {
     .join()
   {
     Ok(Some(true)) => {
-      eprintln!("no errors");
+      println!("no errors");
       0
     }
     Ok(Some(false)) => 1,
