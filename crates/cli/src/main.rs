@@ -1,4 +1,4 @@
-//! A hacky CLI wrapper over `analysis`.
+//! A CLI wrapper over `analysis`.
 
 use analysis::{Db, Uri};
 use gumdrop::Options;
@@ -8,8 +8,6 @@ use std::collections::HashMap;
 struct Config {
   #[options(help = "print this help")]
   pub help: bool,
-  #[options(short = "l", help = "header file")]
-  pub header: Option<String>,
   #[options(free, help = "source files")]
   pub source: Vec<String>,
 }
@@ -24,25 +22,13 @@ fn read_file(s: &str) -> Option<String> {
   }
 }
 
-fn get_files(files: Vec<String>) -> Option<HashMap<Uri, String>> {
-  let mut ret = HashMap::new();
-  for file in files {
-    let contents = read_file(&file)?;
-    ret.insert(Uri::new(file.into()), contents);
-  }
-  Some(ret)
-}
-
 fn run(conf: Config) -> Option<bool> {
-  let header = match conf.header {
-    None => None,
-    Some(header) => {
-      let contents = read_file(&header)?;
-      Some((Uri::new(header.into()), contents))
-    }
-  };
-  let files = get_files(conf.source)?;
-  let ide = Db::new(files, header);
+  let mut files = HashMap::new();
+  for file in conf.source {
+    let contents = read_file(&file)?;
+    files.insert(Uri::new(file.into()), contents);
+  }
+  let ide = Db::new(files);
   let diagnostics = ide.all_diagnostics();
   for &(uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
@@ -60,7 +46,7 @@ fn main() {
     .name("run".to_owned())
     .stack_size(BIG_STACK_SIZE)
     .spawn(|| run(conf))
-    .expect("couldn't spawn")
+    .expect("couldn't spawn run")
     .join()
   {
     Ok(Some(true)) => {

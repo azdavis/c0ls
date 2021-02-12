@@ -5,7 +5,7 @@ pub(crate) fn check(s: &str) {
   let mut files = HashMap::with_capacity(1);
   let uri = Uri::from("main.c0");
   files.insert(uri.clone(), s.to_owned());
-  let db = Db::new(files, None);
+  let db = Db::new(files);
   let want = parse_expected(s);
   // diagnostics
   let mut got_all = db.all_diagnostics();

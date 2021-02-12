@@ -1,7 +1,7 @@
 use crate::lines::Lines;
 use crate::types::{Diagnostic, Hover, Location, Markdown, Position, Range};
 use crate::uri::{Map, Uri};
-use crate::uses::{get as get_use, Lib, Use, UseKind};
+use crate::uses::{get as get_use, Lib, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{
@@ -21,11 +21,7 @@ pub struct Db {
 }
 
 impl Db {
-  /// TODO rm header hack
-  pub fn new<S>(
-    files: std::collections::HashMap<Uri, String, S>,
-    header: Option<(Uri, String)>,
-  ) -> Self
+  pub fn new<S>(files: std::collections::HashMap<Uri, String, S>) -> Self
   where
     S: BuildHasher,
   {
@@ -33,11 +29,6 @@ impl Db {
     let num_files = files.len();
     let mut uris = Map::default();
     let mut id_and_contents = map_with_capacity(num_files);
-    let header_id = header.map(|(uri, contents)| {
-      let id = uris.insert(uri, FileKind::Header);
-      id_and_contents.insert(id, contents);
-      id
-    });
     for (uri, contents) in files {
       let ext = uri
         .as_path()
@@ -64,14 +55,6 @@ impl Db {
       let lowered = lower::get(parsed.root.clone());
       let mut us = Vec::with_capacity(lexed.uses.len());
       let mut uses_errors = Vec::new();
-      if let Some(header_id) = header_id {
-        if header_id != id {
-          us.push(Use {
-            kind: UseKind::File(header_id),
-            range: TextRange::empty(0.into()),
-          });
-        }
-      }
       for u in lexed.uses {
         match get_use(&uris, id, u) {
           Ok(u) => us.push(u),
