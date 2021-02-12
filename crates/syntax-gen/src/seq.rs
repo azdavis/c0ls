@@ -22,11 +22,7 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     impl Cast for #name {
       fn cast(elem: SyntaxElement) -> Option<Self> {
         let node = elem.into_node()?;
-        if node.kind() == SK::#name {
-          Some(Self(node))
-        } else {
-          None
-        }
+        (node.kind() == SK::#name).then(|| Self(node))
       }
     }
     impl Syntax for #name {
