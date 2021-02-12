@@ -12,6 +12,7 @@ use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use topo_sort::{topological_sort, Graph};
 
+#[derive(Debug)]
 pub struct Db {
   uris: Map,
   ordering: Vec<FileId>,
@@ -325,6 +326,7 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
 
+#[derive(Debug)]
 enum Kind {
   CycleError(FileId),
   Done(Box<Done>),
@@ -339,12 +341,14 @@ impl Kind {
   }
 }
 
+#[derive(Debug)]
 struct Done {
   cx: Cx,
   semantic_data: FxHashMap<FileId, SemanticData>,
 }
 
 /// not really 'syntax', but more in contrast to semantic info from statics.
+#[derive(Debug)]
 struct SyntaxData {
   lines: Lines,
   ast_root: AstRoot,
@@ -352,6 +356,7 @@ struct SyntaxData {
   errors: SyntaxErrors,
 }
 
+#[derive(Debug)]
 struct SyntaxErrors {
   lex: Vec<lex::Error>,
   uses: Vec<crate::uses::Error>,
@@ -359,6 +364,7 @@ struct SyntaxErrors {
   lower: Vec<lower::PragmaError>,
 }
 
+#[derive(Debug)]
 struct SemanticData {
   env: Env,
   errors: Vec<statics::Error>,

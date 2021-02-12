@@ -1,6 +1,7 @@
 use crate::types::{Position, Range};
 use syntax::rowan::{TextRange, TextSize};
 
+#[derive(Debug)]
 struct Line {
   end: TextSize,
   /// pairs of (where this char was in the line, the difference between the
@@ -8,6 +9,7 @@ struct Line {
   non_ascii: Vec<(TextSize, u32)>,
 }
 
+#[derive(Debug)]
 pub(crate) struct Lines {
   lines: Vec<Line>,
 }

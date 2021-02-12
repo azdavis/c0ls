@@ -3,6 +3,7 @@
 //! Doesn't do I/O, just takes in filenames and file contents and answers
 //! queries about them.
 
+#![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
 mod db;
