@@ -1,0 +1,12 @@
+void foo() {
+  3++;
+//^ error: cannot increment
+  3--;
+//^ error: cannot decrement
+  false = true;
+//^^^^^ error: cannot assign
+  3 += 4;
+//^ error: cannot assign
+  foo() = foo();
+//^^^^^ error: cannot assign
+}

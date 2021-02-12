@@ -10,3 +10,10 @@ int bar() {
 
 int quz() {}
 //        ^^ error: cannot reach end of function
+
+void mk_void() {}
+
+void ret_void() {
+  return mk_void();
+//^^^^^^^^^^^^^^^^^ error: cannot return a value
+}

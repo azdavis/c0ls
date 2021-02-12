@@ -42,6 +42,11 @@ fn hover_ty() {
 }
 
 #[test]
+fn lv_bad() {
+  check(include_str!("data/lv_bad.c0"))
+}
+
+#[test]
 fn mismatched_types_any() {
   check(include_str!("data/mismatched_types_any.c0"))
 }
@@ -57,6 +62,16 @@ fn return_bad() {
 }
 
 #[test]
+fn ty_bad() {
+  check(include_str!("data/ty_bad.c0"))
+}
+
+#[test]
 fn undefined() {
   check(include_str!("data/undefined.c0"))
+}
+
+#[test]
+fn use_lib() {
+  check(include_str!("data/use_lib.c0"))
 }

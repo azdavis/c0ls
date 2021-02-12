@@ -1,0 +1,27 @@
+struct unit {};
+
+struct s {
+  struct unit u;
+  struct s* b;
+};
+
+/**/ struct s mk() {
+//   ^^^^^^^^ error: cannot use struct type here
+  struct s* ret = alloc(struct s);
+  ret->u;
+//^^^^^^ error: cannot use struct type here
+  ret->b;
+  *(ret->b);
+//^^^^^^^^^ error: cannot use struct type here
+  return *ret;
+}
+
+void foo(void x) {}
+//       ^^^^ error: cannot use void type here
+
+void bar() {
+  struct s hm = mk();
+//^^^^^^^^ error: cannot use struct type here
+  bar();
+  foo(bar());
+}

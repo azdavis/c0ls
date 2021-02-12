@@ -75,7 +75,8 @@ pub(crate) fn get<'a>(
       ret = VarInfo::Decl;
     }
     Simp::Expr(expr) => {
-      get_expr(cx, env, fn_cx, expr);
+      let ty = get_expr(cx, env, fn_cx, expr);
+      no_struct(cx, ty, expr);
     }
     // hacky. using `simp` as the ID for the error is not great.
     Simp::Ambiguous(ref lhs, ref rhs) => {

@@ -8,4 +8,6 @@ void foo() {
 //^^^^^ error: cannot get field
   x(3);
 //^^^^ error: cannot call
+  *x;
+//^^ error: cannot dereference
 }

@@ -24,6 +24,7 @@ pub(crate) fn get(
         vars: Default::default(),
         ret_ty: get_ty(import, arenas, cx, env, ret_ty),
       };
+      no_struct(cx, fn_cx.ret_ty, ret_ty);
       let mut sig_params = Vec::with_capacity(params.len());
       for param in params {
         let ty = get_ty(import, arenas, cx, env, param.ty);

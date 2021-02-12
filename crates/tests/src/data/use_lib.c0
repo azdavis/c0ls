@@ -1,0 +1,22 @@
+#use <conio>
+#use <util>
+#use <string>
+
+string foo(int x, int y) {
+  string s = readline();
+  if (eof()) {
+//    ^^^^^ hover: bool
+    return s;
+  }
+  printint(x);
+//^^^^^^^^^^^ hover: void
+  printint(int_size());
+//         ^^^^^^^^^^ hover: int
+  printint(x + abs(x));
+  printint(max(x, y));
+  println(int2hex(x * y));
+//^^^^^^^^^^^^^^^^^^^^^^^ hover: void
+  flush();
+  return string_join(s, int2hex(x ^ y));
+//       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ hover: string
+}
