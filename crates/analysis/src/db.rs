@@ -29,7 +29,7 @@ impl Db {
   where
     S: BuildHasher,
   {
-    // assign file IDs
+    // assign file IDs.
     let num_files = files.len();
     let mut uris = Map::default();
     let mut id_and_contents = map_with_capacity(num_files);
@@ -52,9 +52,9 @@ impl Db {
       let id = uris.insert(uri.clone(), kind);
       id_and_contents.insert(id, contents);
     }
-    // - lex, parse, lower
-    // - process uses to resolve libraries/files
-    // - calculate line ending information
+    // - lex, parse, lower.
+    // - process uses to resolve libraries/files.
+    // - calculate line ending information.
     let mut syntax_data = map_with_capacity(num_files);
     let mut hir_roots = map_with_capacity(num_files);
     let mut uses = map_with_capacity(num_files);
@@ -95,7 +95,7 @@ impl Db {
         },
       );
     }
-    // determine a topo ordering of the file dependencies
+    // determine a topo ordering of the file dependencies.
     let graph: Graph<_> = uses
       .iter()
       .map(|(&id, file_uses)| {
@@ -167,7 +167,7 @@ impl Db {
         },
       );
     }
-    // return
+    // return.
     Self {
       uris,
       syntax_data,
