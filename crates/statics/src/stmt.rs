@@ -72,7 +72,9 @@ pub(crate) fn get(
       let got = expr.map(|expr| (expr, get_expr(cx, env, fn_cx, expr)));
       match (got, fn_cx.ret_ty == Ty::Void) {
         (Some(_), true) => cx.err(stmt, ErrorKind::ReturnExprVoid),
-        (None, false) => cx.err(stmt, ErrorKind::ReturnNothingNonVoid),
+        (None, false) => {
+          cx.err(stmt, ErrorKind::ReturnNothingNonVoid(fn_cx.ret_ty))
+        }
         (Some((expr, ty)), false) => {
           unify(cx, fn_cx.ret_ty, ty, expr);
         }

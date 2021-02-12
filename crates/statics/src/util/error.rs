@@ -28,7 +28,7 @@ pub enum ErrorKind {
   MismatchedTysAny(&'static [Ty], Ty),
   NotInLoop,
   ReturnExprVoid,
-  ReturnNothingNonVoid,
+  ReturnNothingNonVoid(Ty),
   SubscriptNonArrayTy(Ty),
   UndefinedField,
   UndefinedFn,
@@ -74,10 +74,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         "cannot get field of non-struct type `{}`",
         t.display(self.tys)
       ),
-      ErrorKind::FnMightNotReturnVal => write!(
-        f,
-        "control might reach end of non-void function without returning"
-      ),
+      ErrorKind::FnMightNotReturnVal => {
+        write!(f, "cannot reach end of function without returning a value")
+      }
       ErrorKind::InvalidStructTy => write!(f, "cannot use struct type here"),
       ErrorKind::InvalidVoidTy => write!(f, "cannot use void type here"),
       ErrorKind::MismatchedNumArgs(want, got) => write!(
@@ -107,11 +106,12 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "cannot use this statement outside of a loop")
       }
       ErrorKind::ReturnExprVoid => {
-        write!(f, "cannot return an expression from a void function")
+        write!(f, "cannot return a value from a function returning `void`")
       }
-      ErrorKind::ReturnNothingNonVoid => write!(
+      ErrorKind::ReturnNothingNonVoid(t) => write!(
         f,
-        "cannot return without an expression from a non-void function"
+        "cannot return without a value from a function returning `{}`",
+        t.display(self.tys)
       ),
       ErrorKind::SubscriptNonArrayTy(t) => write!(
         f,
