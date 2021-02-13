@@ -64,12 +64,16 @@ fn handle_notif(
 fn get_initial_files(root: &Url) -> FxHashMap<Url, String> {
   WalkDir::new(root.path())
     .into_iter()
-    .map(|entry| {
+    .filter_map(|entry| {
       let entry = entry.unwrap();
+      if !entry.metadata().unwrap().is_file() {
+        return None;
+      }
       let path = entry.path().as_os_str().to_str().unwrap();
+      eprintln!("got file: {}", path);
       let uri = Url::from_file_path(path).unwrap();
       let contents = read_to_string(entry.path()).unwrap();
-      (uri, contents)
+      Some((uri, contents))
     })
     .collect()
 }
