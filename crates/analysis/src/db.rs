@@ -1,3 +1,5 @@
+//! TODO implement incremental updating
+
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uri::{UriDb, UriId};
