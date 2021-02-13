@@ -27,6 +27,10 @@ impl Req {
       Err(req) => Ok(Self::new(req)),
     }
   }
+
+  pub(crate) fn method(&self) -> &str {
+    self.req.method.as_str()
+  }
 }
 
 pub(crate) struct Notif {
@@ -53,5 +57,9 @@ impl Notif {
       }
       Err(notif) => Ok(Self::new(notif)),
     }
+  }
+
+  pub(crate) fn method(&self) -> &str {
+    self.notif.method.as_str()
   }
 }

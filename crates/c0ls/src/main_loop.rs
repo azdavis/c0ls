@@ -22,19 +22,15 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
           eprintln!("shutting down");
           return;
         }
-        eprintln!("got request: {:?}", req);
         match handle_req(&db, Req::new(req)) {
-          Ok(_) => eprintln!("don't know how to handle"),
+          Ok(req) => eprintln!("don't know how to handle {}", req.method()),
           Err(res) => conn.sender.send(res.into()).unwrap(),
         }
       }
-      Message::Response(res) => {
-        eprintln!("got response, ignoring: {:?}", res);
-      }
+      Message::Response(res) => eprintln!("got response: {:?}", res),
       Message::Notification(notif) => {
-        eprintln!("got notification: {:?}", notif);
         match handle_notif(&root, &mut db, Notif::new(notif)) {
-          Ok(_) => eprintln!("don't know how to handle"),
+          Ok(notif) => eprintln!("don't know how to handle {}", notif.method()),
           Err(Handled) => {}
         }
       }
