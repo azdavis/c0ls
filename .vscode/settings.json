@@ -5,6 +5,8 @@
   },
   "files.exclude": {
     "compiler": true,
+    "extensions/vscode/node_modules": true,
+    "extensions/vscode/out": true,
     "pdf": true,
     "target": true
   },

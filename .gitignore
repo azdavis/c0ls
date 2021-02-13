@@ -3,6 +3,8 @@
 /compiler
 /crates/syntax/src/ast.rs
 /crates/syntax/src/kind.rs
+/extensions/vscode/node_modules
+/extensions/vscode/out
 /pdf
 /target
 /thoughts.md
