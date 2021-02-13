@@ -4,7 +4,9 @@ use crate::from::CrateFrom;
 use crate::wrapper::{Handled, Notif, Req};
 use analysis::Db;
 use lsp_server::{Connection, Message, Response};
-use lsp_types::notification::{DidChangeWatchedFiles, PublishDiagnostics};
+use lsp_types::notification::{
+  DidChangeTextDocument, DidChangeWatchedFiles, PublishDiagnostics,
+};
 use lsp_types::request::HoverRequest;
 use lsp_types::{InitializeParams, PublishDiagnosticsParams, Url};
 use rustc_hash::FxHashMap;
@@ -53,11 +55,24 @@ fn handle_notif(
   db: &mut Db,
   notif: Notif,
 ) -> Result<Notif, Handled> {
-  notif.handle::<DidChangeWatchedFiles, _>(|_| {
-    // TODO impl incremental updating
-    *db = Db::new(get_initial_files(root));
-    send_all_diagnostics(conn, db);
-  })
+  notif
+    .handle::<DidChangeWatchedFiles, _>(|_| {
+      // TODO impl incremental updating
+      eprintln!("watched files changed");
+      *db = Db::new(get_initial_files(root));
+      send_all_diagnostics(conn, db);
+    })?
+    .handle::<DidChangeTextDocument, _>(|mut params| {
+      // TODO impl incremental updating
+      eprintln!("did change a text document");
+      let change = params.content_changes.pop().unwrap();
+      assert!(params.content_changes.is_empty());
+      assert!(change.range.is_none());
+      let mut files = get_initial_files(root);
+      files.insert(params.text_document.uri, change.text);
+      *db = Db::new(files);
+      send_all_diagnostics(conn, db);
+    })
 }
 
 fn get_initial_files(root: &Url) -> FxHashMap<Url, String> {
