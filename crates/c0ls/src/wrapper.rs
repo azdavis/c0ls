@@ -1,12 +1,11 @@
 use lsp_server::{Notification, Request, RequestId, Response};
 
-pub(crate) struct Req {
-  req: Request,
-}
+#[derive(Debug)]
+pub(crate) struct Req(Request);
 
 impl Req {
   pub(crate) fn new(req: Request) -> Self {
-    Self { req }
+    Self(req)
   }
 
   pub(crate) fn handle<R, F>(self, f: F) -> Result<Self, Response>
@@ -14,7 +13,7 @@ impl Req {
     R: lsp_types::request::Request,
     F: FnOnce(RequestId, R::Params) -> R::Result,
   {
-    match self.req.extract::<R::Params>(R::METHOD) {
+    match self.0.extract::<R::Params>(R::METHOD) {
       Ok((id, params)) => {
         let result = f(id.clone(), params);
         let val = serde_json::to_value(&result).unwrap();
@@ -29,20 +28,19 @@ impl Req {
   }
 
   pub(crate) fn method(&self) -> &str {
-    self.req.method.as_str()
+    self.0.method.as_str()
   }
 }
 
-pub(crate) struct Notif {
-  notif: Notification,
-}
+#[derive(Debug)]
+pub(crate) struct Notif(Notification);
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Handled;
 
 impl Notif {
   pub(crate) fn new(notif: Notification) -> Self {
-    Self { notif }
+    Self(notif)
   }
 
   pub(crate) fn handle<N, F>(self, f: F) -> Result<Self, Handled>
@@ -50,7 +48,7 @@ impl Notif {
     N: lsp_types::notification::Notification,
     F: FnOnce(N::Params),
   {
-    match self.notif.extract::<N::Params>(N::METHOD) {
+    match self.0.extract::<N::Params>(N::METHOD) {
       Ok(params) => {
         f(params);
         Err(Handled)
@@ -60,6 +58,6 @@ impl Notif {
   }
 
   pub(crate) fn method(&self) -> &str {
-    self.notif.method.as_str()
+    self.0.method.as_str()
   }
 }
