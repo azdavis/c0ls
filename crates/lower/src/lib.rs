@@ -14,4 +14,4 @@ mod util;
 
 pub use ptr::AstPtr;
 pub use root::get;
-pub use util::{Lowered, PragmaError, Ptrs, SyntheticSyntax};
+pub use util::{Lowered, PragmaError, Ptrs};

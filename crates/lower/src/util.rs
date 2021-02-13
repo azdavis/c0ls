@@ -8,16 +8,12 @@ use std::fmt;
 use syntax::ast::{Expr, Item, Simp, Stmt, Ty};
 use syntax::rowan::TextRange;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct SyntheticSyntax;
-
 #[derive(Debug, Default)]
 pub struct Ptrs {
   pub item: FxHashMap<AstPtr<Item>, ItemId>,
   pub item_back: ArenaMap<ItemId, AstPtr<Item>>,
   pub expr: FxHashMap<AstPtr<Expr>, ExprId>,
-  /// we desugar some expressions (and nothing else)
-  pub expr_back: ArenaMap<ExprId, Result<AstPtr<Expr>, SyntheticSyntax>>,
+  pub expr_back: ArenaMap<ExprId, AstPtr<Expr>>,
   pub ty: FxHashMap<AstPtr<Ty>, TyId>,
   pub ty_back: ArenaMap<TyId, AstPtr<Ty>>,
   pub stmt: FxHashMap<AstPtr<Stmt>, StmtId>,

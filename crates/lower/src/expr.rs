@@ -1,6 +1,6 @@
 use crate::ptr::AstPtr;
 use crate::ty::get as get_ty;
-use crate::util::{Cx, SyntheticSyntax};
+use crate::util::Cx;
 use hir::{BinOp, MathOp, UnOp};
 use syntax::ast::{BinOpKind, Expr, UnOpKind};
 use unwrap_or::unwrap_or;
@@ -12,7 +12,7 @@ pub(crate) fn get(cx: &mut Cx, expr: Option<Expr>) -> hir::ExprId {
   let ret = cx.arenas.expr.alloc(data);
   if let Some(ptr) = ptr {
     cx.ptrs.expr.insert(ptr, ret);
-    cx.ptrs.expr_back.insert(ret, Ok(ptr));
+    cx.ptrs.expr_back.insert(ret, ptr);
   }
   ret
 }
@@ -61,13 +61,14 @@ fn get_impl(cx: &mut Cx, expr: Expr) -> hir::Expr {
       let expr = get(cx, expr.expr());
       hir::Expr::Dot(expr, field.text().into())
     }
-    Expr::ArrowExpr(expr) => {
-      let field = unwrap_or!(expr.ident(), return hir::Expr::None);
-      let expr = get(cx, expr.expr());
+    Expr::ArrowExpr(ref inner) => {
+      let field = unwrap_or!(inner.ident(), return hir::Expr::None);
+      let ptr = AstPtr::new(&expr);
+      let expr = get(cx, inner.expr());
       let deref = cx.arenas.expr.alloc(hir::Expr::UnOp(UnOp::Deref, expr));
       // no entry for `cx.ptrs.expr`, since we'll have an entry from expr to the
       // id of the Dot
-      cx.ptrs.expr_back.insert(deref, Err(SyntheticSyntax));
+      cx.ptrs.expr_back.insert(deref, ptr);
       hir::Expr::Dot(deref, field.text().into())
     }
     Expr::SubscriptExpr(expr) => {

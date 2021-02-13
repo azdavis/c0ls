@@ -206,11 +206,7 @@ impl Db {
 fn get_text_range(ptrs: &Ptrs, ast_root: &AstRoot, id: Id) -> TextRange {
   let root = ast_root.syntax().clone();
   match id {
-    Id::Expr(id) => ptrs.expr_back[id]
-      .unwrap()
-      .to_node(root)
-      .syntax()
-      .text_range(),
+    Id::Expr(id) => ptrs.expr_back[id].to_node(root).syntax().text_range(),
     Id::Ty(id) => ptrs.ty_back[id].to_node(root).syntax().text_range(),
     Id::Stmt(id) => ptrs.stmt_back[id].to_node(root).syntax().text_range(),
     Id::Simp(id) => ptrs.simp_back[id].to_node(root).syntax().text_range(),

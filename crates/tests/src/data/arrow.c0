@@ -1,0 +1,14 @@
+struct a {
+  int x;
+};
+
+struct b {
+  struct a* y;
+};
+
+void foo(struct a* the_a, struct b* the_b) {
+  the_a->x->bad;
+//^^^^^^^^^^^^^ error: cannot dereference
+  the_b->y->bad;
+//^^^^^^^^^^^^^ error: undefined field
+}

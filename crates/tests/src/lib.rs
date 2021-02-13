@@ -7,6 +7,11 @@ mod support;
 use support::check;
 
 #[test]
+fn arrow() {
+  check(include_str!("data/arrow.c0"))
+}
+
+#[test]
 fn bad_op() {
   check(include_str!("data/bad_op.c0"))
 }
