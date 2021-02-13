@@ -57,3 +57,19 @@ impl CrateFrom<analysis::Hover> for lsp_types::Hover {
     }
   }
 }
+
+impl CrateFrom<analysis::Diagnostic> for lsp_types::Diagnostic {
+  fn from(val: analysis::Diagnostic) -> Self {
+    Self {
+      range: CrateFrom::from(val.range),
+      severity: None,
+      code: None,
+      code_description: None,
+      source: None,
+      message: val.message,
+      related_information: None,
+      tags: None,
+      data: None,
+    }
+  }
+}
