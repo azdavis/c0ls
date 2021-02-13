@@ -43,6 +43,7 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
 
 fn handle_req(db: &Db, req: Req) -> Result<Req, Response> {
   req.handle::<HoverRequest, _>(|_, params| {
+    eprintln!("hover");
     let params = params.text_document_position_params;
     db.hover(&params.text_document.uri, CrateFrom::from(params.position))
       .map(CrateFrom::from)
@@ -89,7 +90,6 @@ fn get_initial_files(root: &Url) -> FxHashMap<Url, String> {
         return None;
       }
       let path = path.as_os_str().to_str().unwrap();
-      eprintln!("got file: {}", path);
       let uri = Url::from_file_path(path).unwrap();
       let contents = read_to_string(entry.path()).unwrap();
       Some((uri, contents))
