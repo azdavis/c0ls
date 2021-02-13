@@ -65,10 +65,15 @@ fn get_initial_files(root: &Url) -> FxHashMap<Url, String> {
     .into_iter()
     .filter_map(|entry| {
       let entry = entry.unwrap();
-      if !entry.metadata().unwrap().is_file() {
+      let path = entry.path();
+      if !path.is_file() {
         return None;
       }
-      let path = entry.path().as_os_str().to_str().unwrap();
+      let ext = path.extension()?;
+      if ext != "c0" && ext != "h0" {
+        return None;
+      }
+      let path = path.as_os_str().to_str().unwrap();
       eprintln!("got file: {}", path);
       let uri = Url::from_file_path(path).unwrap();
       let contents = read_to_string(entry.path()).unwrap();
