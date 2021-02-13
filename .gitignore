@@ -6,5 +6,6 @@
 /extensions/vscode/node_modules
 /extensions/vscode/out
 /pdf
+/sandbox
 /target
 /thoughts.md
