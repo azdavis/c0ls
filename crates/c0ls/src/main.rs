@@ -9,6 +9,7 @@ use lsp_server::Connection;
 use lsp_types::InitializeParams;
 
 fn main() {
+  env_logger::init();
   let (conn, io_threads) = Connection::stdio();
   let sc = serde_json::to_value(&capabilities::get()).unwrap();
   let init = conn.initialize(sc).unwrap();

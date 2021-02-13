@@ -14,7 +14,7 @@ use std::fs::read_to_string;
 use walkdir::WalkDir;
 
 pub(crate) fn run(conn: &Connection, init: InitializeParams) {
-  eprintln!("starting main loop");
+  log::info!("starting main loop");
   let root = init.root_uri.expect("no root");
   let mut db = Db::new(get_initial_files(&root));
   send_all_diagnostics(conn, &db);
@@ -22,18 +22,18 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
     match msg {
       Message::Request(req) => {
         if conn.handle_shutdown(&req).unwrap() {
-          eprintln!("shutting down");
+          log::info!("shutting down");
           return;
         }
         match handle_req(&db, Req::new(req)) {
-          Ok(req) => eprintln!("don't know how to handle {}", req.method()),
+          Ok(req) => log::warn!("ignoring request: {}", req.method()),
           Err(res) => conn.sender.send(res.into()).unwrap(),
         }
       }
-      Message::Response(res) => eprintln!("got response: {:?}", res),
+      Message::Response(res) => log::warn!("ignoring response: {:?}", res),
       Message::Notification(notif) => {
         match handle_notif(&conn, &root, &mut db, Notif::new(notif)) {
-          Ok(notif) => eprintln!("don't know how to handle {}", notif.method()),
+          Ok(notif) => log::warn!("ignoring notification: {}", notif.method()),
           Err(Handled) => {}
         }
       }
@@ -43,7 +43,7 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
 
 fn handle_req(db: &Db, req: Req) -> Result<Req, Response> {
   req.handle::<HoverRequest, _>(|_, params| {
-    eprintln!("hover");
+    log::info!("hover");
     let params = params.text_document_position_params;
     db.hover(&params.text_document.uri, CrateFrom::from(params.position))
       .map(CrateFrom::from)
@@ -59,13 +59,13 @@ fn handle_notif(
   notif
     .handle::<DidChangeWatchedFiles, _>(|_| {
       // TODO impl incremental updating
-      eprintln!("watched files changed");
+      log::info!("watched files changed");
       *db = Db::new(get_initial_files(root));
       send_all_diagnostics(conn, db);
     })?
     .handle::<DidChangeTextDocument, _>(|mut params| {
       // TODO impl incremental updating
-      eprintln!("did change a text document");
+      log::info!("did change a text document");
       let change = params.content_changes.pop().unwrap();
       assert!(params.content_changes.is_empty());
       assert!(change.range.is_none());

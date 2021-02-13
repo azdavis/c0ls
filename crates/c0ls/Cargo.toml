@@ -7,6 +7,8 @@ publish = false
 
 [dependencies]
 analysis = { path = "../analysis" }
+env_logger = "0.8"
+log = "0.4"
 lsp-server = "0.5"
 lsp-types = "0.86"
 rustc-hash = "1"
