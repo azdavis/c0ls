@@ -1,12 +1,11 @@
-use crate::uri_db::UriDb;
-use statics::FileId;
+use crate::uri::{UriDb, UriId};
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
 
 pub(crate) fn get(
   map: &UriDb,
-  id: FileId,
-  u: syntax::Use<'_>,
+  id: UriId,
+  u: lex::Use<'_>,
 ) -> Result<Use, Error> {
   match get_impl(map, id, u.path, u.kind) {
     Ok(kind) => Ok(Use {
@@ -22,12 +21,12 @@ pub(crate) fn get(
 
 fn get_impl(
   map: &UriDb,
-  id: FileId,
+  id: UriId,
   path: &str,
-  kind: syntax::UseKind,
+  kind: lex::UseKind,
 ) -> Result<UseKind, ErrorKind> {
   match kind {
-    syntax::UseKind::Local => {
+    lex::UseKind::Local => {
       let uri = map.get(id);
       let mut buf = PathBuf::from(uri.path()).parent().unwrap().to_owned();
       for c in Path::new(path).components() {
@@ -51,7 +50,7 @@ fn get_impl(
         None => Err(ErrorKind::NoSuchPath),
       }
     }
-    syntax::UseKind::Lib => match path {
+    lex::UseKind::Lib => match path {
       "args" => Ok(UseKind::Lib(Lib::Args)),
       "conio" => Ok(UseKind::Lib(Lib::Conio)),
       "file" => Ok(UseKind::Lib(Lib::File)),
@@ -73,7 +72,7 @@ pub(crate) struct Use {
 
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum UseKind {
-  File(FileId),
+  File(UriId),
   Lib(Lib),
 }
 

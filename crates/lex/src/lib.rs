@@ -17,13 +17,26 @@ use std::convert::TryInto;
 use std::fmt;
 use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
-use syntax::{SyntaxKind as SK, Use, UseKind};
+use syntax::SyntaxKind as SK;
 
 #[derive(Debug)]
 pub struct Lex<'input> {
   pub tokens: Vec<Token<'input, SK>>,
   pub uses: Vec<Use<'input>>,
   pub errors: Vec<Error>,
+}
+
+#[derive(Debug)]
+pub struct Use<'a> {
+  pub kind: UseKind,
+  pub range: TextRange,
+  pub path: &'a str,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UseKind {
+  Local,
+  Lib,
 }
 
 #[derive(Debug)]

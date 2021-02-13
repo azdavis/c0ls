@@ -4,6 +4,12 @@ use crate::util::ty::{Ty, TyDb};
 use hir::{la_arena::ArenaMap, Arenas, ExprId, Name, SimpId};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum FileKind {
+  Source,
+  Header,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Defined {
   /// Must not be defined.

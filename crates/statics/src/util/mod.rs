@@ -1,5 +1,4 @@
 pub(crate) mod error;
-pub(crate) mod file;
 pub(crate) mod id;
 pub(crate) mod ty;
 pub(crate) mod types;

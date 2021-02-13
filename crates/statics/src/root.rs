@@ -1,6 +1,5 @@
 use crate::item::get as get_item;
-use crate::util::file::FileKind;
-use crate::util::types::{Cx, Env, Import};
+use crate::util::types::{Cx, Env, FileKind, Import};
 use hir::Root;
 
 pub fn get(cx: &mut Cx, import: &Import, kind: FileKind, root: &Root) -> Env {

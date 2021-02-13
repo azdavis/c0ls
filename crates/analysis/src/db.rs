@@ -1,14 +1,11 @@
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uri_db::UriDb;
+use crate::uri::{UriDb, UriId};
 use crate::uses::{get as get_use, Lib, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{
-  get as get_statics, Cx, Env, FileId, FileKind, Id, Import, TyDb,
-};
+use statics::{get as get_statics, Cx, Env, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
-use std::path::Path;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use topo_sort::{topological_sort, Graph};
@@ -17,8 +14,8 @@ use url::Url;
 #[derive(Debug)]
 pub struct Db {
   uris: UriDb,
-  ordering: Vec<FileId>,
-  syntax_data: FxHashMap<FileId, SyntaxData>,
+  ordering: Vec<UriId>,
+  syntax_data: FxHashMap<UriId, SyntaxData>,
   kind: Kind,
 }
 
@@ -29,16 +26,7 @@ impl Db {
     let mut uris = UriDb::default();
     let mut id_and_contents = map_with_capacity(num_files);
     for (uri, contents) in files {
-      let ext = Path::new(uri.path())
-        .extension()
-        .expect("no extension")
-        .to_str()
-        .expect("extension is not UTF-8");
-      let kind = match ext {
-        "h0" => FileKind::Header,
-        _ => FileKind::Source,
-      };
-      let id = uris.insert(uri.clone(), kind);
+      let id = uris.insert(uri.clone());
       id_and_contents.insert(id, contents);
     }
     // - lex, parse, lower.
@@ -108,8 +96,7 @@ impl Db {
     drop(graph);
     // run statics in the order of the topo order, update errors.
     let (mut cx, std_lib) = std_lib::get();
-    let mut semantic_data =
-      map_with_capacity::<FileId, SemanticData>(num_files);
+    let mut semantic_data = map_with_capacity::<UriId, SemanticData>(num_files);
     for &id in ordering.iter() {
       let mut import = Import::with_main();
       for u in uses[&id].iter() {
@@ -280,8 +267,8 @@ fn get_diagnostics(
 
 fn get_diagnostics_cycle_error(
   syntax_data: &SyntaxData,
-  id: FileId,
-  witness: FileId,
+  id: UriId,
+  witness: UriId,
 ) -> Vec<Diagnostic> {
   let mut ret: Vec<_> = get_syntax_diagnostics(syntax_data)
     .map(|(rng, message)| Diagnostic {
@@ -308,7 +295,7 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
 
 #[derive(Debug)]
 enum Kind {
-  CycleError(FileId),
+  CycleError(UriId),
   Done(Box<Done>),
 }
 
@@ -324,7 +311,7 @@ impl Kind {
 #[derive(Debug)]
 struct Done {
   cx: Cx,
-  semantic_data: FxHashMap<FileId, SemanticData>,
+  semantic_data: FxHashMap<UriId, SemanticData>,
 }
 
 /// not really 'syntax', but more in contrast to semantic info from statics.

@@ -1,9 +1,9 @@
 use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
-use crate::util::file::FileKind;
 use crate::util::types::{
-  Cx, Defined, Env, FnCx, FnData, FnSig, Import, NameToTy, Param, VarData,
+  Cx, Defined, Env, FileKind, FnCx, FnData, FnSig, Import, NameToTy, Param,
+  VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
 use hir::{Arenas, Item, ItemId};

@@ -9,7 +9,7 @@
 mod db;
 mod lines;
 mod types;
-mod uri_db;
+mod uri;
 mod uses;
 
 pub use db::Db;
