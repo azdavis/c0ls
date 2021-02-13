@@ -9,9 +9,9 @@
 mod db;
 mod lines;
 mod types;
-mod uri;
+mod uri_db;
 mod uses;
 
 pub use db::Db;
 pub use types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-pub use uri::Uri;
+pub use url;

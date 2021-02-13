@@ -1,5 +1,5 @@
-use crate::uri::Uri;
 use std::fmt;
+use url::Url;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position {
@@ -28,7 +28,7 @@ impl fmt::Display for Range {
 
 #[derive(Debug)]
 pub struct Location {
-  pub uri: Uri,
+  pub uri: Url,
   pub range: Range,
 }
 

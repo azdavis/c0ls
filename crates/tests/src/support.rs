@@ -1,9 +1,9 @@
-use analysis::{CodeBlock, Db, Diagnostic, Hover, Position, Range, Uri};
+use analysis::{url::Url, CodeBlock, Db, Diagnostic, Hover, Position, Range};
 use rustc_hash::FxHashMap;
 
 pub(crate) fn check(s: &str) {
   let mut files = FxHashMap::default();
-  let uri = Uri::from("main.c0");
+  let uri = Url::from_file_path("/tmp/main.c0").unwrap();
   files.insert(uri.clone(), s.to_owned());
   let db = Db::new(files);
   let want = parse_expected(s);

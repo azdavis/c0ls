@@ -1,10 +1,10 @@
-use crate::uri::Map;
+use crate::uri_db::UriDb;
 use statics::FileId;
 use std::fmt;
-use std::path::{Component, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 pub(crate) fn get(
-  map: &Map,
+  map: &UriDb,
   id: FileId,
   u: syntax::Use<'_>,
 ) -> Result<Use, Error> {
@@ -21,16 +21,16 @@ pub(crate) fn get(
 }
 
 fn get_impl(
-  map: &Map,
+  map: &UriDb,
   id: FileId,
   path: &str,
   kind: syntax::UseKind,
 ) -> Result<UseKind, ErrorKind> {
   match kind {
     syntax::UseKind::Local => {
-      let mut buf = map.get(id).as_path().parent().unwrap().to_owned();
-      let fella = PathBuf::from(path);
-      for c in fella.components() {
+      let uri = map.get(id);
+      let mut buf = PathBuf::from(uri.path()).parent().unwrap().to_owned();
+      for c in Path::new(path).components() {
         match c {
           Component::Prefix(_) | Component::RootDir => {
             return Err(ErrorKind::AbsolutePath)
@@ -44,7 +44,9 @@ fn get_impl(
           Component::Normal(s) => buf.push(s),
         }
       }
-      match map.get_id(buf.as_path()) {
+      let mut new_uri = uri.clone();
+      new_uri.set_path(buf.as_os_str().to_str().unwrap());
+      match map.get_id(&new_uri) {
         Some(x) => Ok(UseKind::File(x)),
         None => Err(ErrorKind::NoSuchPath),
       }

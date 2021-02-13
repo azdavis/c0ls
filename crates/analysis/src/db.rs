@@ -1,6 +1,6 @@
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uri::{Map, Uri};
+use crate::uri_db::UriDb;
 use crate::uses::{get as get_use, Lib, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
@@ -8,27 +8,28 @@ use statics::{
   get as get_statics, Cx, Env, FileId, FileKind, Id, Import, TyDb,
 };
 use std::hash::BuildHasherDefault;
+use std::path::Path;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use topo_sort::{topological_sort, Graph};
+use url::Url;
 
 #[derive(Debug)]
 pub struct Db {
-  uris: Map,
+  uris: UriDb,
   ordering: Vec<FileId>,
   syntax_data: FxHashMap<FileId, SyntaxData>,
   kind: Kind,
 }
 
 impl Db {
-  pub fn new(files: FxHashMap<Uri, String>) -> Self {
+  pub fn new(files: FxHashMap<Url, String>) -> Self {
     // assign file IDs.
     let num_files = files.len();
-    let mut uris = Map::default();
+    let mut uris = UriDb::default();
     let mut id_and_contents = map_with_capacity(num_files);
     for (uri, contents) in files {
-      let ext = uri
-        .as_path()
+      let ext = Path::new(uri.path())
         .extension()
         .expect("no extension")
         .to_str()
@@ -157,7 +158,7 @@ impl Db {
     }
   }
 
-  pub fn all_diagnostics(&self) -> Vec<(&Uri, Vec<Diagnostic>)> {
+  pub fn all_diagnostics(&self) -> Vec<(&Url, Vec<Diagnostic>)> {
     match self.kind {
       Kind::Done(ref done) => self
         .ordering
@@ -183,12 +184,12 @@ impl Db {
     }
   }
 
-  pub fn go_to_def(&self, _: &Uri, _: Position) -> Option<Location> {
+  pub fn go_to_def(&self, _: &Url, _: Position) -> Option<Location> {
     // TODO
     None
   }
 
-  pub fn hover(&self, uri: &Uri, pos: Position) -> Option<Hover> {
+  pub fn hover(&self, uri: &Url, pos: Position) -> Option<Hover> {
     let done = self.kind.done()?;
     let id = self.uris.get_id(uri)?;
     let syntax_data = &self.syntax_data[&id];

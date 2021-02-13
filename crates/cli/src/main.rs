@@ -1,8 +1,9 @@
 //! A CLI wrapper over `analysis`.
 
-use analysis::{Db, Uri};
+use analysis::{url::Url, Db};
 use gumdrop::Options;
 use rustc_hash::FxHashMap;
+use std::path::Path;
 
 #[derive(Debug, Options)]
 struct Config {
@@ -26,13 +27,14 @@ fn run(conf: Config) -> Option<bool> {
   let mut files = FxHashMap::default();
   for file in conf.source {
     let contents = read_file(&file)?;
-    files.insert(Uri::new(file.into()), contents);
+    let file = Path::new(&file).canonicalize().unwrap();
+    files.insert(Url::from_file_path(file).unwrap(), contents);
   }
   let ide = Db::new(files);
   let diagnostics = ide.all_diagnostics();
   for &(uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
-      println!("{}:{}", uri.as_path().display(), d);
+      println!("{}:{}", uri.path(), d);
     }
   }
   Some(diagnostics.iter().all(|&(_, ref ds)| ds.is_empty()))

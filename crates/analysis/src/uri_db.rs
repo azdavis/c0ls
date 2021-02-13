@@ -3,42 +3,17 @@ use statics::{FileId, FileKind};
 use std::borrow::Borrow;
 use std::hash::Hash;
 use std::ops::Index;
-use std::path::{Path, PathBuf};
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Uri(PathBuf);
-
-impl Uri {
-  pub fn new(path: PathBuf) -> Self {
-    Self(path)
-  }
-
-  pub fn as_path(&self) -> &Path {
-    self.0.as_path()
-  }
-}
-
-impl Borrow<Path> for Uri {
-  fn borrow(&self) -> &Path {
-    self.as_path()
-  }
-}
-
-impl From<&str> for Uri {
-  fn from(val: &str) -> Self {
-    Self::new(PathBuf::from(val))
-  }
-}
+use url::Url;
 
 #[derive(Debug, Default)]
-pub(crate) struct Map {
-  id_to_uri: FxHashMap<FileId, Uri>,
-  uri_to_id: FxHashMap<Uri, FileId>,
+pub(crate) struct UriDb {
+  id_to_uri: FxHashMap<FileId, Url>,
+  uri_to_id: FxHashMap<Url, FileId>,
   next: u32,
 }
 
-impl Map {
-  pub(crate) fn insert(&mut self, uri: Uri, kind: FileKind) -> FileId {
+impl UriDb {
+  pub(crate) fn insert(&mut self, uri: Url, kind: FileKind) -> FileId {
     if let Some(ret) = self.get_id(&uri) {
       return ret;
     }
@@ -51,13 +26,13 @@ impl Map {
 
   pub(crate) fn get_id<Q>(&self, key: &Q) -> Option<FileId>
   where
-    Uri: Borrow<Q>,
+    Url: Borrow<Q>,
     Q: ?Sized + Hash + Eq,
   {
     self.uri_to_id.get(key).copied()
   }
 
-  pub(crate) fn get(&self, file_id: FileId) -> &Uri {
+  pub(crate) fn get(&self, file_id: FileId) -> &Url {
     self.id_to_uri.get(&file_id).expect("no uri for file id")
   }
 
@@ -66,8 +41,8 @@ impl Map {
   }
 }
 
-impl Index<FileId> for Map {
-  type Output = Uri;
+impl Index<FileId> for UriDb {
+  type Output = Url;
   fn index(&self, index: FileId) -> &Self::Output {
     self.get(index)
   }
