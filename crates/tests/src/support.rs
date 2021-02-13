@@ -10,7 +10,7 @@ pub(crate) fn check(s: &str) {
   let mut got_all = db.all_diagnostics();
   let (got_uri, mut got) = got_all.pop().unwrap();
   assert!(got_all.is_empty());
-  assert_eq!(uri, *got_uri);
+  assert_eq!(uri, got_uri);
   got.sort_unstable();
   for (want, got) in want.diagnostics.iter().zip(got.iter()) {
     assert!(

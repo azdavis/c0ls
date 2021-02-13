@@ -147,7 +147,7 @@ impl Db {
     }
   }
 
-  pub fn all_diagnostics(&self) -> Vec<(&Url, Vec<Diagnostic>)> {
+  pub fn all_diagnostics(&self) -> Vec<(Url, Vec<Diagnostic>)> {
     match self.kind {
       Kind::Done(ref done) => self
         .ordering
@@ -158,7 +158,7 @@ impl Db {
             &done.semantic_data[&id],
             &done.cx.tys,
           );
-          (self.uris.get(id), ds)
+          (self.uris.get(id).clone(), ds)
         })
         .collect(),
       Kind::CycleError(witness) => self
@@ -167,7 +167,7 @@ impl Db {
         .map(|&id| {
           let ds =
             get_diagnostics_cycle_error(&self.syntax_data[&id], id, witness);
-          (self.uris.get(id), ds)
+          (self.uris.get(id).clone(), ds)
         })
         .collect(),
     }

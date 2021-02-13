@@ -32,7 +32,7 @@ fn run(conf: Config) -> Option<bool> {
   }
   let ide = Db::new(files);
   let diagnostics = ide.all_diagnostics();
-  for &(uri, ref ds) in diagnostics.iter() {
+  for &(ref uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
       println!("{}:{}", uri.path(), d);
     }
