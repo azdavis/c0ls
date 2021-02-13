@@ -22,7 +22,7 @@ export function activate(cx: ExtensionContext) {
     // to be the encouraged alternative is for the server to register interest
     // in files itself.
     synchronize: {
-      fileEvents: workspace.createFileSystemWatcher("**/*.c0"),
+      fileEvents: workspace.createFileSystemWatcher("**/*.{c0,h0}"),
     },
   };
   client = new LanguageClient("c0ls", serverOpts, clientOpts, true);
