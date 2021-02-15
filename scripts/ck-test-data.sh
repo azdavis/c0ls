@@ -8,11 +8,11 @@ if [ "$#" -ne 0 ]; then
 fi
 
 cd "$(dirname "$0")"
-cd ../crates/tests/src
+cd ../crates/analysis/src/tests
 
 ok=true
 for f in data/*.c0; do
-  if ! git grep -q "$f" -- lib.rs; then
+  if ! git grep -q "$f" -- mod.rs; then
     echo "$f"
     ok=false
   fi

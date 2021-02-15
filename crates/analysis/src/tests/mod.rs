@@ -1,7 +1,3 @@
-//! End-to-end tests for C0 analysis.
-
-#![cfg(test)]
-
 mod support;
 
 use support::check;

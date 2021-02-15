@@ -6,6 +6,9 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
+#[cfg(test)]
+mod tests;
+
 mod db;
 mod lines;
 mod types;

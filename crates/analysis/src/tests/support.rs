@@ -1,4 +1,4 @@
-use analysis::{url::Url, CodeBlock, Db, Diagnostic, Hover, Position, Range};
+use crate::{url::Url, CodeBlock, Db, Diagnostic, Hover, Position, Range};
 use rustc_hash::FxHashMap;
 
 pub(crate) fn check(s: &str) {
