@@ -10,6 +10,7 @@ use statics::{get as get_statics, Cx, Env, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
+use syntax::SyntaxNode;
 use topo_sort::{topological_sort, Graph};
 use url::Url;
 
@@ -171,6 +172,21 @@ impl Db {
         })
         .collect(),
     }
+  }
+
+  pub fn format(&self, uri: &Url) -> Option<String> {
+    let id = self.uris.get_id(uri)?;
+    let errors = &self.syntax_data[&id].errors;
+    if errors.lex.is_empty() && errors.parse.is_empty() {
+      fmt::get(self.syntax_data[&id].ast_root.clone())
+    } else {
+      None
+    }
+  }
+
+  pub fn syntax(&self, uri: &Url) -> Option<SyntaxNode> {
+    let id = self.uris.get_id(uri)?;
+    Some(self.syntax_data[&id].ast_root.syntax().clone())
   }
 
   pub fn go_to_def(&self, _: &Url, _: Position) -> Option<Location> {

@@ -6,6 +6,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
+fmt = { path = "../fmt" }
 hir = { path = "../hir" }
 lex = { path = "../lex" }
 lower = { path = "../lower" }

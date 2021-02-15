@@ -13,6 +13,7 @@ dependencies = [
 name = "analysis"
 version = "0.1.0"
 dependencies = [
+ "fmt",
  "hir",
  "lex",
  "lower",
@@ -135,6 +136,13 @@ name = "event-parse"
 version = "0.1.0"
 dependencies = [
  "drop_bomb",
+]
+
+[[package]]
+name = "fmt"
+version = "0.1.0"
+dependencies = [
+ "syntax",
 ]
 
 [[package]]

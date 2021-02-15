@@ -9,6 +9,10 @@ use std::path::Path;
 struct Config {
   #[options(help = "print this help")]
   pub help: bool,
+  #[options(help = "format each source file")]
+  pub format: bool,
+  #[options(help = "show the CST of each source file")]
+  pub cst: bool,
   #[options(free, help = "source files")]
   pub source: Vec<String>,
 }
@@ -25,16 +29,43 @@ fn read_file(s: &str) -> Option<String> {
 
 fn run(conf: Config) -> Option<bool> {
   let mut files = FxHashMap::default();
-  for file in conf.source {
-    let contents = read_file(&file)?;
-    let file = Path::new(&file).canonicalize().unwrap();
-    files.insert(Url::from_file_path(file).unwrap(), contents);
+  let mut paths = FxHashMap::default();
+  for path in conf.source {
+    let contents = read_file(&path)?;
+    let path = Path::new(&path).canonicalize().unwrap();
+    let uri = Url::from_file_path(&path).unwrap();
+    files.insert(uri.clone(), contents);
+    paths.insert(path, uri);
   }
-  let ide = Db::new(files);
-  let diagnostics = ide.all_diagnostics();
+  let db = Db::new(files);
+  let diagnostics = db.all_diagnostics();
   for &(ref uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
       println!("{}:{}", uri.path(), d);
+    }
+  }
+  if conf.format {
+    for (path, uri) in paths.iter() {
+      let formatted = match db.format(uri) {
+        None => {
+          println!("cannot format {}: syntax error", path.display());
+          return None;
+        }
+        Some(x) => x,
+      };
+      match std::fs::write(&path, formatted) {
+        Ok(()) => {}
+        Err(e) => {
+          println!("{}: {}", path.display(), e);
+          return None;
+        }
+      }
+    }
+  }
+  if conf.cst {
+    for (path, uri) in paths.iter() {
+      println!("==> {}", path.display());
+      print!("{:#?}", db.syntax(uri).unwrap());
     }
   }
   Some(diagnostics.iter().all(|&(_, ref ds)| ds.is_empty()))
