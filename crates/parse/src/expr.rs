@@ -21,7 +21,7 @@ const PRIM: [(SK, SK); 7] = [
   (SK::NullKw, SK::NullExpr),
 ];
 
-fn expr_hd(p: &mut Parser<'_, SK>) -> Option<Exited> {
+fn expr_atom(p: &mut Parser<'_, SK>) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {
       let entered = p.enter();
@@ -45,16 +45,6 @@ fn expr_hd(p: &mut Parser<'_, SK>) -> Option<Exited> {
     } else {
       Some(p.exit(entered, SK::IdentExpr))
     }
-  } else if p.at(SK::Bang)
-    || p.at(SK::Tilde)
-    || p.at(SK::Minus)
-    || p.at(SK::Star)
-  {
-    let entered = p.enter();
-    p.bump();
-    // higher than any infix op prec
-    must(p, |p| expr_prec(p, 11));
-    Some(p.exit(entered, SK::UnOpExpr))
   } else if p.at(SK::AllocKw) {
     let entered = p.enter();
     p.bump();
@@ -77,9 +67,18 @@ fn expr_hd(p: &mut Parser<'_, SK>) -> Option<Exited> {
 }
 
 fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
-  let mut exited = expr_hd(p)?;
+  let mut exited =
+    if p.at(SK::Bang) || p.at(SK::Tilde) || p.at(SK::Minus) || p.at(SK::Star) {
+      assert!(!(UN_OP_PREC <= min_prec));
+      let entered = p.enter();
+      p.bump();
+      must(p, |p| expr_prec(p, UN_OP_PREC - 1));
+      p.exit(entered, SK::UnOpExpr)
+    } else {
+      expr_atom(p)?
+    };
   loop {
-    exited = if let Some(prec) = infix_prec(p) {
+    exited = if let Some(prec) = bin_op_prec(p) {
       if prec <= min_prec {
         break;
       }
@@ -120,28 +119,33 @@ fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
   Some(exited)
 }
 
-fn infix_prec(p: &mut Parser<'_, SK>) -> Option<u8> {
+const UN_OP_PREC: u8 = 12;
+
+fn bin_op_prec(p: &mut Parser<'_, SK>) -> Option<u8> {
   if p.at(SK::Star) || p.at(SK::Slash) || p.at(SK::Percent) {
-    Some(10)
+    Some(11)
   } else if p.at(SK::Plus) || p.at(SK::Minus) {
-    Some(9)
+    Some(10)
   } else if p.at(SK::LtLt) || p.at(SK::GtGt) {
-    Some(8)
+    Some(9)
   } else if p.at(SK::Lt) || p.at(SK::LtEq) || p.at(SK::Gt) || p.at(SK::GtEq) {
-    Some(7)
+    Some(8)
   } else if p.at(SK::EqEq) || p.at(SK::BangEq) {
-    Some(6)
+    Some(7)
   } else if p.at(SK::And) {
-    Some(5)
+    Some(6)
   } else if p.at(SK::Carat) {
-    Some(4)
+    Some(5)
   } else if p.at(SK::Bar) {
-    Some(3)
+    Some(4)
   } else if p.at(SK::AndAnd) {
-    Some(2)
+    Some(3)
   } else if p.at(SK::BarBar) {
-    Some(1)
+    Some(2)
   } else {
     None
   }
 }
+
+// no need for explicit TERNARY_PREC = 1 since it's the lowest and
+// right-associative
