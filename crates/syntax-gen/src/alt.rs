@@ -49,18 +49,29 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
 
 fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let name_kind = format_ident!("{}Kind", name);
-  let (defs, casts): (Vec<_>, Vec<_>) = rules
+  let (defs, arms): (Vec<_>, Vec<_>) = rules
     .iter()
     .map(|rule| {
-      let name = ident(&cx.tokens.name(unwrap_token(rule)));
+      let tok = unwrap_token(rule);
+      let name = ident(&cx.tokens.name(tok));
+      let text = cx.grammar[tok].name.as_str();
       let def = quote! { #name };
       let cast = quote! { SK::#name => #name_kind::#name };
-      (def, cast)
+      let to_str = quote! { Self::#name => #text };
+      (def, (cast, to_str))
     })
     .unzip();
+  let (casts, to_strs): (Vec<_>, Vec<_>) = arms.into_iter().unzip();
   quote! {
     pub enum #name_kind {
       #(#defs ,)*
+    }
+    impl #name_kind {
+      pub fn to_str(&self) -> &'static str {
+        match *self {
+          #(#to_strs ,)*
+        }
+      }
     }
     pub struct #name {
       pub token: SyntaxToken,

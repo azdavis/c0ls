@@ -1,6 +1,6 @@
 use crate::ty::get as get_ty;
 use crate::util::Cx;
-use syntax::ast::{BinOpKind, Expr, UnOpKind};
+use syntax::ast::{BinOpKind, Expr};
 
 #[must_use]
 pub(crate) fn get(cx: &mut Cx, expr: Expr) -> Option<()> {
@@ -27,7 +27,7 @@ fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
       }
       get_prec(cx, prec, expr.lhs()?)?;
       cx.push(" ");
-      cx.push(bin_op_str(&op.kind));
+      cx.push(op.kind.to_str());
       cx.push(" ");
       get_prec(cx, prec, expr.rhs()?)?;
       if prec < min_prec {
@@ -38,7 +38,7 @@ fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
       if UN_OP_PREC < min_prec {
         cx.push("(");
       }
-      cx.push(un_op_str(&expr.op()?.kind));
+      cx.push(&expr.op()?.kind.to_str());
       get_prec(cx, UN_OP_PREC, expr.expr()?)?;
       if UN_OP_PREC < min_prec {
         cx.push(")");
@@ -102,29 +102,6 @@ fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
   Some(())
 }
 
-fn bin_op_str(op: &BinOpKind) -> &'static str {
-  match *op {
-    BinOpKind::Plus => "+",
-    BinOpKind::Minus => "-",
-    BinOpKind::Star => "*",
-    BinOpKind::Slash => "/",
-    BinOpKind::Percent => "%",
-    BinOpKind::LtLt => "<<",
-    BinOpKind::GtGt => ">>",
-    BinOpKind::And => "&",
-    BinOpKind::Carat => "^",
-    BinOpKind::Bar => "|",
-    BinOpKind::EqEq => "==",
-    BinOpKind::BangEq => "!=",
-    BinOpKind::Lt => "<",
-    BinOpKind::LtEq => "<=",
-    BinOpKind::Gt => ">",
-    BinOpKind::GtEq => ">=",
-    BinOpKind::AndAnd => "&&",
-    BinOpKind::BarBar => "||",
-  }
-}
-
 const TOP_PREC: u8 = 13;
 const UN_OP_PREC: u8 = 12;
 
@@ -144,12 +121,3 @@ fn bin_op_prec(op: &BinOpKind) -> u8 {
 }
 
 const TERNARY_PREC: u8 = 1;
-
-fn un_op_str(op: &UnOpKind) -> &'static str {
-  match *op {
-    UnOpKind::Bang => "!",
-    UnOpKind::Tilde => "~",
-    UnOpKind::Minus => "-",
-    UnOpKind::Star => "*",
-  }
-}
