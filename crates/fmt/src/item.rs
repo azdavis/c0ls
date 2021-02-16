@@ -56,6 +56,7 @@ pub(crate) fn get(cx: &mut Cx, item: Item) -> Option<()> {
     Item::TypedefItem(item) => {
       cx.push("typedef ");
       get_ty(cx, item.ty()?)?;
+      cx.push(" ");
       cx.push(item.ident()?.text());
       cx.push(";\n");
     }
