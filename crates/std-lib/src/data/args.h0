@@ -1,6 +1,6 @@
-void args_flag(string name, bool *ptr);
-void args_int(string name, int *ptr);
-void args_string(string name, string *ptr);
+void args_flag(string name, bool* ptr);
+void args_int(string name, int* ptr);
+void args_string(string name, string* ptr);
 struct args {
   int argc;
   string[] argv;
