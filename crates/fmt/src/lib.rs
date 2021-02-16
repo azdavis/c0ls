@@ -1,4 +1,4 @@
-//! Format a C0 CST.
+//! Formats a C0 CST.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
