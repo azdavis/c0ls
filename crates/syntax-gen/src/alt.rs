@@ -12,17 +12,15 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
 }
 
 fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
-  let (defs, arms): (Vec<_>, Vec<_>) = rules
-    .iter()
-    .map(|rule| {
-      let name = ident(&cx.grammar[unwrap_node(rule)].name);
-      let def = quote! { #name(#name) };
-      let cast = quote! { SK::#name => Self::#name(#name(node)) };
-      let syntax = quote! { Self::#name(x) => x.syntax() };
-      (def, (cast, syntax))
-    })
-    .unzip();
-  let (casts, syntaxes): (Vec<_>, Vec<_>) = arms.into_iter().unzip();
+  let mut defs = Vec::with_capacity(rules.len());
+  let mut casts = Vec::with_capacity(rules.len());
+  let mut syntaxes = Vec::with_capacity(rules.len());
+  for rule in rules {
+    let name = ident(&cx.grammar[unwrap_node(rule)].name);
+    defs.push(quote! { #name(#name) });
+    casts.push(quote! { SK::#name => Self::#name(#name(node)) });
+    syntaxes.push(quote! { Self::#name(x) => x.syntax() });
+  }
   quote! {
     pub enum #name {
       #(#defs ,)*
@@ -49,19 +47,17 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
 
 fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let name_kind = format_ident!("{}Kind", name);
-  let (defs, arms): (Vec<_>, Vec<_>) = rules
-    .iter()
-    .map(|rule| {
-      let tok = unwrap_token(rule);
-      let name = ident(&cx.tokens.name(tok));
-      let text = cx.grammar[tok].name.as_str();
-      let def = quote! { #name };
-      let cast = quote! { SK::#name => #name_kind::#name };
-      let to_str = quote! { Self::#name => #text };
-      (def, (cast, to_str))
-    })
-    .unzip();
-  let (casts, to_strs): (Vec<_>, Vec<_>) = arms.into_iter().unzip();
+  let mut defs = Vec::with_capacity(rules.len());
+  let mut casts = Vec::with_capacity(rules.len());
+  let mut to_strs = Vec::with_capacity(rules.len());
+  for rule in rules {
+    let tok = unwrap_token(rule);
+    let name = ident(&cx.tokens.name(tok));
+    let text = cx.grammar[tok].name.as_str();
+    defs.push(quote! { #name });
+    casts.push(quote! { SK::#name => #name_kind::#name });
+    to_strs.push(quote! { Self::#name => #text });
+  }
   quote! {
     pub enum #name_kind {
       #(#defs ,)*
