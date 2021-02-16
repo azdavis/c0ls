@@ -1,14 +1,16 @@
 use crate::expr::get as get_expr;
 use crate::ty::get as get_ty;
 use crate::util::Cx;
-use syntax::ast::{IncDecKind, Simp};
+use syntax::ast::{AsgnOpKind, IncDecKind, Simp};
 
 #[must_use]
 pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<()> {
   match simp {
     Simp::AsgnSimp(simp) => {
       get_expr(cx, simp.lhs()?)?;
-      cx.push(" = ");
+      cx.push(" ");
+      cx.push(asgn_op(simp.op()?.kind));
+      cx.push(" ");
       get_expr(cx, simp.rhs()?)?;
     }
     Simp::IncDecSimp(simp) => {
@@ -41,4 +43,20 @@ pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<()> {
     }
   }
   Some(())
+}
+
+fn asgn_op(op: AsgnOpKind) -> &'static str {
+  match op {
+    AsgnOpKind::Eq => "=",
+    AsgnOpKind::PlusEq => "+=",
+    AsgnOpKind::MinusEq => "-=",
+    AsgnOpKind::StarEq => "*=",
+    AsgnOpKind::SlashEq => "/=",
+    AsgnOpKind::PercentEq => "%=",
+    AsgnOpKind::LtLtEq => "<<=",
+    AsgnOpKind::GtGtEq => ">>=",
+    AsgnOpKind::AndEq => "&=",
+    AsgnOpKind::CaratEq => "^=",
+    AsgnOpKind::BarEq => "|=",
+  }
 }
