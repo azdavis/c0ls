@@ -1,0 +1,16 @@
+#use <util>
+
+#use <conio>
+
+int  foo(int
+x, int    y){ printint(x); flush();return x +(abs( y)*3);}
+
+int
+main(      ){
+  int i=0;
+  while(i<3)
+    while(i>i*3 -1234)
+      i ++; i+= foo(i,i+1);
+      what();
+  return(3+i*5 + 0);
+}

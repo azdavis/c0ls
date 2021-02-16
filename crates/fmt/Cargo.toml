@@ -7,3 +7,7 @@ publish = false
 
 [dependencies]
 syntax = { path = "../syntax" }
+
+[dev-dependencies]
+lex = { path = "../lex" }
+parse = { path = "../parse" }
