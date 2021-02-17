@@ -8,15 +8,21 @@ if [ "$#" -ne 0 ]; then
 fi
 
 cd "$(dirname "$0")"
-cd ../crates/analysis/src/tests
+cd ..
 
+root="$PWD"
 ok=true
-for f in data/*.c0; do
-  if ! git grep -q "$f" -- mod.rs; then
-    echo "$f"
-    ok=false
-  fi
+for c in analysis fmt; do
+  cd "crates/$c/src/tests"
+  for f in data/*.c0; do
+    if ! git grep -q "$f" -- mod.rs; then
+      echo "$c: $f"
+      ok=false
+    fi
+  done
+  cd "$root"
 done
+
 if "$ok"; then
   echo "ok: all test data files are mentioned"
 else
