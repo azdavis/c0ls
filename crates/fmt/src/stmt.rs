@@ -51,7 +51,13 @@ fn get_one(cx: &mut Cx, level: u8, stmt: Stmt) -> Option<()> {
       if let Some(no) = stmt.no() {
         cx.push(" else ");
         match no.stmt()? {
-          Stmt::BlockStmt(stmt) => get_many(cx, level, stmt.stmts())?,
+          Stmt::BlockStmt(stmt) => {
+            let mut stmts: Vec<_> = stmt.stmts().collect();
+            match stmts.as_slice() {
+              [Stmt::IfStmt(_)] => get_one(cx, level, stmts.pop().unwrap())?,
+              _ => get_many(cx, level, stmts.into_iter())?,
+            }
+          }
           stmt @ Stmt::IfStmt(_) => get_one(cx, level, stmt)?,
           stmt => get_many(cx, level, std::iter::once(stmt))?,
         }

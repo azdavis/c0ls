@@ -23,3 +23,11 @@ fn simple() {
     include_str!("data/simple.out.c0"),
   );
 }
+
+#[test]
+fn if_return() {
+  check(
+    include_str!("data/if_return.inp.c0"),
+    include_str!("data/if_return.out.c0"),
+  );
+}

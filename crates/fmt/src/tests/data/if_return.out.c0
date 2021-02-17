@@ -1,0 +1,30 @@
+int foo(bool a) {
+  if (a) {
+    return 1;
+  }
+  if (a) {
+    if (a) {
+      return 2;
+    } else {
+      return 3;
+    }
+  }
+  if (a) {
+    return 4;
+  } else if (a) {
+    return 5;
+  }
+  if (a) {
+    return 6;
+  } else if (a) {
+    return 7;
+  } else {
+    return 8;
+  }
+  if (a) {
+    return 9;
+  } else if (a) {
+    return 10;
+  }
+  return 11;
+}
