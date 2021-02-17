@@ -61,8 +61,27 @@ pub(crate) fn get(cx: &mut Cx, item: Item) -> Option<()> {
       cx.push(";\n");
     }
     Item::PragmaItem(item) => {
-      // TODO format pragmas more?
-      cx.push(item.pragma()?.text());
+      let tok = item.pragma()?;
+      let text = tok.text();
+      let mut parts = text.split_ascii_whitespace();
+      let was_use = match parts.next() {
+        Some(fst) => match fst {
+          "#use" | "#ref" => match parts.next() {
+            Some(snd) => {
+              cx.push(fst);
+              cx.push(" ");
+              cx.push(snd);
+              true
+            }
+            None => false,
+          },
+          _ => false,
+        },
+        None => false,
+      };
+      if !was_use {
+        cx.push(text)
+      }
       cx.push("\n");
     }
   }

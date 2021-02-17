@@ -1,6 +1,6 @@
-#use <util>
+#use   <util>
 
-#use <conio>
+#use                     <conio>
 
 int  foo(int
 x, int    y){ printint(x); flush();return x +(abs( y)*3);}
