@@ -4,7 +4,6 @@ use crate::util::Cx;
 use crate::util::INDENT;
 use syntax::ast::{Field, FnTail, Item};
 
-#[must_use]
 pub(crate) fn get(cx: &mut Cx, item: Item) -> Option<()> {
   match item {
     Item::StructItem(item) => {
@@ -88,7 +87,6 @@ pub(crate) fn get(cx: &mut Cx, item: Item) -> Option<()> {
   Some(())
 }
 
-#[must_use]
 fn get_field(cx: &mut Cx, field: Field) -> Option<()> {
   cx.push(INDENT);
   get_ty(cx, field.ty()?)?;

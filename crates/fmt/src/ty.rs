@@ -1,7 +1,6 @@
 use crate::util::Cx;
 use syntax::ast::Ty;
 
-#[must_use]
 pub(crate) fn get(cx: &mut Cx, ty: Ty) -> Option<()> {
   match ty {
     Ty::IntTy(_) => cx.push("int"),

@@ -3,12 +3,10 @@ use crate::simp::get as get_simp;
 use crate::util::{Cx, INDENT};
 use syntax::ast::{BlockStmt, Stmt};
 
-#[must_use]
 pub(crate) fn get_block(cx: &mut Cx, stmt: BlockStmt) -> Option<()> {
   get_many(cx, 0, stmt.stmts())
 }
 
-#[must_use]
 fn get_many<I>(cx: &mut Cx, level: u8, stmts: I) -> Option<()>
 where
   I: Iterator<Item = Stmt>,
@@ -28,7 +26,6 @@ where
   Some(())
 }
 
-#[must_use]
 fn get_always_block(cx: &mut Cx, level: u8, stmt: Stmt) -> Option<()> {
   match stmt {
     Stmt::BlockStmt(stmt) => get_many(cx, level, stmt.stmts()),
@@ -36,7 +33,6 @@ fn get_always_block(cx: &mut Cx, level: u8, stmt: Stmt) -> Option<()> {
   }
 }
 
-#[must_use]
 fn get_one(cx: &mut Cx, level: u8, stmt: Stmt) -> Option<()> {
   match stmt {
     Stmt::SimpStmt(stmt) => {

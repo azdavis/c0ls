@@ -3,7 +3,6 @@ use crate::ty::get as get_ty;
 use crate::util::Cx;
 use syntax::ast::Simp;
 
-#[must_use]
 pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<()> {
   match simp {
     Simp::AsgnSimp(simp) => {

@@ -2,12 +2,10 @@ use crate::ty::get as get_ty;
 use crate::util::Cx;
 use syntax::ast::{BinOpKind, Expr};
 
-#[must_use]
 pub(crate) fn get(cx: &mut Cx, expr: Expr) -> Option<()> {
   get_prec(cx, 0, expr)
 }
 
-#[must_use]
 fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
   match expr {
     Expr::DecExpr(expr) => cx.push(expr.dec_lit()?.text()),
