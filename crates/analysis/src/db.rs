@@ -199,20 +199,7 @@ impl Db {
     let done = self.kind.done()?;
     let id = self.uris.get_id(uri)?;
     let syntax_data = &self.syntax_data[&id];
-    let idx = syntax_data.lines.text_size(pos);
-    let tok = match syntax_data.ast_root.syntax().token_at_offset(idx) {
-      TokenAtOffset::None => return None,
-      TokenAtOffset::Single(t) => t,
-      TokenAtOffset::Between(t1, t2) => {
-        // right biased when eq
-        if priority(t1.kind()) > priority(t2.kind()) {
-          t1
-        } else {
-          t2
-        }
-      }
-    };
-    let mut node = tok.parent();
+    let mut node = get_node(syntax_data, pos)?;
     let expr_node = loop {
       match Expr::cast(node.clone().into()) {
         Some(x) => break x,
@@ -313,6 +300,23 @@ fn get_diagnostics_cycle_error(
 
 fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
+}
+
+fn get_node(syntax_data: &SyntaxData, pos: Position) -> Option<SyntaxNode> {
+  let idx = syntax_data.lines.text_size(pos);
+  let tok = match syntax_data.ast_root.syntax().token_at_offset(idx) {
+    TokenAtOffset::None => return None,
+    TokenAtOffset::Single(t) => t,
+    TokenAtOffset::Between(t1, t2) => {
+      // right biased when eq
+      if priority(t1.kind()) > priority(t2.kind()) {
+        t1
+      } else {
+        t2
+      }
+    }
+  };
+  Some(tok.parent())
 }
 
 // heuristic for how much we should care about some token
