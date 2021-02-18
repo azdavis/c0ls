@@ -3,6 +3,7 @@
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uses::{get as get_use, UseKind};
+use hir::{Item, Root as HirRoot};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{get as get_statics, Cx, Env, FileId, Id, Import, TyDb};
@@ -36,7 +37,6 @@ impl Db {
     // - process uses to resolve libraries/files.
     // - calculate line ending information.
     let mut syntax_data = map_with_capacity(num_files);
-    let mut hir_roots = map_with_capacity(num_files);
     let mut uses = map_with_capacity(num_files);
     for (id, contents) in id_and_contents {
       let lexed = lex::get(&contents);
@@ -50,13 +50,13 @@ impl Db {
           Err(e) => uses_errors.push(e),
         }
       }
-      hir_roots.insert(id, lowered.root);
       uses.insert(id, us);
       syntax_data.insert(
         id,
         SyntaxData {
           lines: Lines::new(&contents),
           ast_root: parsed.root,
+          hir_root: lowered.root,
           ptrs: lowered.ptrs,
           errors: SyntaxErrors {
             lex: lexed.errors,
@@ -123,10 +123,16 @@ impl Db {
           import.type_defs.insert(name.clone(), file_id.wrap(ty));
         }
       }
-      let env = get_statics(&mut cx, &import, FileId::Uri(id), &hir_roots[&id]);
+      let env = get_statics(
+        &mut cx,
+        &import,
+        FileId::Uri(id),
+        &syntax_data[&id].hir_root,
+      );
       semantic_data.insert(
         id,
         SemanticData {
+          import,
           env,
           errors: std::mem::take(&mut cx.errors),
         },
@@ -341,6 +347,7 @@ struct Done {
 struct SyntaxData {
   lines: Lines,
   ast_root: AstRoot,
+  hir_root: HirRoot,
   ptrs: Ptrs,
   errors: SyntaxErrors,
 }
@@ -355,6 +362,7 @@ struct SyntaxErrors {
 
 #[derive(Debug)]
 struct SemanticData {
+  import: Import,
   env: Env,
   errors: Vec<statics::Error>,
 }
