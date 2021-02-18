@@ -2,7 +2,7 @@ use crate::expr::{get as get_expr, get_name as get_name_expr};
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::ty::{Ty, TyData};
-use crate::util::types::{Cx, Env, FnCx, Import, VarData};
+use crate::util::types::{Cx, Env, FnCx, Import, InFile, VarData};
 use crate::util::{no_struct, no_void, unify};
 use hir::{Arenas, AssignOp, Expr, ExprId, Name, Simp, SimpId, UnOp};
 
@@ -83,7 +83,7 @@ pub(crate) fn get<'a>(
       let ty = env
         .type_defs
         .get(lhs)
-        .or_else(|| fn_cx.import.type_defs.get(lhs));
+        .or_else(|| fn_cx.import.type_defs.get(lhs).map(InFile::val));
       match ty {
         // multiplication.
         None => {

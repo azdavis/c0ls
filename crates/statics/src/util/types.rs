@@ -13,6 +13,28 @@ pub enum FileId {
   Uri(UriId),
 }
 
+impl FileId {
+  pub fn wrap<T>(self, val: T) -> InFile<T> {
+    InFile { file: self, val }
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct InFile<T> {
+  file: FileId,
+  val: T,
+}
+
+impl<T> InFile<T> {
+  pub fn file(&self) -> FileId {
+    self.file
+  }
+
+  pub fn val(&self) -> &T {
+    &self.val
+  }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum Defined {
   /// Must not be defined.
@@ -41,9 +63,9 @@ pub struct Param {
 
 #[derive(Debug, Default)]
 pub struct Import {
-  pub fns: FxHashMap<Name, FnSig>,
-  pub structs: FxHashMap<Name, NameToTy>,
-  pub type_defs: FxHashMap<Name, Ty>,
+  pub fns: FxHashMap<Name, InFile<FnSig>>,
+  pub structs: FxHashMap<Name, InFile<NameToTy>>,
+  pub type_defs: FxHashMap<Name, InFile<Ty>>,
 }
 
 impl Import {
@@ -51,11 +73,12 @@ impl Import {
     let mut ret = Self::default();
     ret.fns.insert(
       "main".into(),
-      FnSig {
+      // this is the only thing 'from' the std lib that can be defined.
+      FileId::StdLib.wrap(FnSig {
         params: vec![],
         ret_ty: Ty::Int,
         defined: Defined::NotYet,
-      },
+      }),
     );
     ret
   }

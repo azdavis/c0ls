@@ -2,8 +2,8 @@ use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::types::{
-  Cx, Defined, Env, FileId, FnCx, FnData, FnSig, Import, NameToTy, Param,
-  VarData,
+  Cx, Defined, Env, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy,
+  Param, VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
 use hir::{Arenas, Item, ItemId};
@@ -64,7 +64,7 @@ pub(crate) fn get(
         .fns
         .get(name)
         .map(|x| &x.sig)
-        .or_else(|| import.fns.get(name));
+        .or_else(|| import.fns.get(name).map(InFile::val));
       let mut dup =
         env.type_defs.contains_key(name) || import.type_defs.contains_key(name);
       if let Some(old_sig) = old_sig {

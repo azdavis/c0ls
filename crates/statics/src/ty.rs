@@ -35,8 +35,8 @@ pub(crate) fn get(
     Ty::Name(ref name) => {
       if let Some(&type_def) = env.type_defs.get(name) {
         type_def
-      } else if let Some(&type_def) = import.type_defs.get(name) {
-        type_def
+      } else if let Some(type_def) = import.type_defs.get(name) {
+        *type_def.val()
       } else {
         cx.err(ty, ErrorKind::UndefinedTypeDef);
         ty::Ty::None

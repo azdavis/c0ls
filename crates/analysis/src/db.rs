@@ -103,22 +103,24 @@ impl Db {
     for &id in ordering.iter() {
       let mut import = Import::with_main();
       for u in uses[&id].iter() {
-        let env = match u.kind {
-          UseKind::File(id) => &semantic_data[&id].env,
-          UseKind::Lib(lib) => std_lib.get(lib),
+        let (file_id, env) = match u.kind {
+          UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
+          UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
         };
         for (name, data) in env.fns.iter() {
           // TODO this should actually be the logic that checks for compatible
           // function declarations
-          import.fns.insert(name.clone(), data.sig.clone());
+          let val = file_id.wrap(data.sig.clone());
+          import.fns.insert(name.clone(), val);
         }
         for (name, sig) in env.structs.iter() {
           // TODO this should error if dupe
-          import.structs.insert(name.clone(), sig.clone());
+          let val = file_id.wrap(sig.clone());
+          import.structs.insert(name.clone(), val);
         }
         for (name, &ty) in env.type_defs.iter() {
           // TODO this should error if dupe
-          import.type_defs.insert(name.clone(), ty);
+          import.type_defs.insert(name.clone(), file_id.wrap(ty));
         }
       }
       let env = get_statics(&mut cx, &import, FileId::Uri(id), &hir_roots[&id]);

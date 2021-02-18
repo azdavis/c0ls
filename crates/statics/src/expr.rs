@@ -2,7 +2,7 @@ use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyData};
-use crate::util::types::{Cx, Env, FnCx, Vars};
+use crate::util::types::{Cx, Env, FnCx, InFile, Vars};
 use crate::util::{no_struct, no_unsized, no_void, unify, unify_impl};
 use hir::{BinOp, Expr, ExprId, Name, UnOp};
 
@@ -90,7 +90,7 @@ pub(crate) fn get(
         .fns
         .get(name)
         .map(|x| &x.sig)
-        .or_else(|| fn_cx.import.fns.get(name));
+        .or_else(|| fn_cx.import.fns.get(name).map(InFile::val));
       match sig {
         Some(sig) => {
           let want_len = sig.params.len();
@@ -117,7 +117,7 @@ pub(crate) fn get(
           let sig = env
             .structs
             .get(name)
-            .or_else(|| fn_cx.import.structs.get(name));
+            .or_else(|| fn_cx.import.structs.get(name).map(InFile::val));
           match sig {
             None => cx.err(inner, ErrorKind::UndefinedStruct),
             Some(sig) => match sig.get(field) {
