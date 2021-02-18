@@ -226,34 +226,17 @@ fn get_text_range(ptrs: &Ptrs, ast_root: &AstRoot, id: Id) -> TextRange {
 }
 
 fn get_syntax_diagnostics(
-  syntax_data: &SyntaxData,
+  sd: &SyntaxData,
 ) -> impl Iterator<Item = (TextRange, String)> + '_ {
-  syntax_data
+  let lex = sd.errors.lex.iter().map(|x| (x.range, x.kind.to_string()));
+  let uses = sd.errors.uses.iter().map(|x| (x.range, x.kind.to_string()));
+  let parse = sd
     .errors
-    .lex
+    .parse
     .iter()
-    .map(|x| (x.range, x.kind.to_string()))
-    .chain(
-      syntax_data
-        .errors
-        .uses
-        .iter()
-        .map(|x| (x.range, x.kind.to_string())),
-    )
-    .chain(
-      syntax_data
-        .errors
-        .parse
-        .iter()
-        .map(|x| (x.range, x.expected.to_string())),
-    )
-    .chain(
-      syntax_data
-        .errors
-        .lower
-        .iter()
-        .map(|x| (x.range, x.to_string())),
-    )
+    .map(|x| (x.range, x.expected.to_string()));
+  let lower = sd.errors.lower.iter().map(|x| (x.range, x.to_string()));
+  lex.chain(uses).chain(parse).chain(lower)
 }
 
 fn get_diagnostics(
