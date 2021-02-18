@@ -10,7 +10,8 @@ use statics::{get as get_statics, Cx, Env, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
-use syntax::SyntaxNode;
+use syntax::rowan::TokenAtOffset;
+use syntax::{SyntaxKind, SyntaxNode};
 use topo_sort::{topological_sort, Graph};
 use url::Url;
 
@@ -199,11 +200,18 @@ impl Db {
     let id = self.uris.get_id(uri)?;
     let syntax_data = &self.syntax_data[&id];
     let idx = syntax_data.lines.text_size(pos);
-    let tok = syntax_data
-      .ast_root
-      .syntax()
-      .token_at_offset(idx)
-      .right_biased()?;
+    let tok = match syntax_data.ast_root.syntax().token_at_offset(idx) {
+      TokenAtOffset::None => return None,
+      TokenAtOffset::Single(t) => t,
+      TokenAtOffset::Between(t1, t2) => {
+        // right biased when eq
+        if priority(t1.kind()) > priority(t2.kind()) {
+          t1
+        } else {
+          t2
+        }
+      }
+    };
     let mut node = tok.parent();
     let expr_node = loop {
       match Expr::cast(node.clone().into()) {
@@ -305,6 +313,27 @@ fn get_diagnostics_cycle_error(
 
 fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
+}
+
+// heuristic for how much we should care about some token
+fn priority(kind: SyntaxKind) -> u8 {
+  match kind {
+    SyntaxKind::Ident => 4,
+    SyntaxKind::DecLit
+    | SyntaxKind::HexLit
+    | SyntaxKind::StringLit
+    | SyntaxKind::CharLit => 3,
+    SyntaxKind::IntKw
+    | SyntaxKind::BoolKw
+    | SyntaxKind::StringKw
+    | SyntaxKind::CharKw
+    | SyntaxKind::VoidKw => 2,
+    SyntaxKind::Whitespace
+    | SyntaxKind::LineComment
+    | SyntaxKind::BlockComment
+    | SyntaxKind::Invalid => 0,
+    _ => 1,
+  }
 }
 
 #[derive(Debug)]
