@@ -17,6 +17,13 @@ impl FileId {
   pub fn wrap<T>(self, val: T) -> InFile<T> {
     InFile { file: self, val }
   }
+
+  pub fn uri(&self) -> Option<UriId> {
+    match *self {
+      Self::StdLib => None,
+      Self::Uri(uri) => Some(uri),
+    }
+  }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
