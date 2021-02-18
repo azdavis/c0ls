@@ -14,7 +14,7 @@ use std::fs::read_to_string;
 use walkdir::WalkDir;
 
 pub(crate) fn run(conn: &Connection, init: InitializeParams) {
-  log::info!("starting main loop");
+  log::info!("starting");
   let root = init.root_uri.expect("no root");
   let mut db = Db::new(get_initial_files(&root));
   send_all_diagnostics(conn, &db);
