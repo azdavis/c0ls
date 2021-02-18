@@ -5,7 +5,7 @@ use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uses::{get as get_use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{get as get_statics, Cx, Env, FileKind, Id, Import, TyDb};
+use statics::{get as get_statics, Cx, Env, FileId, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
@@ -121,8 +121,7 @@ impl Db {
           import.type_defs.insert(name.clone(), ty);
         }
       }
-      let kind = FileKind::Uri(id.kind());
-      let env = get_statics(&mut cx, &import, kind, &hir_roots[&id]);
+      let env = get_statics(&mut cx, &import, FileId::Uri(id), &hir_roots[&id]);
       semantic_data.insert(
         id,
         SemanticData {

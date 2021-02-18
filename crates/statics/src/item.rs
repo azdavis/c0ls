@@ -2,7 +2,7 @@ use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::types::{
-  Cx, Defined, Env, FileKind, FnCx, FnData, FnSig, Import, NameToTy, Param,
+  Cx, Defined, Env, FileId, FnCx, FnData, FnSig, Import, NameToTy, Param,
   VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
@@ -14,7 +14,7 @@ pub(crate) fn get(
   arenas: &Arenas,
   cx: &mut Cx,
   env: &mut Env,
-  kind: FileKind,
+  file: FileId,
   item: ItemId,
 ) {
   match arenas.item[item] {
@@ -46,15 +46,18 @@ pub(crate) fn get(
       let mut sig = FnSig {
         params: sig_params,
         ret_ty: fn_cx.ret_ty,
-        defined: match kind {
-          FileKind::StdLib | FileKind::Uri(UriKind::Header) => Defined::MustNot,
-          FileKind::Uri(UriKind::Source) => {
-            if body.is_some() {
-              Defined::Yes
-            } else {
-              Defined::NotYet
+        defined: match file {
+          FileId::StdLib => Defined::MustNot,
+          FileId::Uri(uri) => match uri.kind() {
+            UriKind::Header => Defined::MustNot,
+            UriKind::Source => {
+              if body.is_some() {
+                Defined::Yes
+              } else {
+                Defined::NotYet
+              }
             }
-          }
+          },
         },
       };
       let old_sig = env
