@@ -3,7 +3,6 @@
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uses::{get as get_use, UseKind};
-use hir::{Item, Root as HirRoot};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{get as get_statics, Cx, Env, FileId, Id, Import, TyDb};
@@ -211,7 +210,7 @@ impl Db {
       let item_id =
         *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
           match def_syntax_data.hir_root.arenas.item[id] {
-            Item::Fn(ref name, _, _, _) => name == tok.text(),
+            hir::Item::Fn(ref name, _, _, _) => name == tok.text(),
             _ => false,
           }
         })?;
@@ -381,7 +380,7 @@ struct Done {
 struct SyntaxData {
   lines: Lines,
   ast_root: AstRoot,
-  hir_root: HirRoot,
+  hir_root: hir::Root,
   ptrs: Ptrs,
   errors: SyntaxErrors,
 }
