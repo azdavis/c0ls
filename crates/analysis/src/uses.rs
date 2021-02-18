@@ -1,5 +1,6 @@
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
+use std_lib::Lib;
 use uri_db::{UriDb, UriId};
 
 pub(crate) fn get(
@@ -50,16 +51,9 @@ fn get_impl(
         None => Err(ErrorKind::NoSuchPath),
       }
     }
-    lex::UseKind::Lib => match path {
-      "args" => Ok(UseKind::Lib(Lib::Args)),
-      "conio" => Ok(UseKind::Lib(Lib::Conio)),
-      "file" => Ok(UseKind::Lib(Lib::File)),
-      "img" => Ok(UseKind::Lib(Lib::Img)),
-      "parse" => Ok(UseKind::Lib(Lib::Parse)),
-      "rand" => Ok(UseKind::Lib(Lib::Rand)),
-      "string" => Ok(UseKind::Lib(Lib::String)),
-      "util" => Ok(UseKind::Lib(Lib::Util)),
-      _ => Err(ErrorKind::NoSuchLib),
+    lex::UseKind::Lib => match path.parse::<Lib>() {
+      Ok(lib) => Ok(UseKind::Lib(lib)),
+      Err(()) => Err(ErrorKind::NoSuchLib),
     },
   }
 }
@@ -74,18 +68,6 @@ pub(crate) struct Use {
 pub(crate) enum UseKind {
   File(UriId),
   Lib(Lib),
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum Lib {
-  Args,
-  Conio,
-  File,
-  Img,
-  Parse,
-  Rand,
-  String,
-  Util,
 }
 
 #[derive(Debug)]

@@ -4,17 +4,63 @@
 #![deny(rust_2018_idioms)]
 
 use statics::{Cx, Env, FileKind as FK, Import};
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct StdLib {
-  pub args: Env,
-  pub conio: Env,
-  pub file: Env,
-  pub img: Env,
-  pub parse: Env,
-  pub rand: Env,
-  pub string: Env,
-  pub util: Env,
+  args: Env,
+  conio: Env,
+  file: Env,
+  img: Env,
+  parse: Env,
+  rand: Env,
+  string: Env,
+  util: Env,
+}
+
+impl StdLib {
+  pub fn get(&self, lib: Lib) -> &Env {
+    match lib {
+      Lib::Args => &self.args,
+      Lib::Conio => &self.conio,
+      Lib::File => &self.file,
+      Lib::Img => &self.img,
+      Lib::Parse => &self.parse,
+      Lib::Rand => &self.rand,
+      Lib::String => &self.string,
+      Lib::Util => &self.util,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Lib {
+  Args,
+  Conio,
+  File,
+  Img,
+  Parse,
+  Rand,
+  String,
+  Util,
+}
+
+impl FromStr for Lib {
+  type Err = ();
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let ret = match s {
+      "args" => Self::Args,
+      "conio" => Self::Conio,
+      "file" => Self::File,
+      "img" => Self::Img,
+      "parse" => Self::Parse,
+      "rand" => Self::Rand,
+      "string" => Self::String,
+      "util" => Self::Util,
+      _ => return Err(()),
+    };
+    Ok(ret)
+  }
 }
 
 /// the Cx will always have no errors. the TyDb inside the Cx allows getting

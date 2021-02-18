@@ -2,7 +2,7 @@
 
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uses::{get as get_use, Lib, UseKind};
+use crate::uses::{get as get_use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{get as get_statics, Cx, Env, FileKind, Id, Import, TyDb};
@@ -105,16 +105,7 @@ impl Db {
       for u in uses[&id].iter() {
         let env = match u.kind {
           UseKind::File(id) => &semantic_data[&id].env,
-          UseKind::Lib(lib) => match lib {
-            Lib::Args => &std_lib.args,
-            Lib::Conio => &std_lib.conio,
-            Lib::File => &std_lib.file,
-            Lib::Img => &std_lib.img,
-            Lib::Parse => &std_lib.parse,
-            Lib::Rand => &std_lib.rand,
-            Lib::String => &std_lib.string,
-            Lib::Util => &std_lib.util,
-          },
+          UseKind::Lib(lib) => std_lib.get(lib),
         };
         for (name, data) in env.fns.iter() {
           // TODO this should actually be the logic that checks for compatible
