@@ -1,6 +1,6 @@
-use crate::uri::{UriDb, UriId};
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
+use uri_db::{UriDb, UriId};
 
 pub(crate) fn get(
   map: &UriDb,

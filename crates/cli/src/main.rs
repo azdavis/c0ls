@@ -1,9 +1,10 @@
 //! A CLI wrapper over `analysis`.
 
-use analysis::{url::Url, Db};
+use analysis::Db;
 use gumdrop::Options;
 use rustc_hash::FxHashMap;
 use std::path::Path;
+use uri_db::Uri;
 
 #[derive(Debug, Options)]
 struct Config {
@@ -33,7 +34,7 @@ fn run(conf: Config) -> Option<bool> {
   for path in conf.source {
     let contents = read_file(&path)?;
     let path = Path::new(&path).canonicalize().unwrap();
-    let uri = Url::from_file_path(&path).unwrap();
+    let uri = Uri::from_file_path(&path).unwrap();
     files.insert(uri.clone(), contents);
     paths.insert(path, uri);
   }

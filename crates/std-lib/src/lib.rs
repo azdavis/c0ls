@@ -3,7 +3,7 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
-use statics::{Cx, Env, FileKind::Header, Import};
+use statics::{Cx, Env, FileKind as FK, Import};
 
 #[derive(Debug)]
 pub struct StdLib {
@@ -38,7 +38,7 @@ fn get_one(cx: &mut Cx, contents: &str) -> Env {
   let lexed = lex::get(contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root);
-  let ret = statics::get(cx, &Import::default(), Header, &lowered.root);
+  let ret = statics::get(cx, &Import::default(), FK::StdLib, &lowered.root);
   assert!(lexed.errors.is_empty());
   assert!(parsed.errors.is_empty());
   assert!(lowered.errors.is_empty());

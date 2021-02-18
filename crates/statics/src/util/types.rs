@@ -3,11 +3,14 @@ use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
 use hir::{la_arena::ArenaMap, Arenas, ExprId, Name, SimpId};
 use rustc_hash::{FxHashMap, FxHashSet};
+use uri_db::UriKind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FileKind {
-  Source,
-  Header,
+  /// Not a real file the user wrote, just the standard library.
+  StdLib,
+  /// A real file that exists at a URI.
+  Uri(UriKind),
 }
 
 #[derive(Debug, Clone, Copy)]

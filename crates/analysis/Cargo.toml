@@ -16,4 +16,4 @@ statics = { path = "../statics" }
 std-lib = { path = "../std-lib" }
 syntax = { path = "../syntax" }
 topo-sort = { path = "../topo-sort" }
-url = "2"
+uri-db = { path = "../uri-db" }

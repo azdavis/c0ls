@@ -1,9 +1,10 @@
-use crate::{url::Url, CodeBlock, Db, Diagnostic, Hover, Position, Range};
+use crate::{CodeBlock, Db, Diagnostic, Hover, Position, Range};
 use rustc_hash::FxHashMap;
+use uri_db::Uri;
 
 pub(crate) fn check(s: &str) {
   let mut files = FxHashMap::default();
-  let uri = Url::from_file_path("/tmp/main.c0").unwrap();
+  let uri = Uri::from_file_path("/tmp/main.c0").unwrap();
   files.insert(uri.clone(), s.to_owned());
   let db = Db::new(files);
   let want = parse_expected(s);

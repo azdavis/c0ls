@@ -7,6 +7,7 @@ use crate::util::types::{
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
 use hir::{Arenas, Item, ItemId};
+use uri_db::UriKind;
 
 pub(crate) fn get(
   import: &Import,
@@ -46,8 +47,8 @@ pub(crate) fn get(
         params: sig_params,
         ret_ty: fn_cx.ret_ty,
         defined: match kind {
-          FileKind::Header => Defined::MustNot,
-          FileKind::Source => {
+          FileKind::StdLib | FileKind::Uri(UriKind::Header) => Defined::MustNot,
+          FileKind::Uri(UriKind::Source) => {
             if body.is_some() {
               Defined::Yes
             } else {

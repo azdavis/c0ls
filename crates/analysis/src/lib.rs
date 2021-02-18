@@ -12,9 +12,7 @@ mod tests;
 mod db;
 mod lines;
 mod types;
-mod uri;
 mod uses;
 
 pub use db::Db;
 pub use types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-pub use url;

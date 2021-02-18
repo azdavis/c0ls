@@ -2,18 +2,17 @@
 
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uri::{UriDb, UriId};
 use crate::uses::{get as get_use, Lib, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{get as get_statics, Cx, Env, Id, Import, TyDb};
+use statics::{get as get_statics, Cx, Env, FileKind, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use syntax::rowan::TokenAtOffset;
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use topo_sort::{topological_sort, Graph};
-use url::Url;
+use uri_db::{Uri, UriDb, UriId};
 
 #[derive(Debug)]
 pub struct Db {
@@ -24,7 +23,7 @@ pub struct Db {
 }
 
 impl Db {
-  pub fn new(files: FxHashMap<Url, String>) -> Self {
+  pub fn new(files: FxHashMap<Uri, String>) -> Self {
     // assign file IDs.
     let num_files = files.len();
     let mut uris = UriDb::default();
@@ -131,7 +130,8 @@ impl Db {
           import.type_defs.insert(name.clone(), ty);
         }
       }
-      let env = get_statics(&mut cx, &import, id.kind(), &hir_roots[&id]);
+      let kind = FileKind::Uri(id.kind());
+      let env = get_statics(&mut cx, &import, kind, &hir_roots[&id]);
       semantic_data.insert(
         id,
         SemanticData {
@@ -149,7 +149,7 @@ impl Db {
     }
   }
 
-  pub fn all_diagnostics(&self) -> Vec<(Url, Vec<Diagnostic>)> {
+  pub fn all_diagnostics(&self) -> Vec<(Uri, Vec<Diagnostic>)> {
     match self.kind {
       Kind::Done(ref done) => self
         .ordering
@@ -175,7 +175,7 @@ impl Db {
     }
   }
 
-  pub fn format(&self, uri: &Url) -> Option<String> {
+  pub fn format(&self, uri: &Uri) -> Option<String> {
     let id = self.uris.get_id(uri)?;
     let errors = &self.syntax_data[&id].errors;
     if errors.lex.is_empty() && errors.parse.is_empty() {
@@ -185,17 +185,17 @@ impl Db {
     }
   }
 
-  pub fn syntax(&self, uri: &Url) -> Option<SyntaxNode> {
+  pub fn syntax(&self, uri: &Uri) -> Option<SyntaxNode> {
     let id = self.uris.get_id(uri)?;
     Some(self.syntax_data[&id].ast_root.syntax().clone())
   }
 
-  pub fn go_to_def(&self, _: &Url, _: Position) -> Option<Location> {
+  pub fn go_to_def(&self, _: &Uri, _: Position) -> Option<Location> {
     // TODO
     None
   }
 
-  pub fn hover(&self, uri: &Url, pos: Position) -> Option<Hover> {
+  pub fn hover(&self, uri: &Uri, pos: Position) -> Option<Hover> {
     let done = self.kind.done()?;
     let id = self.uris.get_id(uri)?;
     let syntax_data = &self.syntax_data[&id];

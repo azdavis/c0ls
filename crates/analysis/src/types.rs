@@ -1,5 +1,5 @@
 use std::fmt;
-use url::Url;
+use uri_db::Uri;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position {
@@ -28,7 +28,7 @@ impl fmt::Display for Range {
 
 #[derive(Debug)]
 pub struct Location {
-  pub uri: Url,
+  pub uri: Uri,
   pub range: Range,
 }
 

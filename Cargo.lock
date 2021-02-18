@@ -23,7 +23,7 @@ dependencies = [
  "std-lib",
  "syntax",
  "topo-sort",
- "url",
+ "uri-db",
 ]
 
 [[package]]
@@ -83,6 +83,7 @@ dependencies = [
  "analysis",
  "gumdrop",
  "rustc-hash",
+ "uri-db",
 ]
 
 [[package]]
@@ -467,6 +468,7 @@ version = "0.1.0"
 dependencies = [
  "hir",
  "rustc-hash",
+ "uri-db",
 ]
 
 [[package]]
@@ -589,6 +591,14 @@ checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
 [[package]]
 name = "unwrap-or"
 version = "0.1.0"
+
+[[package]]
+name = "uri-db"
+version = "0.1.0"
+dependencies = [
+ "rustc-hash",
+ "url",
+]
 
 [[package]]
 name = "url"
