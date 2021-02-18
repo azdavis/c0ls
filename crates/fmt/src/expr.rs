@@ -68,12 +68,12 @@ fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
       }
       cx.push(")");
     }
-    Expr::DotExpr(expr) => {
+    Expr::FieldGetExpr(expr) => {
       get_prec(cx, TOP_PREC, expr.expr()?)?;
       cx.push(".");
       cx.push(expr.ident()?.text());
     }
-    Expr::ArrowExpr(expr) => {
+    Expr::DerefFieldGetExpr(expr) => {
       get_prec(cx, TOP_PREC, expr.expr()?)?;
       cx.push("->");
       cx.push(expr.ident()?.text());

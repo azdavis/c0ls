@@ -56,12 +56,12 @@ fn get_impl(cx: &mut Cx, expr: Expr) -> hir::Expr {
       let args: Vec<_> = expr.args().map(|arg| get(cx, arg.expr())).collect();
       hir::Expr::Call(name.text().into(), args)
     }
-    Expr::DotExpr(expr) => {
+    Expr::FieldGetExpr(expr) => {
       let field = unwrap_or!(expr.ident(), return hir::Expr::None);
       let expr = get(cx, expr.expr());
       hir::Expr::Dot(expr, field.text().into())
     }
-    Expr::ArrowExpr(ref inner) => {
+    Expr::DerefFieldGetExpr(ref inner) => {
       let field = unwrap_or!(inner.ident(), return hir::Expr::None);
       let ptr = AstPtr::new(&expr);
       let expr = get(cx, inner.expr());

@@ -98,8 +98,8 @@ Expr =
 | UnOpExpr
 | TernaryExpr
 | CallExpr
-| DotExpr
-| ArrowExpr
+| FieldGetExpr
+| DerefFieldGetExpr
 | SubscriptExpr
 | AllocExpr
 | AllocArrayExpr
@@ -117,8 +117,8 @@ BinOpExpr = lhs:Expr op:BinOp rhs:Expr
 UnOpExpr = op:UnOp Expr
 TernaryExpr = cond:Expr '?' yes:Expr ':' no:Expr
 CallExpr = 'Ident' '(' Arg* ')'
-DotExpr = Expr '.' 'Ident'
-ArrowExpr = Expr '->' 'Ident'
+FieldGetExpr = Expr '.' 'Ident'
+DerefFieldGetExpr = Expr '->' 'Ident'
 SubscriptExpr = array:Expr '[' idx:Expr ']'
 AllocExpr = 'alloc' '(' Ty ')'
 AllocArrayExpr = 'alloc_array' '(' Ty ',' Expr ')'

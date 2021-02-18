@@ -100,12 +100,12 @@ fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
       let entered = p.precede(exited);
       p.bump();
       p.eat(SK::Ident);
-      p.exit(entered, SK::DotExpr)
+      p.exit(entered, SK::FieldGetExpr)
     } else if p.at(SK::Arrow) {
       let entered = p.precede(exited);
       p.bump();
       p.eat(SK::Ident);
-      p.exit(entered, SK::ArrowExpr)
+      p.exit(entered, SK::DerefFieldGetExpr)
     } else if p.at(SK::LSquare) {
       let entered = p.precede(exited);
       p.bump();
