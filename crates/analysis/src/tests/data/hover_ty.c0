@@ -19,7 +19,7 @@ int consume(struct s* guy) {
   struct s* nil = NULL;
   //              ^^^^ hover: <any>*
   if (guy == nil) {
-  //  ^^^ hover: struct s*
+  //         ^^^ hover: struct s*
     return 123;
   //       ^^^ hover: int
   }
