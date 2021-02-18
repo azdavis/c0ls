@@ -238,10 +238,28 @@ impl Db {
       }
     };
     let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&expr_node))?;
-    let ty = *done.semantic_data[&id].env.expr_tys.get(expr)?;
-    let contents = CodeBlock::new(ty.display(&done.cx.tys).to_string());
     let range = syntax_data.lines.range(expr_node.syntax().text_range());
-    Some(Hover { contents, range })
+    let semantic_data = &done.semantic_data[&id];
+    let contents = match syntax_data.hir_root.arenas.expr[expr] {
+      hir::Expr::Call(ref name, _) => semantic_data
+        .import
+        .fns
+        .get(name)
+        .map(|x| x.val())
+        .or_else(|| semantic_data.env.fns.get(name).map(|x| &x.sig))?
+        .display(name, &done.cx.tys)
+        .to_string(),
+      _ => semantic_data
+        .env
+        .expr_tys
+        .get(expr)?
+        .display(&done.cx.tys)
+        .to_string(),
+    };
+    Some(Hover {
+      contents: CodeBlock::new(contents),
+      range,
+    })
   }
 }
 

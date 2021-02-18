@@ -6,19 +6,18 @@ string foo(int x, int y) {
   string s = readline();
 //         ^ hover: <none>
   if (eof()) {
-//    ^^^^^ hover: bool
+//    ^^^^^ hover: bool eof()
     return s;
 //  ^^^^^^ hover: <none>
   }
   printint(x);
-//^^^^^^^^^^^ hover: void
+//^^^^^^^^^^^ hover: void printint(int i)
   printint(int_size());
-//         ^^^^^^^^^^ hover: int
+//         ^^^^^^^^^^ hover: int int_size()
   printint(x + abs(x));
   printint(max(x, y));
   println(int2hex(x * y));
-//^^^^^^^^^^^^^^^^^^^^^^^ hover: void
+//^^^^^^^^^^^^^^^^^^^^^^^ hover: void println(string s)
   flush();
   return string_join(s, int2hex(x ^ y));
-//       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ hover: string
 }

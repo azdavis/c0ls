@@ -30,7 +30,7 @@ int consume(struct s* guy) {
   //       ^ hover: int
   }
   ret += consume(guy->next);
-  //     ^^^^^^^^^^^^^^^^^^ hover: int
+  //     ^^^^^^^^^^^^^^^^^^ hover: int consume(struct s* guy)
   return ret;
   //     ^^^ hover: int
 }

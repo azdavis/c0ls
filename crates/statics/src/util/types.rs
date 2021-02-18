@@ -3,6 +3,7 @@ use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
 use hir::{la_arena::ArenaMap, Arenas, ExprId, Name, SimpId};
 use rustc_hash::{FxHashMap, FxHashSet};
+use std::fmt;
 use uri_db::UriId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -59,6 +60,41 @@ pub struct FnSig {
   pub defined: Defined,
 }
 
+impl FnSig {
+  pub fn display<'a>(
+    &'a self,
+    name: &'a Name,
+    tys: &'a TyDb,
+  ) -> FnSigDisplay<'a> {
+    FnSigDisplay {
+      this: self,
+      name,
+      tys,
+    }
+  }
+}
+
+#[derive(Debug)]
+pub struct FnSigDisplay<'a> {
+  this: &'a FnSig,
+  name: &'a Name,
+  tys: &'a TyDb,
+}
+
+impl fmt::Display for FnSigDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{} {}(", self.this.ret_ty.display(self.tys), self.name)?;
+    let mut params = self.this.params.iter();
+    if let Some(param) = params.next() {
+      write!(f, "{}", param.display(self.tys))?;
+    }
+    for param in params {
+      write!(f, ", {}", param.display(self.tys))?;
+    }
+    write!(f, ")")
+  }
+}
+
 pub type NameToTy = FxHashMap<Name, Ty>;
 
 #[derive(Debug, Clone)]
@@ -66,6 +102,23 @@ pub struct Param {
   /// only used for informational messages
   pub name: Name,
   pub ty: Ty,
+}
+
+impl Param {
+  fn display<'a>(&'a self, tys: &'a TyDb) -> ParamDisplay<'a> {
+    ParamDisplay { this: self, tys }
+  }
+}
+
+struct ParamDisplay<'a> {
+  this: &'a Param,
+  tys: &'a TyDb,
+}
+
+impl fmt::Display for ParamDisplay<'_> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{} {}", self.this.ty.display(self.tys), self.this.name)
+  }
 }
 
 #[derive(Debug, Default)]
