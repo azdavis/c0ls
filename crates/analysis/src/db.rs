@@ -11,7 +11,7 @@ use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use syntax::rowan::TokenAtOffset;
-use syntax::{SyntaxKind, SyntaxNode};
+use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use topo_sort::{topological_sort, Graph};
 use url::Url;
 
@@ -199,7 +199,7 @@ impl Db {
     let done = self.kind.done()?;
     let id = self.uris.get_id(uri)?;
     let syntax_data = &self.syntax_data[&id];
-    let mut node = get_node(syntax_data, pos)?;
+    let mut node = get_token(syntax_data, pos)?.parent();
     let expr_node = loop {
       match Expr::cast(node.clone().into()) {
         Some(x) => break x,
@@ -285,9 +285,9 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
 
-fn get_node(syntax_data: &SyntaxData, pos: Position) -> Option<SyntaxNode> {
+fn get_token(syntax_data: &SyntaxData, pos: Position) -> Option<SyntaxToken> {
   let idx = syntax_data.lines.text_size(pos);
-  let tok = match syntax_data.ast_root.syntax().token_at_offset(idx) {
+  let ret = match syntax_data.ast_root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
     TokenAtOffset::Between(t1, t2) => {
@@ -299,7 +299,7 @@ fn get_node(syntax_data: &SyntaxData, pos: Position) -> Option<SyntaxNode> {
       }
     }
   };
-  Some(tok.parent())
+  Some(ret)
 }
 
 // heuristic for how much we should care about some token
