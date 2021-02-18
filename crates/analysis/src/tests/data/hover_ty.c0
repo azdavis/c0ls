@@ -23,6 +23,11 @@ int consume(struct s* guy) {
     return 123;
   //       ^^^ hover: int
   }
+  if (guy == NULL) {
+  //         ^^^^ hover: <any>*
+    return 234;
+  //       ^^^ hover: int
+  }
   int ret = guy->x;
   //        ^^^ hover: struct s*
   if (guy->y) {
