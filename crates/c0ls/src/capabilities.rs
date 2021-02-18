@@ -1,7 +1,6 @@
 use lsp_types::{
-  HoverOptions, HoverProviderCapability, ServerCapabilities,
-  TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions,
-  WorkDoneProgressOptions,TextDocumentSyncSaveOptions,
+  HoverProviderCapability, ServerCapabilities, TextDocumentSyncCapability,
+  TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
 };
 
 pub(crate) fn get() -> ServerCapabilities {
@@ -15,11 +14,7 @@ pub(crate) fn get() -> ServerCapabilities {
         save: Some(TextDocumentSyncSaveOptions::Supported(false)),
       },
     )),
-    hover_provider: Some(HoverProviderCapability::Options(HoverOptions {
-      work_done_progress_options: WorkDoneProgressOptions {
-        work_done_progress: Some(false),
-      },
-    })),
+    hover_provider: Some(HoverProviderCapability::Simple(true)),
     ..ServerCapabilities::default()
   }
 }
