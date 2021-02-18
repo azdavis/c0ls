@@ -46,6 +46,24 @@ impl CrateFrom<lsp_types::Range> for analysis::Range {
   }
 }
 
+impl CrateFrom<analysis::Location> for lsp_types::Location {
+  fn from(val: analysis::Location) -> Self {
+    Self {
+      uri: val.uri,
+      range: CrateFrom::from(val.range),
+    }
+  }
+}
+
+impl CrateFrom<lsp_types::Location> for analysis::Location {
+  fn from(val: lsp_types::Location) -> Self {
+    Self {
+      uri: val.uri,
+      range: CrateFrom::from(val.range),
+    }
+  }
+}
+
 impl CrateFrom<analysis::Hover> for lsp_types::Hover {
   fn from(val: analysis::Hover) -> Self {
     Self {
