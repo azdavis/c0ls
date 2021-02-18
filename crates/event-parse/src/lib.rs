@@ -186,6 +186,7 @@ where
             }
           }
           for kind in kinds.drain(..).rev() {
+            // keep as much trivia as possible outside of what we're entering.
             if levels != 0 {
               self.eat_trivia(sink);
             }
@@ -196,7 +197,8 @@ where
         Event::Exit => {
           sink.exit();
           levels -= 1;
-          if levels != 0 {
+          // keep as much trivia as possible outside of top-level items.
+          if levels == 1 {
             self.eat_trivia(sink);
           }
         }
