@@ -1,6 +1,7 @@
 use lsp_types::{
-  HoverProviderCapability, ServerCapabilities, TextDocumentSyncCapability,
-  TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
+  HoverProviderCapability, OneOf, ServerCapabilities,
+  TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions,
+  TextDocumentSyncSaveOptions,
 };
 
 pub(crate) fn get() -> ServerCapabilities {
@@ -14,6 +15,7 @@ pub(crate) fn get() -> ServerCapabilities {
         save: Some(TextDocumentSyncSaveOptions::Supported(false)),
       },
     )),
+    definition_provider: Some(OneOf::Left(true)),
     hover_provider: Some(HoverProviderCapability::Simple(true)),
     ..ServerCapabilities::default()
   }

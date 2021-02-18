@@ -8,7 +8,7 @@ use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{get as get_statics, Cx, Env, FileId, Id, Import, TyDb};
 use std::hash::BuildHasherDefault;
-use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _};
+use syntax::ast::{CallExpr, Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
 use syntax::rowan::TokenAtOffset;
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
@@ -188,8 +188,42 @@ impl Db {
     Some(self.syntax_data[&id].ast_root.syntax().clone())
   }
 
-  pub fn go_to_def(&self, _: &Uri, _: Position) -> Option<Location> {
-    // TODO
+  pub fn go_to_def(&self, uri: &Uri, pos: Position) -> Option<Location> {
+    let done = self.kind.done()?;
+    let id = self.uris.get_id(uri)?;
+    let syntax_data = &self.syntax_data[&id];
+    let tok = get_token(syntax_data, pos)?;
+    if tok.kind() != SyntaxKind::Ident {
+      return None;
+    }
+    let node = tok.parent();
+    let semantic_data = &done.semantic_data[&id];
+    if CallExpr::cast(node.into()).is_some() {
+      let def_uri_id = semantic_data
+        .import
+        .fns
+        .get(tok.text())
+        .and_then(|x| x.file().uri())
+        .or_else(|| {
+          semantic_data.env.fns.contains_key(tok.text()).then(|| id)
+        })?;
+      let def_syntax_data = &self.syntax_data[&def_uri_id];
+      let item_id =
+        *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
+          match def_syntax_data.hir_root.arenas.item[id] {
+            Item::Fn(ref name, _, _, _) => name == tok.text(),
+            _ => false,
+          }
+        })?;
+      let def_range = def_syntax_data.ptrs.item_back[item_id]
+        .to_node(def_syntax_data.ast_root.syntax().clone())
+        .syntax()
+        .text_range();
+      return Some(Location {
+        uri: self.uris.get(def_uri_id).clone(),
+        range: def_syntax_data.lines.range(def_range),
+      });
+    }
     None
   }
 

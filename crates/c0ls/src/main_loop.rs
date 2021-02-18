@@ -7,8 +7,10 @@ use lsp_server::{Connection, Message, Response};
 use lsp_types::notification::{
   DidChangeTextDocument, DidChangeWatchedFiles, PublishDiagnostics,
 };
-use lsp_types::request::HoverRequest;
-use lsp_types::{InitializeParams, PublishDiagnosticsParams, Url};
+use lsp_types::request::{GotoDefinition, HoverRequest};
+use lsp_types::{
+  GotoDefinitionResponse, InitializeParams, PublishDiagnosticsParams, Url,
+};
 use rustc_hash::FxHashMap;
 use std::fs::read_to_string;
 use walkdir::WalkDir;
@@ -42,12 +44,22 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
 }
 
 fn handle_req(db: &Db, req: Req) -> Result<Req, Response> {
-  req.handle::<HoverRequest, _>(|_, params| {
-    log::info!("hover");
-    let params = params.text_document_position_params;
-    db.hover(&params.text_document.uri, CrateFrom::from(params.position))
-      .map(CrateFrom::from)
-  })
+  req
+    .handle::<GotoDefinition, _>(|_, params| {
+      log::info!("goto def");
+      let params = params.text_document_position_params;
+      let loc = db.go_to_def(
+        &params.text_document.uri,
+        CrateFrom::from(params.position),
+      )?;
+      Some(GotoDefinitionResponse::Scalar(CrateFrom::from(loc)))
+    })?
+    .handle::<HoverRequest, _>(|_, params| {
+      log::info!("hover");
+      let params = params.text_document_position_params;
+      db.hover(&params.text_document.uri, CrateFrom::from(params.position))
+        .map(CrateFrom::from)
+    })
 }
 
 fn handle_notif(
