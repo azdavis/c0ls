@@ -72,19 +72,19 @@ impl Ty {
   const LEN: usize = 9;
 
   pub fn display(self, tys: &TyDb) -> TyDisplay<'_> {
-    TyDisplay { ty: self, tys }
+    TyDisplay { this: self, tys }
   }
 }
 
 #[derive(Debug)]
 pub struct TyDisplay<'a> {
-  ty: Ty,
+  this: Ty,
   tys: &'a TyDb,
 }
 
 impl fmt::Display for TyDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match *self.tys.get(self.ty) {
+    match *self.tys.get(self.this) {
       TyData::None => write!(f, "<none>"),
       TyData::Any => write!(f, "<any>"),
       TyData::Int => write!(f, "int"),

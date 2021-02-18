@@ -40,19 +40,19 @@ pub enum ErrorKind {
 
 impl ErrorKind {
   pub fn display<'a>(&'a self, tys: &'a TyDb) -> ErrorKindDisplay<'a> {
-    ErrorKindDisplay { kind: self, tys }
+    ErrorKindDisplay { this: self, tys }
   }
 }
 
 #[derive(Debug)]
 pub struct ErrorKindDisplay<'a> {
-  kind: &'a ErrorKind,
+  this: &'a ErrorKind,
   tys: &'a TyDb,
 }
 
 impl fmt::Display for ErrorKindDisplay<'_> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self.kind {
+    match self.this {
       ErrorKind::CallNonFnTy(t) => {
         write!(f, "cannot call non-function type `{}`", t.display(self.tys))
       }
