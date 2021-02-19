@@ -29,9 +29,7 @@ impl Db {
     for uri in files.keys() {
       uris.insert(uri.clone());
     }
-    // - lex, parse, lower.
-    // - process uses to resolve libraries/files.
-    // - calculate line ending information.
+    // get syntax data for each file.
     let syntax_data: FxHashMap<_, _> = files
       .into_iter()
       .map(|(uri, contents)| {
