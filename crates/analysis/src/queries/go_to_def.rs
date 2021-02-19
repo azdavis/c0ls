@@ -17,9 +17,8 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
   if tok.kind() != SyntaxKind::Ident {
     return None;
   }
-  let node = tok.parent();
   let semantic_data = &done.semantic_data[&id];
-  if let Some(expr) = Expr::cast(node.clone().into()) {
+  if let Some(expr) = Expr::cast(tok.parent().into()) {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
       hir::Expr::Call(ref name, _) => {
@@ -46,7 +45,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
       _ => return None,
     }
   }
-  if let Some(ty) = Ty::cast(node.into()) {
+  if let Some(ty) = Ty::cast(tok.parent().into()) {
     let ty = syntax_data.ptrs.ty[&AstPtr::new(&ty)];
     match syntax_data.hir_root.arenas.ty[ty] {
       hir::Ty::Struct(ref name) => {
