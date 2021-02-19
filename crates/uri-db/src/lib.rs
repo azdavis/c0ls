@@ -60,7 +60,7 @@ impl UriDb {
 
   /// Returns the URI associated with this ID.
   pub fn get(&self, file_id: UriId) -> &Uri {
-    self.id_to_uri.get(&file_id).expect("no uri for file id")
+    self.id_to_uri.get(&file_id).expect("no uri for id")
   }
 
   /// Returns an iterator over the IDs.
