@@ -36,26 +36,7 @@ impl Db {
     // - calculate line ending information.
     let mut syntax_data = map_with_capacity(num_files);
     for (id, contents) in id_and_contents {
-      let lexed = lex::get(&contents);
-      let parsed = parse::get(lexed.tokens);
-      let lowered = lower::get(parsed.root.clone());
-      let uses = uses::get(&uris, id, lexed.uses);
-      syntax_data.insert(
-        id,
-        SyntaxData {
-          lines: Lines::new(&contents),
-          ast_root: parsed.root,
-          hir_root: lowered.root,
-          ptrs: lowered.ptrs,
-          uses: uses.uses,
-          errors: SyntaxErrors {
-            lex: lexed.errors,
-            uses: uses.errors,
-            parse: parsed.errors,
-            lower: lowered.errors,
-          },
-        },
-      );
+      syntax_data.insert(id, get_syntax_data(&uris, id, &contents));
     }
     // determine a topo ordering of the file dependencies.
     let graph: Graph<_> = syntax_data
@@ -275,6 +256,26 @@ impl Db {
       contents: CodeBlock::new(contents),
       range,
     })
+  }
+}
+
+fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
+  let lexed = lex::get(&contents);
+  let parsed = parse::get(lexed.tokens);
+  let lowered = lower::get(parsed.root.clone());
+  let uses = uses::get(&uris, id, lexed.uses);
+  SyntaxData {
+    lines: Lines::new(&contents),
+    ast_root: parsed.root,
+    hir_root: lowered.root,
+    ptrs: lowered.ptrs,
+    uses: uses.uses,
+    errors: SyntaxErrors {
+      lex: lexed.errors,
+      uses: uses.errors,
+      parse: parsed.errors,
+      lower: lowered.errors,
+    },
   }
 }
 
