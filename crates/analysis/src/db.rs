@@ -26,18 +26,19 @@ impl Db {
     // assign file IDs.
     let num_files = files.len();
     let mut uris = UriDb::default();
-    let mut id_and_contents = map_with_capacity(num_files);
-    for (uri, contents) in files {
-      let id = uris.insert(uri.clone());
-      id_and_contents.insert(id, contents);
+    for uri in files.keys() {
+      uris.insert(uri.clone());
     }
     // - lex, parse, lower.
     // - process uses to resolve libraries/files.
     // - calculate line ending information.
-    let mut syntax_data = map_with_capacity(num_files);
-    for (id, contents) in id_and_contents {
-      syntax_data.insert(id, get_syntax_data(&uris, id, &contents));
-    }
+    let syntax_data: FxHashMap<_, _> = files
+      .into_iter()
+      .map(|(uri, contents)| {
+        let id = uris.get_id(&uri).unwrap();
+        (id, get_syntax_data(&uris, id, &contents))
+      })
+      .collect();
     // determine a topo ordering of the file dependencies.
     let graph: Graph<_> = syntax_data
       .iter()
