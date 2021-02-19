@@ -81,28 +81,26 @@ impl Index<UriId> for UriDb {
 /// Yes, this is a "uniform resource identifier identifier". We only use this to
 /// avoid cloning URIs all over the place.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UriId {
-  raw: u32,
-}
+pub struct UriId(u32);
 
 const TOP: u32 = 1 << 31;
 
 impl UriId {
   /// Panics if the MSB of `id` is 1.
   fn new(id: u32, kind: UriKind) -> Self {
-    assert_eq!(TOP & id, 0);
+    assert_eq!(id & TOP, 0);
     let raw = match kind {
       UriKind::Source => id | TOP,
       UriKind::Header => id,
     };
-    Self { raw }
+    Self(raw)
   }
 }
 
 impl UriId {
   /// Returns the kind of the URI that this is an ID for.
   pub fn kind(&self) -> UriKind {
-    if (self.raw & TOP) == TOP {
+    if (self.0 & TOP) == TOP {
       UriKind::Source
     } else {
       UriKind::Header
