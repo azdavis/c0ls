@@ -18,9 +18,6 @@ export function activate(cx: ExtensionContext) {
   };
   const clientOpts: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "c0" }],
-    // TODO this seems to be mildly discouraged by the VSCode docs. what seems
-    // to be the encouraged alternative is for the server to register interest
-    // in files itself.
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher("**/*.{c0,h0}"),
     },
