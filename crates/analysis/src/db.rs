@@ -10,8 +10,7 @@ use statics::{
 };
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
-use syntax::rowan::TextRange;
-use syntax::rowan::TokenAtOffset;
+use syntax::rowan::{TextRange, TokenAtOffset};
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use topo_sort::{topological_sort, Graph};
 use uri_db::{Uri, UriDb, UriId};
