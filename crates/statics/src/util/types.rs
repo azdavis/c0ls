@@ -56,7 +56,7 @@ impl FnSig {
     &'a self,
     name: &'a Name,
     tys: &'a TyDb,
-  ) -> FnSigDisplay<'a> {
+  ) -> impl fmt::Display + 'a {
     FnSigDisplay {
       this: self,
       name,
@@ -65,8 +65,7 @@ impl FnSig {
   }
 }
 
-#[derive(Debug)]
-pub struct FnSigDisplay<'a> {
+struct FnSigDisplay<'a> {
   this: &'a FnSig,
   name: &'a Name,
   tys: &'a TyDb,
@@ -96,7 +95,7 @@ pub struct Param {
 }
 
 impl Param {
-  fn display<'a>(&'a self, tys: &'a TyDb) -> ParamDisplay<'a> {
+  fn display<'a>(&'a self, tys: &'a TyDb) -> impl fmt::Display + 'a {
     ParamDisplay { this: self, tys }
   }
 }

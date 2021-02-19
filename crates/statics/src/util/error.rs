@@ -40,13 +40,12 @@ pub enum ErrorKind {
 }
 
 impl ErrorKind {
-  pub fn display<'a>(&'a self, tys: &'a TyDb) -> ErrorKindDisplay<'a> {
+  pub fn display<'a>(&'a self, tys: &'a TyDb) -> impl fmt::Display + 'a {
     ErrorKindDisplay { this: self, tys }
   }
 }
 
-#[derive(Debug)]
-pub struct ErrorKindDisplay<'a> {
+struct ErrorKindDisplay<'a> {
   this: &'a ErrorKind,
   tys: &'a TyDb,
 }

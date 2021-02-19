@@ -71,13 +71,12 @@ impl Ty {
   pub const ArrayAny: Self = Self(8);
   const LEN: usize = 9;
 
-  pub fn display(self, tys: &TyDb) -> TyDisplay<'_> {
+  pub fn display(self, tys: &TyDb) -> impl fmt::Display + '_ {
     TyDisplay { this: self, tys }
   }
 }
 
-#[derive(Debug)]
-pub struct TyDisplay<'a> {
+struct TyDisplay<'a> {
   this: Ty,
   tys: &'a TyDb,
 }

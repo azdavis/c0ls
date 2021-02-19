@@ -14,9 +14,9 @@ mod util;
 
 pub use import::add_env;
 pub use root::get;
-pub use util::error::{Error, ErrorKind, ErrorKindDisplay};
+pub use util::error::{Error, ErrorKind};
 pub use util::id::Id;
-pub use util::ty::{Ty, TyData, TyDb, TyDisplay};
+pub use util::ty::{Ty, TyData, TyDb};
 pub use util::types::{
   Cx, Env, EnvIds, EnvWithIds, ExprTys, FileId, FnData, FnSig, Import, InFile,
   NameToTy, Param,
