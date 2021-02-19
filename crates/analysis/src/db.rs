@@ -2,7 +2,7 @@
 
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uses::{get as get_uses, UseKind};
+use crate::uses::{get as get_uses, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{
@@ -37,13 +37,11 @@ impl Db {
     // - process uses to resolve libraries/files.
     // - calculate line ending information.
     let mut syntax_data = map_with_capacity(num_files);
-    let mut uses = map_with_capacity(num_files);
     for (id, contents) in id_and_contents {
       let lexed = lex::get(&contents);
       let parsed = parse::get(lexed.tokens);
       let lowered = lower::get(parsed.root.clone());
-      let u = get_uses(&uris, id, lexed.uses);
-      uses.insert(id, u.uses);
+      let uses = get_uses(&uris, id, lexed.uses);
       syntax_data.insert(
         id,
         SyntaxData {
@@ -51,9 +49,10 @@ impl Db {
           ast_root: parsed.root,
           hir_root: lowered.root,
           ptrs: lowered.ptrs,
+          uses: uses.uses,
           errors: SyntaxErrors {
             lex: lexed.errors,
-            uses: u.errors,
+            uses: uses.errors,
             parse: parsed.errors,
             lower: lowered.errors,
           },
@@ -61,10 +60,11 @@ impl Db {
       );
     }
     // determine a topo ordering of the file dependencies.
-    let graph: Graph<_> = uses
+    let graph: Graph<_> = syntax_data
       .iter()
-      .map(|(&id, file_uses)| {
-        let neighbors = file_uses
+      .map(|(&id, sd)| {
+        let neighbors = sd
+          .uses
           .iter()
           .filter_map(|u| match u.kind {
             UseKind::File(id) => Some(id),
@@ -95,7 +95,7 @@ impl Db {
     let mut semantic_data = map_with_capacity::<UriId, SemanticData>(num_files);
     for &id in ordering.iter() {
       let mut import = Import::with_main();
-      for u in uses[&id].iter() {
+      for u in syntax_data[&id].uses.iter() {
         let (file_id, env) = match u.kind {
           UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
           UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
@@ -468,6 +468,7 @@ struct SyntaxData {
   ast_root: AstRoot,
   hir_root: hir::Root,
   ptrs: Ptrs,
+  uses: Vec<Use>,
   errors: SyntaxErrors,
 }
 
