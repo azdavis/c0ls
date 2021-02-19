@@ -1,7 +1,6 @@
 //! TODO implement incremental updating
 
-use crate::lines::Lines;
-use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
+use crate::types::{CodeBlock, Diagnostic, Hover, Location};
 use crate::uses::{self, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
@@ -10,6 +9,7 @@ use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
 use syntax::rowan::{TextRange, TokenAtOffset};
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
+use text_pos::{Position, PositionDb, Range};
 use topo_sort::{self, Graph};
 use uri_db::{Uri, UriDb, UriId};
 
@@ -234,7 +234,7 @@ impl Db {
       }
     };
     let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&expr_node))?;
-    let range = syntax_data.lines.range(expr_node.syntax().text_range());
+    let range = syntax_data.positions.range(expr_node.syntax().text_range());
     let semantic_data = &done.semantic_data[&id];
     let contents = match syntax_data.hir_root.arenas.expr[expr] {
       hir::Expr::Call(ref name, _) => semantic_data
@@ -265,7 +265,7 @@ fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
   let lowered = lower::get(parsed.root.clone());
   let uses = uses::get(&uris, id, lexed.uses);
   SyntaxData {
-    lines: Lines::new(&contents),
+    positions: PositionDb::new(&contents),
     ast_root: parsed.root,
     hir_root: lowered.root,
     ptrs: lowered.ptrs,
@@ -316,7 +316,7 @@ fn get_diagnostics(
       (range, x.kind.display(tys).to_string())
     }))
     .map(|(rng, message)| Diagnostic {
-      range: syntax_data.lines.range(rng),
+      range: syntax_data.positions.range(rng),
       message,
     })
     .collect()
@@ -329,7 +329,7 @@ fn get_diagnostics_cycle_error(
 ) -> Vec<Diagnostic> {
   let mut ret: Vec<_> = get_syntax_diagnostics(syntax_data)
     .map(|(rng, message)| Diagnostic {
-      range: syntax_data.lines.range(rng),
+      range: syntax_data.positions.range(rng),
       message,
     })
     .collect();
@@ -351,7 +351,7 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
 }
 
 fn get_token(syntax_data: &SyntaxData, pos: Position) -> Option<SyntaxToken> {
-  let idx = syntax_data.lines.text_size(pos);
+  let idx = syntax_data.positions.text_size(pos);
   let ret = match syntax_data.ast_root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
@@ -431,7 +431,7 @@ where
     .find(|&&id| f(&def_syntax_data.hir_root.arenas.item[id]))?;
   Some(Location {
     uri: db.uris.get(def_uri_id).clone(),
-    range: def_syntax_data.lines.range(get_text_range(
+    range: def_syntax_data.positions.range(get_text_range(
       &def_syntax_data.ptrs,
       &def_syntax_data.ast_root,
       item_id.into(),
@@ -463,7 +463,7 @@ struct Done {
 /// not really 'syntax', but more in contrast to semantic info from statics.
 #[derive(Debug)]
 struct SyntaxData {
-  lines: Lines,
+  positions: PositionDb,
   ast_root: AstRoot,
   hir_root: hir::Root,
   ptrs: Ptrs,

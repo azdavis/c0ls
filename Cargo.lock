@@ -22,6 +22,7 @@ dependencies = [
  "statics",
  "std-lib",
  "syntax",
+ "text-pos",
  "topo-sort",
  "uri-db",
 ]
@@ -519,6 +520,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "text-pos"
+version = "0.1.0"
+dependencies = [
+ "text-size",
 ]
 
 [[package]]

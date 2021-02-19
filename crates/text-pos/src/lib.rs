@@ -1,5 +1,10 @@
-use crate::types::{Position, Range};
-use syntax::rowan::{TextRange, TextSize};
+//! Positions in text.
+
+#![deny(missing_debug_implementations)]
+#![deny(rust_2018_idioms)]
+
+use std::fmt;
+use text_size::{TextRange, TextSize};
 
 #[derive(Debug)]
 struct Line {
@@ -10,12 +15,12 @@ struct Line {
 }
 
 #[derive(Debug)]
-pub(crate) struct Lines {
+pub struct PositionDb {
   lines: Vec<Line>,
 }
 
-impl Lines {
-  pub(crate) fn new(s: &str) -> Self {
+impl PositionDb {
+  pub fn new(s: &str) -> Self {
     let mut end = TextSize::from(0);
     let mut col = TextSize::from(0);
     let mut lines = Vec::new();
@@ -41,7 +46,7 @@ impl Lines {
     Self { lines }
   }
 
-  pub(crate) fn position(&self, pos: TextSize) -> Position {
+  pub fn position(&self, pos: TextSize) -> Position {
     let line = self.lines.iter().position(|line| pos <= line.end).unwrap();
     let pos = match line.checked_sub(1) {
       None => pos,
@@ -61,7 +66,7 @@ impl Lines {
     }
   }
 
-  pub(crate) fn text_size(&self, pos: Position) -> TextSize {
+  pub fn text_size(&self, pos: Position) -> TextSize {
     let line = pos.line as usize;
     let start = line
       .checked_sub(1)
@@ -77,7 +82,7 @@ impl Lines {
     start + TextSize::from(col)
   }
 
-  pub(crate) fn range(&self, rng: TextRange) -> Range {
+  pub fn range(&self, rng: TextRange) -> Range {
     Range {
       start: self.position(rng.start()),
       end: self.position(rng.end()),
@@ -92,10 +97,10 @@ impl Lines {
 
 #[cfg(test)]
 mod tests {
-  use super::{Lines, Position, TextSize};
+  use super::{Position, PositionDb, TextSize};
 
   fn check(s: &str, tests: &[(u32, u32, u32)]) {
-    let lines = Lines::new(s);
+    let lines = PositionDb::new(s);
     for &(idx, line, character) in tests {
       let text_size = TextSize::from(idx);
       let pos = Position { line, character };
@@ -153,5 +158,30 @@ mod tests {
         (6, 0, 4),
       ],
     );
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Position {
+  /// zero-based
+  pub line: u32,
+  pub character: u32,
+}
+
+impl fmt::Display for Position {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.line + 1, self.character + 1)
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Range {
+  pub start: Position,
+  pub end: Position,
+}
+
+impl fmt::Display for Range {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}-{}", self.start, self.end)
   }
 }

@@ -15,5 +15,6 @@ rustc-hash = "1"
 statics = { path = "../statics" }
 std-lib = { path = "../std-lib" }
 syntax = { path = "../syntax" }
+text-pos = { path = "../text-pos" }
 topo-sort = { path = "../topo-sort" }
 uri-db = { path = "../uri-db" }

@@ -1,30 +1,6 @@
 use std::fmt;
+use text_pos::Range;
 use uri_db::Uri;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Position {
-  /// zero-based
-  pub line: u32,
-  pub character: u32,
-}
-
-impl fmt::Display for Position {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}:{}", self.line + 1, self.character + 1)
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Range {
-  pub start: Position,
-  pub end: Position,
-}
-
-impl fmt::Display for Range {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}-{}", self.start, self.end)
-  }
-}
 
 #[derive(Debug)]
 pub struct Location {
