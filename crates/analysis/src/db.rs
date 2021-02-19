@@ -10,7 +10,7 @@ use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
 use syntax::rowan::{TextRange, TokenAtOffset};
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
-use topo_sort::{topological_sort, Graph};
+use topo_sort::{self, Graph};
 use uri_db::{Uri, UriDb, UriId};
 
 #[derive(Debug)]
@@ -72,7 +72,7 @@ impl Db {
         (id, neighbors)
       })
       .collect();
-    let ordering = match topological_sort(&graph) {
+    let ordering = match topo_sort::get(&graph) {
       Ok(x) => x,
       Err(e) => {
         // give up on further processing. conjure up a stable but arbitrary

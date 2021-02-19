@@ -12,7 +12,7 @@ pub type Graph<T> = BTreeMap<T, BTreeSet<T>>;
 
 /// Returns a reverse topological ordering of the graph, or an error if the
 /// graph has a cycle.
-pub fn topological_sort<T>(graph: &Graph<T>) -> Result<Vec<T>, CycleError<T>>
+pub fn get<T>(graph: &Graph<T>) -> Result<Vec<T>, CycleError<T>>
 where
   T: Copy + Eq + Ord,
 {
@@ -70,15 +70,15 @@ enum Action {
 
 #[cfg(test)]
 mod tests {
-  use super::{topological_sort, CycleError, Graph};
+  use super::{get, CycleError, Graph};
   use maplit::{btreemap, btreeset};
 
   fn check(graph: Graph<u32>, order: &[u32]) {
-    assert_eq!(topological_sort(&graph).unwrap(), order);
+    assert_eq!(get(&graph).unwrap(), order);
   }
 
   fn check_cycle(graph: Graph<u32>) {
-    let err = topological_sort(&graph).unwrap_err();
+    let err = get(&graph).unwrap_err();
     assert!(matches!(err, CycleError(_)));
   }
 
