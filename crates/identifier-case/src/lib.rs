@@ -5,6 +5,13 @@
 #![deny(rust_2018_idioms)]
 
 /// Works with either upper or lower snake case.
+///
+/// ```
+/// # use identifier_case::snake_to_pascal;
+/// assert_eq!(snake_to_pascal("fella"), "Fella");
+/// assert_eq!(snake_to_pascal("the_best"), "TheBest");
+/// assert_eq!(snake_to_pascal("HEY_THERE_DUDE"), "HeyThereDude");
+/// ```
 pub fn snake_to_pascal(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut is_cap = true;
@@ -22,6 +29,13 @@ pub fn snake_to_pascal(s: &str) -> String {
 }
 
 /// Also works for camelCase.
+///
+///```
+/// # use identifier_case::pascal_to_snake;
+/// assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
+/// assert_eq!(pascal_to_snake("readFile"), "read_file");
+/// assert_eq!(pascal_to_snake("GetLine"), "get_line");
+///```
 pub fn pascal_to_snake(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut cs = s.chars();
@@ -36,18 +50,4 @@ pub fn pascal_to_snake(s: &str) -> String {
     ret.push(c.to_ascii_lowercase());
   }
   ret
-}
-
-#[test]
-fn snake_to_pascal_t() {
-  assert_eq!(snake_to_pascal("fella"), "Fella");
-  assert_eq!(snake_to_pascal("the_best"), "TheBest");
-  assert_eq!(snake_to_pascal("HEY_THERE_DUDE"), "HeyThereDude");
-}
-
-#[test]
-fn pascal_to_snake_t() {
-  assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
-  assert_eq!(pascal_to_snake("readFile"), "read_file");
-  assert_eq!(pascal_to_snake("GetLine"), "get_line");
 }
