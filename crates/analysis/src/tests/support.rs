@@ -57,6 +57,10 @@ pub(crate) fn check(s: &str) {
     let want = *want.type_def_defs.get(&type_def_use.0).unwrap();
     check_def(&db, &uri, want, type_def_use.1.start);
   }
+  for var_use in want.var_uses.iter() {
+    let want = *want.var_defs.get(&var_use.0).unwrap();
+    check_def(&db, &uri, want, var_use.1.start);
+  }
 }
 
 fn check_def(db: &Db, uri: &Uri, want: Range, pos: Position) {
@@ -79,6 +83,8 @@ struct Expectations {
   fn_uses: Vec<(String, Range)>,
   type_def_defs: FxHashMap<String, Range>,
   type_def_uses: Vec<(String, Range)>,
+  var_defs: FxHashMap<String, Range>,
+  var_uses: Vec<(String, Range)>,
 }
 
 /// only supports ascii files, and treats all line comments as expectations.
@@ -190,6 +196,8 @@ fn parse_expected(s: &str) -> Expectations {
         assert!(ret.type_def_defs.insert(content, range).is_none())
       }
       "type-def-use" => ret.type_def_uses.push((content, range)),
+      "var-def" => assert!(ret.var_defs.insert(content, range).is_none()),
+      "var-use" => ret.var_uses.push((content, range)),
       bad => panic!("unknown expectation kind: {}", bad),
     }
   }
@@ -199,5 +207,6 @@ fn parse_expected(s: &str) -> Expectations {
   ret.struct_uses.sort_unstable();
   ret.fn_uses.sort_unstable();
   ret.type_def_uses.sort_unstable();
+  ret.var_uses.sort_unstable();
   ret
 }

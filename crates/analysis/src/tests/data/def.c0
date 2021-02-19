@@ -10,10 +10,26 @@
 //                    ^ struct-use: S
 }
 
-  int foo() { return 123; }
-//^^^^^^^^^^^^^^^^^^^^^^^^^ fn-def: foo
+  int foo() { int ret = 123; return ret; }
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ fn-def: foo
 
 int main() {
-  return foo() + mk()->a;
-//       ^^^^^ fn-use: foo
+  int ret = 123;
+//^^^^^^^^^^^^^^ var-def: ret
+  S guy = mk();
+//^^^^^^^^^^^^^ var-def: guy
+  if (guy != NULL) {
+    int got = foo();
+//            ^^^^^ fn-use: foo
+    int a = got;
+//  ^^^^^^^^^^^^ var-def: a
+    ret += got
+//  ^^^ var-use: ret
+      + a
+//      ^ var-use: a
+      + guy->a;
+//      ^^^ var-use: guy
+  }
+  return ret;
+//       ^^^ var-use: ret
 }

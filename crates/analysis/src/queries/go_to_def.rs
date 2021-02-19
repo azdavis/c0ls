@@ -43,13 +43,12 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
               break syntax_data.positions.range(stmt.syntax().text_range());
             }
           }
-          stmt_node = Stmt::cast(
-            stmt_node
-              .syntax()
-              .prev_sibling()
-              .or_else(|| stmt_node.syntax().parent())?
-              .into(),
-          )?;
+          // might have a prev sibling be an expr (if we're e.g. in an IfStmt)
+          stmt_node = stmt_node
+            .syntax()
+            .prev_sibling()
+            .and_then(|x| Stmt::cast(x.into()))
+            .or_else(|| Stmt::cast(stmt_node.syntax().parent()?.into()))?;
         };
         Some(Location {
           uri: uri.clone(),
