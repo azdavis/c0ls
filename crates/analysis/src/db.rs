@@ -1,24 +1,25 @@
 //! TODO implement incremental updating
 
+use crate::queries::all_diagnostics;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{Cx, Env, FileId, Id, Import, InFile, TyData, TyDb};
+use statics::{Cx, Env, FileId, Import, InFile, TyData};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
-use syntax::rowan::{TextRange, TokenAtOffset};
+use syntax::rowan::TokenAtOffset;
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
-use text_pos::{Position, PositionDb, Range};
+use text_pos::{Position, PositionDb};
 use topo_sort::{self, Graph};
 use uri_db::{Uri, UriDb, UriId};
 use uses::{Use, UseKind};
 
 #[derive(Debug)]
 pub struct Db {
-  uris: UriDb,
-  ordering: Vec<UriId>,
-  syntax_data: FxHashMap<UriId, SyntaxData>,
-  kind: Kind,
+  pub(crate) uris: UriDb,
+  pub(crate) ordering: Vec<UriId>,
+  pub(crate) syntax_data: FxHashMap<UriId, SyntaxData>,
+  pub(crate) kind: DbKind,
 }
 
 impl Db {
@@ -64,7 +65,7 @@ impl Db {
           uris,
           syntax_data,
           ordering,
-          kind: Kind::CycleError(e.witness()),
+          kind: DbKind::CycleError(e.witness()),
         };
       }
     };
@@ -115,34 +116,12 @@ impl Db {
       uris,
       syntax_data,
       ordering,
-      kind: Kind::Done(Box::new(Done { cx, semantic_data })),
+      kind: DbKind::Done(Box::new(Done { cx, semantic_data })),
     }
   }
 
   pub fn all_diagnostics(&self) -> Vec<(Uri, Vec<Diagnostic>)> {
-    match self.kind {
-      Kind::Done(ref done) => self
-        .ordering
-        .iter()
-        .map(|&id| {
-          let ds = get_diagnostics(
-            &self.syntax_data[&id],
-            &done.semantic_data[&id],
-            &done.cx.tys,
-          );
-          (self.uris.get(id).clone(), ds)
-        })
-        .collect(),
-      Kind::CycleError(witness) => self
-        .ordering
-        .iter()
-        .map(|&id| {
-          let ds =
-            get_diagnostics_cycle_error(&self.syntax_data[&id], id, witness);
-          (self.uris.get(id).clone(), ds)
-        })
-        .collect(),
-    }
+    all_diagnostics::get(self)
   }
 
   pub fn format(&self, uri: &Uri) -> Option<String> {
@@ -279,73 +258,6 @@ fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
   }
 }
 
-fn get_text_range(ptrs: &Ptrs, ast_root: &AstRoot, id: Id) -> TextRange {
-  let root = ast_root.syntax().clone();
-  match id {
-    Id::Expr(id) => ptrs.expr_back[id].to_node(root).syntax().text_range(),
-    Id::Ty(id) => ptrs.ty_back[id].to_node(root).syntax().text_range(),
-    Id::Stmt(id) => ptrs.stmt_back[id].to_node(root).syntax().text_range(),
-    Id::Simp(id) => ptrs.simp_back[id].to_node(root).syntax().text_range(),
-    Id::Item(id) => ptrs.item_back[id].to_node(root).syntax().text_range(),
-  }
-}
-
-fn get_syntax_diagnostics(
-  sd: &SyntaxData,
-) -> impl Iterator<Item = (TextRange, String)> + '_ {
-  let lex = sd.errors.lex.iter().map(|x| (x.range, x.kind.to_string()));
-  let uses = sd.errors.uses.iter().map(|x| (x.range, x.kind.to_string()));
-  let parse = sd
-    .errors
-    .parse
-    .iter()
-    .map(|x| (x.range, x.expected.to_string()));
-  let lower = sd.errors.lower.iter().map(|x| (x.range, x.to_string()));
-  lex.chain(uses).chain(parse).chain(lower)
-}
-
-fn get_diagnostics(
-  syntax_data: &SyntaxData,
-  semantic_data: &SemanticData,
-  tys: &TyDb,
-) -> Vec<Diagnostic> {
-  get_syntax_diagnostics(syntax_data)
-    .chain(semantic_data.errors.iter().map(|x| {
-      let range =
-        get_text_range(&syntax_data.ptrs, &syntax_data.ast_root, x.id);
-      (range, x.kind.display(tys).to_string())
-    }))
-    .map(|(rng, message)| Diagnostic {
-      range: syntax_data.positions.range(rng),
-      message,
-    })
-    .collect()
-}
-
-fn get_diagnostics_cycle_error(
-  syntax_data: &SyntaxData,
-  id: UriId,
-  witness: UriId,
-) -> Vec<Diagnostic> {
-  let mut ret: Vec<_> = get_syntax_diagnostics(syntax_data)
-    .map(|(rng, message)| Diagnostic {
-      range: syntax_data.positions.range(rng),
-      message,
-    })
-    .collect();
-  if id == witness {
-    let z = Position {
-      line: 0,
-      character: 0,
-    };
-    ret.push(Diagnostic {
-      range: Range { start: z, end: z },
-      message: "cannot have a use cycle involving this file".to_owned(),
-    })
-  }
-  ret
-}
-
 fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
@@ -431,57 +343,58 @@ where
     .find(|&&id| f(&def_syntax_data.hir_root.arenas.item[id]))?;
   Some(Location {
     uri: db.uris.get(def_uri_id).clone(),
-    range: def_syntax_data.positions.range(get_text_range(
-      &def_syntax_data.ptrs,
-      &def_syntax_data.ast_root,
-      item_id.into(),
-    )),
+    range: def_syntax_data.positions.range(
+      def_syntax_data.ptrs.item_back[item_id]
+        .to_node(def_syntax_data.ast_root.syntax().clone())
+        .syntax()
+        .text_range(),
+    ),
   })
 }
 
 #[derive(Debug)]
-enum Kind {
+pub(crate) enum DbKind {
   CycleError(UriId),
   Done(Box<Done>),
 }
 
-impl Kind {
-  fn done(&self) -> Option<&Done> {
+impl DbKind {
+  pub(crate) fn done(&self) -> Option<&Done> {
     match *self {
-      Kind::CycleError(_) => None,
-      Kind::Done(ref done) => Some(done.as_ref()),
+      DbKind::CycleError(_) => None,
+      DbKind::Done(ref done) => Some(done.as_ref()),
     }
   }
 }
 
 #[derive(Debug)]
-struct Done {
-  cx: Cx,
-  semantic_data: FxHashMap<UriId, SemanticData>,
+pub(crate) struct Done {
+  pub(crate) cx: Cx,
+  pub(crate) semantic_data: FxHashMap<UriId, SemanticData>,
 }
 
 /// not really 'syntax', but more in contrast to semantic info from statics.
 #[derive(Debug)]
-struct SyntaxData {
-  positions: PositionDb,
-  ast_root: AstRoot,
-  hir_root: hir::Root,
-  ptrs: Ptrs,
-  uses: Vec<Use>,
-  errors: SyntaxErrors,
+pub(crate) struct SyntaxData {
+  pub(crate) positions: PositionDb,
+  pub(crate) ast_root: AstRoot,
+  pub(crate) hir_root: hir::Root,
+  pub(crate) ptrs: Ptrs,
+  pub(crate) uses: Vec<Use>,
+  pub(crate) errors: SyntaxErrors,
 }
 
 #[derive(Debug)]
-struct SyntaxErrors {
-  lex: Vec<lex::Error>,
-  uses: Vec<uses::Error>,
-  parse: Vec<parse::Error>,
-  lower: Vec<lower::PragmaError>,
+pub(crate) struct SyntaxErrors {
+  pub(crate) lex: Vec<lex::Error>,
+  pub(crate) uses: Vec<uses::Error>,
+  pub(crate) parse: Vec<parse::Error>,
+  pub(crate) lower: Vec<lower::PragmaError>,
 }
 
 #[derive(Debug)]
-struct SemanticData {
-  import: Import,
-  env: Env,
-  errors: Vec<statics::Error>,
+pub(crate) struct SemanticData {
+  pub(crate) import: Import,
+  pub(crate) env: Env,
+  pub(crate) errors: Vec<statics::Error>,
 }

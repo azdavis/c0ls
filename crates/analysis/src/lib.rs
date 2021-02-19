@@ -10,6 +10,7 @@
 mod tests;
 
 mod db;
+mod queries;
 mod types;
 
 pub use db::Db;
