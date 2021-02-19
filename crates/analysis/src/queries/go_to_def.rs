@@ -21,53 +21,46 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
   if let Some(expr) = Expr::cast(tok.parent().into()) {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
-      hir::Expr::Call(ref name, _) => {
-        return get_item_loc(
-          db,
-          &semantic_data.import.fns,
-          &semantic_data.env.fns,
-          id,
-          name,
-          |item| match *item {
-            hir::Item::Fn(ref the_name, _, _, _) => the_name == name,
-            _ => false,
-          },
-        );
-      }
+      hir::Expr::Call(ref name, _) => get_item_loc(
+        db,
+        &semantic_data.import.fns,
+        &semantic_data.env.fns,
+        id,
+        name,
+        |item| match *item {
+          hir::Item::Fn(ref the_name, _, _, _) => the_name == name,
+          _ => false,
+        },
+      ),
       hir::Expr::FieldGet(expr, _) => {
-        let name = match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
-          TyData::None => return None,
-          TyData::Struct(name) => name,
+        match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
+          TyData::None => None,
+          TyData::Struct(name) => get_struct_loc(db, semantic_data, id, name),
           data => unreachable!("bad ty: {:?}", data),
-        };
-        return get_struct_loc(db, semantic_data, id, name);
+        }
       }
-      _ => return None,
+      _ => None,
     }
-  }
-  if let Some(ty) = Ty::cast(tok.parent().into()) {
+  } else if let Some(ty) = Ty::cast(tok.parent().into()) {
     let ty = syntax_data.ptrs.ty[&AstPtr::new(&ty)];
     match syntax_data.hir_root.arenas.ty[ty] {
-      hir::Ty::Struct(ref name) => {
-        return get_struct_loc(db, semantic_data, id, name)
-      }
-      hir::Ty::Name(ref name) => {
-        return get_item_loc(
-          db,
-          &semantic_data.import.type_defs,
-          &semantic_data.env.type_defs,
-          id,
-          name,
-          |item| match *item {
-            hir::Item::TypeDef(ref the_name, _) => the_name == name,
-            _ => false,
-          },
-        );
-      }
-      _ => return None,
+      hir::Ty::Struct(ref name) => get_struct_loc(db, semantic_data, id, name),
+      hir::Ty::Name(ref name) => get_item_loc(
+        db,
+        &semantic_data.import.type_defs,
+        &semantic_data.env.type_defs,
+        id,
+        name,
+        |item| match *item {
+          hir::Item::TypeDef(ref the_name, _) => the_name == name,
+          _ => false,
+        },
+      ),
+      _ => None,
     }
+  } else {
+    None
   }
-  None
 }
 
 fn get_struct_loc(
