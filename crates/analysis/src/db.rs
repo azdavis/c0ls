@@ -9,7 +9,7 @@ use statics::{
   get as get_statics, Cx, Env, FileId, Id, Import, InFile, TyData, TyDb,
 };
 use std::hash::BuildHasherDefault;
-use syntax::ast::{Cast as _, Expr, Root as AstRoot, StructTy, Syntax as _};
+use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
 use syntax::rowan::TextRange;
 use syntax::rowan::TokenAtOffset;
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
@@ -233,13 +233,46 @@ impl Db {
             TyData::Struct(name) => name,
             data => unreachable!("bad ty: {:?}", data),
           };
-          return get_struct_loc(self, semantic_data, id, name.as_str());
+          return get_struct_loc(self, semantic_data, id, name);
         }
         _ => return None,
       }
     }
-    if StructTy::cast(node.into()).is_some() {
-      return get_struct_loc(self, semantic_data, id, tok.text());
+    if let Some(ty) = Ty::cast(node.into()) {
+      let ty = syntax_data.ptrs.ty[&AstPtr::new(&ty)];
+      match syntax_data.hir_root.arenas.ty[ty] {
+        hir::Ty::Struct(ref name) => {
+          return get_struct_loc(self, semantic_data, id, name)
+        }
+        hir::Ty::Name(ref name) => {
+          let def_uri_id = semantic_data
+            .import
+            .type_defs
+            .get(name)
+            .and_then(|x| x.file().uri())
+            .or_else(|| {
+              semantic_data.env.type_defs.contains_key(name).then(|| id)
+            })?;
+          let def_syntax_data = &self.syntax_data[&def_uri_id];
+          let item_id =
+            *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
+              match def_syntax_data.hir_root.arenas.item[id] {
+                hir::Item::TypeDef(ref the_name, _) => the_name == name,
+                _ => false,
+              }
+            })?;
+          return Some(Location {
+            uri: self.uris.get(def_uri_id).clone(),
+            range: def_syntax_data.lines.range(
+              def_syntax_data.ptrs.item_back[item_id]
+                .to_node(def_syntax_data.ast_root.syntax().clone())
+                .syntax()
+                .text_range(),
+            ),
+          });
+        }
+        _ => return None,
+      }
     }
     None
   }
@@ -394,7 +427,7 @@ fn get_struct_loc(
   db: &Db,
   semantic_data: &SemanticData,
   id: UriId,
-  name: &str,
+  name: &hir::Name,
 ) -> Option<Location> {
   let def_uri_id = semantic_data
     .import
