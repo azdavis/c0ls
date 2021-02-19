@@ -440,12 +440,11 @@ where
     .find(|&&id| f(&def_syntax_data.hir_root.arenas.item[id]))?;
   Some(Location {
     uri: db.uris.get(def_uri_id).clone(),
-    range: def_syntax_data.lines.range(
-      def_syntax_data.ptrs.item_back[item_id]
-        .to_node(def_syntax_data.ast_root.syntax().clone())
-        .syntax()
-        .text_range(),
-    ),
+    range: def_syntax_data.lines.range(get_text_range(
+      &def_syntax_data.ptrs,
+      &def_syntax_data.ast_root,
+      item_id.into(),
+    )),
   })
 }
 
