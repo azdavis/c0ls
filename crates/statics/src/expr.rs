@@ -28,7 +28,13 @@ pub(crate) fn get(
         .iter()
         .find_map(|&p| unify_impl(&mut cx.tys, p, lhs_ty));
       match param_ty {
-        None => cx.err(lhs, ErrorKind::MismatchedTysAny(param_tys, lhs_ty)),
+        None => {
+          let kind = match *param_tys {
+            [want] => ErrorKind::MismatchedTys(want, lhs_ty),
+            _ => ErrorKind::MismatchedTysAny(param_tys, lhs_ty),
+          };
+          cx.err(lhs, kind)
+        }
         Some(ty) => {
           unify(cx, ty, rhs_ty, rhs);
         }
@@ -181,6 +187,7 @@ pub(crate) fn get_name<I: Into<Id>>(
   }
 }
 
+/// returns (param_tys, ret_ty) where param_tys has length >= 1
 fn bin_op_ty(op: BinOp) -> (&'static [Ty], Ty) {
   let param_tys: &'static [Ty];
   let ret_ty;
@@ -202,5 +209,6 @@ fn bin_op_ty(op: BinOp) -> (&'static [Ty], Ty) {
       ret_ty = Ty::Bool;
     }
   }
+  assert!(!param_tys.is_empty());
   (param_tys, ret_ty)
 }

@@ -96,11 +96,17 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         got.display(self.tys)
       ),
       ErrorKind::MismatchedTysAny(wants, got) => {
-        write!(f, "mismatched types: expected any of ")?;
-        for &want in wants.iter() {
-          write!(f, "`{}`, ", want.display(self.tys))?;
+        assert!(wants.len() >= 2);
+        let mut wants = wants.iter();
+        write!(
+          f,
+          "mismatched types: expected any of {{`{}`",
+          wants.next().unwrap().display(self.tys)
+        )?;
+        for want in wants {
+          write!(f, ", `{}`", want.display(self.tys))?;
         }
-        write!(f, "found `{}`", got.display(self.tys))
+        write!(f, "}}, found `{}`", got.display(self.tys))
       }
       ErrorKind::NotInLoop => {
         write!(f, "cannot use this statement outside of a loop")
