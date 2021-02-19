@@ -1,0 +1,11 @@
+[package]
+name = "uses"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+std-lib = { path = "../std-lib" }
+syntax = { path = "../syntax" }
+uri-db = { path = "../uri-db" }

@@ -1,7 +1,6 @@
 //! TODO implement incremental updating
 
 use crate::types::{CodeBlock, Diagnostic, Hover, Location};
-use crate::uses::{self, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{Cx, Env, FileId, Id, Import, InFile, TyData, TyDb};
@@ -12,6 +11,7 @@ use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 use text_pos::{Position, PositionDb, Range};
 use topo_sort::{self, Graph};
 use uri_db::{Uri, UriDb, UriId};
+use uses::{Use, UseKind};
 
 #[derive(Debug)]
 pub struct Db {
@@ -474,7 +474,7 @@ struct SyntaxData {
 #[derive(Debug)]
 struct SyntaxErrors {
   lex: Vec<lex::Error>,
-  uses: Vec<crate::uses::Error>,
+  uses: Vec<uses::Error>,
   parse: Vec<parse::Error>,
   lower: Vec<lower::PragmaError>,
 }

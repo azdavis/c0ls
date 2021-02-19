@@ -1,3 +1,8 @@
+//! Resolves `#use` pragmas.
+
+#![deny(missing_debug_implementations)]
+#![deny(rust_2018_idioms)]
+
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
 use std_lib::Lib;
@@ -5,12 +10,12 @@ use syntax::rowan::TextRange;
 use uri_db::{UriDb, UriId};
 
 #[derive(Debug, Default)]
-pub(crate) struct Uses {
-  pub(crate) uses: Vec<Use>,
-  pub(crate) errors: Vec<Error>,
+pub struct Uses {
+  pub uses: Vec<Use>,
+  pub errors: Vec<Error>,
 }
 
-pub(crate) fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use<'_>>) -> Uses {
+pub fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use<'_>>) -> Uses {
   let mut ret = Uses::default();
   for u in uses {
     let range = u.range;
@@ -61,25 +66,25 @@ fn get_one(
 }
 
 #[derive(Debug)]
-pub(crate) struct Use {
+pub struct Use {
   pub kind: UseKind,
-  pub range: syntax::rowan::TextRange,
+  pub range: TextRange,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(crate) enum UseKind {
+pub enum UseKind {
   File(UriId),
   Lib(Lib),
 }
 
 #[derive(Debug)]
-pub(crate) struct Error {
+pub struct Error {
   pub kind: ErrorKind,
   pub range: TextRange,
 }
 
 #[derive(Debug)]
-pub(crate) enum ErrorKind {
+pub enum ErrorKind {
   NoSuchLib,
   NoSuchPath,
   AbsolutePath,

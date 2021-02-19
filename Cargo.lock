@@ -25,6 +25,7 @@ dependencies = [
  "text-pos",
  "topo-sort",
  "uri-db",
+ "uses",
 ]
 
 [[package]]
@@ -619,6 +620,15 @@ dependencies = [
  "matches",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "uses"
+version = "0.1.0"
+dependencies = [
+ "std-lib",
+ "syntax",
+ "uri-db",
 ]
 
 [[package]]
