@@ -18,7 +18,7 @@ pub enum ErrorKind {
   DefnHeaderFn,
   DerefNonPtrTy(Ty),
   DerefNull,
-  Duplicate,
+  Duplicate(Name),
   FieldGetNonStructTy(Ty),
   FnMightNotReturnVal,
   InvalidStructTy,
@@ -69,7 +69,9 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         t.display(self.tys)
       ),
       ErrorKind::DerefNull => write!(f, "cannot dereference `NULL`"),
-      ErrorKind::Duplicate => write!(f, "duplicate definitions"),
+      ErrorKind::Duplicate(name) => {
+        write!(f, "duplicate definitions for `{}`", name)
+      }
       ErrorKind::FieldGetNonStructTy(t) => write!(
         f,
         "cannot get field of non-struct type `{}`",

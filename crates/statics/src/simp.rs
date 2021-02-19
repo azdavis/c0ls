@@ -69,7 +69,7 @@ pub(crate) fn get<'a>(
         || env.type_defs.contains_key(name)
         || fn_cx.import.type_defs.contains_key(name);
       if dup {
-        cx.err(simp, ErrorKind::Duplicate);
+        cx.err(simp, ErrorKind::Duplicate(name.clone()));
       }
       ret = VarInfo::Decl;
     }
@@ -101,7 +101,7 @@ pub(crate) fn get<'a>(
             || env.type_defs.contains_key(rhs)
             || fn_cx.import.type_defs.contains_key(rhs);
           if dup {
-            cx.err(simp, ErrorKind::Duplicate);
+            cx.err(simp, ErrorKind::Duplicate(rhs.clone()));
           }
           ret = VarInfo::Decl;
         }

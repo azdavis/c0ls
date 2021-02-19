@@ -36,7 +36,7 @@ pub(crate) fn get(
           || env.type_defs.contains_key(&param.name)
           || import.type_defs.contains_key(&param.name);
         if dup {
-          cx.err(item, ErrorKind::Duplicate);
+          cx.err(item, ErrorKind::Duplicate(name.clone()));
         }
         sig_params.push(Param {
           name: param.name.clone(),
@@ -93,7 +93,7 @@ pub(crate) fn get(
         }
       }
       if dup {
-        cx.err(item, ErrorKind::Duplicate);
+        cx.err(item, ErrorKind::Duplicate(name.clone()));
       }
       if matches!(sig.defined, Defined::MustNot) && body.is_some() {
         cx.err(item, ErrorKind::DefnHeaderFn)
@@ -113,11 +113,11 @@ pub(crate) fn get(
         let ty = get_ty(import, arenas, cx, env, field.ty);
         no_unsized(cx, import, env, ty, field.ty);
         if sig.insert(field.name.clone(), ty).is_some() {
-          cx.err(field.ty, ErrorKind::Duplicate);
+          cx.err(field.ty, ErrorKind::Duplicate(name.clone()));
         }
       }
       if env.structs.insert(name.clone(), sig).is_some() {
-        cx.err(item, ErrorKind::Duplicate)
+        cx.err(item, ErrorKind::Duplicate(name.clone()))
       }
     }
     Item::TypeDef(ref name, ty) => {
@@ -128,7 +128,7 @@ pub(crate) fn get(
         || env.fns.contains_key(name)
         || import.fns.contains_key(name);
       if dup {
-        cx.err(item, ErrorKind::Duplicate)
+        cx.err(item, ErrorKind::Duplicate(name.clone()))
       }
     }
   }
