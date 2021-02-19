@@ -95,6 +95,30 @@ impl PositionDb {
   }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Position {
+  pub line: u32,
+  pub character: u32,
+}
+
+impl fmt::Display for Position {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.line + 1, self.character + 1)
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Range {
+  pub start: Position,
+  pub end: Position,
+}
+
+impl fmt::Display for Range {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}-{}", self.start, self.end)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::{Position, PositionDb, TextSize};
@@ -158,30 +182,5 @@ mod tests {
         (6, 0, 4),
       ],
     );
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Position {
-  /// zero-based
-  pub line: u32,
-  pub character: u32,
-}
-
-impl fmt::Display for Position {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}:{}", self.line + 1, self.character + 1)
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Range {
-  pub start: Position,
-  pub end: Position,
-}
-
-impl fmt::Display for Range {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}-{}", self.start, self.end)
   }
 }
