@@ -1,8 +1,8 @@
 use crate::util::error::{Error, ErrorKind};
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
-use hir::{la_arena::ArenaMap, Arenas, ExprId, Name, SimpId};
-use rustc_hash::{FxHashMap, FxHashSet};
+use hir::{la_arena::ArenaMap, Arenas, ExprId, Name};
+use rustc_hash::FxHashMap;
 use std::fmt;
 use uri_db::UriId;
 
@@ -144,13 +144,11 @@ impl Import {
   }
 }
 
-pub type DeclTys = ArenaMap<SimpId, Ty>;
 pub type ExprTys = ArenaMap<ExprId, Ty>;
 
 #[derive(Debug)]
 pub struct FnData {
   pub sig: FnSig,
-  // pub decl_tys: DeclTys,
   // pub expr_tys: ExprTys,
 }
 
@@ -159,9 +157,7 @@ pub struct Env {
   pub fns: FxHashMap<Name, FnData>,
   pub structs: FxHashMap<Name, NameToTy>,
   pub type_defs: FxHashMap<Name, Ty>,
-  pub decl_tys: DeclTys,
   pub expr_tys: ExprTys,
-  pub called_fns: FxHashSet<Name>,
 }
 
 #[derive(Debug, Default)]

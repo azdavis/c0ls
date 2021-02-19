@@ -71,7 +71,6 @@ pub(crate) fn get<'a>(
       if dup {
         cx.err(simp, ErrorKind::Duplicate);
       }
-      env.decl_tys.insert(simp, got_ty);
       ret = VarInfo::Decl;
     }
     Simp::Expr(expr) => {
@@ -104,7 +103,6 @@ pub(crate) fn get<'a>(
           if dup {
             cx.err(simp, ErrorKind::Duplicate);
           }
-          env.decl_tys.insert(simp, ty);
           ret = VarInfo::Decl;
         }
       }

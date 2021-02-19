@@ -80,7 +80,6 @@ pub(crate) fn get(
       ret
     }
     Expr::Call(ref name, ref args) => {
-      env.called_fns.insert(name.clone());
       // do this here non-lazily since we want all type errors from trying to
       // get the types of the arguments. could probably wrangle doing this
       // non-lazily without allocating but it would require more finagling to
