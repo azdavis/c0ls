@@ -133,12 +133,12 @@ impl Db {
 }
 
 fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
-  let lexed = lex::get(&contents);
+  let lexed = lex::get(contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root.clone());
   let uses = uses::get(&uris, id, lexed.uses);
   SyntaxData {
-    positions: PositionDb::new(&contents),
+    positions: PositionDb::new(contents),
     ast_root: parsed.root,
     hir_root: lowered.root,
     ptrs: lowered.ptrs,
