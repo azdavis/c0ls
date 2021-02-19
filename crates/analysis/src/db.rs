@@ -119,10 +119,6 @@ impl Db {
     }
   }
 
-  pub fn all_diagnostics(&self) -> Vec<(Uri, Vec<Diagnostic>)> {
-    all_diagnostics::get(self)
-  }
-
   pub fn format(&self, uri: &Uri) -> Option<String> {
     let id = self.uris.get_id(uri)?;
     let errors = &self.syntax_data[&id].errors;
@@ -136,6 +132,10 @@ impl Db {
   pub fn syntax(&self, uri: &Uri) -> Option<SyntaxNode> {
     let id = self.uris.get_id(uri)?;
     Some(self.syntax_data[&id].ast_root.syntax().clone())
+  }
+
+  pub fn all_diagnostics(&self) -> Vec<(Uri, Vec<Diagnostic>)> {
+    all_diagnostics::get(self)
   }
 
   pub fn go_to_def(&self, uri: &Uri, pos: Position) -> Option<Location> {
