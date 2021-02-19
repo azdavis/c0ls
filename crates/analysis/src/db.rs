@@ -5,7 +5,7 @@ use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uses::{get as get_use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{get as get_statics, Cx, Env, FileId, Id, Import, TyDb};
+use statics::{get as get_statics, Cx, Env, FileId, Id, Import, InFile, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{CallExpr, Cast as _, Expr, Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
@@ -245,7 +245,7 @@ impl Db {
         .import
         .fns
         .get(name)
-        .map(|x| x.val())
+        .map(InFile::val)
         .or_else(|| semantic_data.env.fns.get(name).map(|x| &x.sig))?
         .display(name, &done.cx.tys)
         .to_string(),
