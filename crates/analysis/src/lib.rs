@@ -12,6 +12,7 @@ mod tests;
 mod db;
 mod queries;
 mod types;
+mod util;
 
 pub use db::Db;
 pub use text_pos::{Position, Range};

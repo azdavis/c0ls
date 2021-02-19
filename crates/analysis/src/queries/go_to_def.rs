@@ -1,5 +1,6 @@
-use crate::db::{get_token, Db, SemanticData};
+use crate::db::{Db, SemanticData};
 use crate::types::Location;
+use crate::util::get_token;
 use lower::AstPtr;
 use rustc_hash::FxHashMap;
 use statics::{InFile, TyData};
