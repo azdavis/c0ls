@@ -4,7 +4,7 @@ use crate::util::get_token;
 use lower::AstPtr;
 use rustc_hash::FxHashMap;
 use statics::{InFile, TyData};
-use syntax::ast::{Cast as _, Expr, Syntax as _, Ty};
+use syntax::ast::{Cast as _, Expr, Simp, Stmt, Syntax as _, Ty};
 use syntax::SyntaxKind;
 use text_pos::Position;
 use uri_db::{Uri, UriId};
@@ -21,6 +21,41 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
   if let Some(expr) = Expr::cast(tok.parent().into()) {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
+      hir::Expr::Name(ref name) => {
+        // find the stmt containing this expr. we know tok.parent() is an expr,
+        // so go up again to start off.
+        let mut node = tok.parent().parent()?;
+        let mut stmt_node = loop {
+          match Stmt::cast(node.clone().into()) {
+            Some(x) => break x,
+            None => node = node.parent()?,
+          }
+        };
+        // work backward up the body of the fn, checking each decl.
+        let range = loop {
+          if let Stmt::SimpStmt(ref stmt) = stmt_node {
+            let tok = match stmt.simp() {
+              Some(Simp::DeclSimp(simp)) => simp.ident(),
+              Some(Simp::AmbiguousSimp(simp)) => simp.lhs(),
+              _ => None,
+            };
+            if tok.map_or(false, |tok| name == tok.text()) {
+              break syntax_data.positions.range(stmt.syntax().text_range());
+            }
+          }
+          stmt_node = Stmt::cast(
+            stmt_node
+              .syntax()
+              .prev_sibling()
+              .or_else(|| stmt_node.syntax().parent())?
+              .into(),
+          )?;
+        };
+        Some(Location {
+          uri: uri.clone(),
+          range,
+        })
+      }
       hir::Expr::Call(ref name, _) => get_item_loc(
         db,
         &semantic_data.import.fns,
