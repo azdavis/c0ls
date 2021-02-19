@@ -46,15 +46,19 @@ impl PositionDb {
     Self { lines }
   }
 
-  pub fn position(&self, pos: TextSize) -> Position {
-    let line = self.lines.iter().position(|line| pos <= line.end).unwrap();
-    let pos = match line.checked_sub(1) {
-      None => pos,
-      Some(prev) => pos - self.start(prev),
+  pub fn position(&self, text_size: TextSize) -> Position {
+    let line = self
+      .lines
+      .iter()
+      .position(|line| text_size <= line.end)
+      .unwrap();
+    let text_size = match line.checked_sub(1) {
+      None => text_size,
+      Some(prev) => text_size - self.start(prev),
     };
-    let mut character = u32::from(pos);
+    let mut character = u32::from(text_size);
     for &(idx, diff) in self.lines[line].non_ascii.iter() {
-      if idx < pos {
+      if idx < text_size {
         character -= diff;
       } else {
         break;
@@ -82,10 +86,10 @@ impl PositionDb {
     start + TextSize::from(col)
   }
 
-  pub fn range(&self, rng: TextRange) -> Range {
+  pub fn range(&self, text_range: TextRange) -> Range {
     Range {
-      start: self.position(rng.start()),
-      end: self.position(rng.end()),
+      start: self.position(text_range.start()),
+      end: self.position(text_range.end()),
     }
   }
 
