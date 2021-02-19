@@ -29,7 +29,11 @@ pub(crate) fn check(s: &str) {
       want.message
     );
   }
-  assert_eq!(want.diagnostics.len(), got.len());
+  assert_eq!(
+    want.diagnostics.len(),
+    got.len(),
+    "mismatched number of diagnostics"
+  );
   for hover in want.hovers.iter() {
     let got_hover = match db.hover(&uri, hover.range.start) {
       None => panic!("no hover at {}", hover.range.start),
@@ -41,6 +45,27 @@ pub(crate) fn check(s: &str) {
     assert!(db.hover(&uri, no_hover.start).is_none());
     assert!(db.hover(&uri, no_hover.end).is_none());
   }
+  for struct_use in want.struct_uses.iter() {
+    let want = *want.struct_defs.get(&struct_use.0).unwrap();
+    check_def(&db, &uri, want, struct_use.1.start);
+  }
+  for fn_use in want.fn_uses.iter() {
+    let want = *want.fn_defs.get(&fn_use.0).unwrap();
+    check_def(&db, &uri, want, fn_use.1.start);
+  }
+  for type_def_use in want.type_def_uses.iter() {
+    let want = *want.type_def_defs.get(&type_def_use.0).unwrap();
+    check_def(&db, &uri, want, type_def_use.1.start);
+  }
+}
+
+fn check_def(db: &Db, uri: &Uri, want: Range, pos: Position) {
+  let got_def = match db.go_to_def(uri, pos) {
+    None => panic!("no def info at {}", pos),
+    Some(x) => x,
+  };
+  assert_eq!(*uri, got_def.uri);
+  assert_eq!(want, got_def.range);
 }
 
 #[derive(Debug, Default)]
@@ -48,6 +73,12 @@ struct Expectations {
   diagnostics: Vec<Diagnostic>,
   hovers: Vec<Hover>,
   no_hovers: Vec<Range>,
+  struct_defs: FxHashMap<String, Range>,
+  struct_uses: Vec<(String, Range)>,
+  fn_defs: FxHashMap<String, Range>,
+  fn_uses: Vec<(String, Range)>,
+  type_def_defs: FxHashMap<String, Range>,
+  type_def_uses: Vec<(String, Range)>,
 }
 
 /// only supports ascii files, and treats all line comments as expectations.
@@ -151,11 +182,22 @@ fn parse_expected(s: &str) -> Expectations {
           })
         }
       }
+      "struct-def" => assert!(ret.struct_defs.insert(content, range).is_none()),
+      "struct-use" => ret.struct_uses.push((content, range)),
+      "fn-def" => assert!(ret.fn_defs.insert(content, range).is_none()),
+      "fn-use" => ret.fn_uses.push((content, range)),
+      "type-def-def" => {
+        assert!(ret.type_def_defs.insert(content, range).is_none())
+      }
+      "type-def-use" => ret.type_def_uses.push((content, range)),
       bad => panic!("unknown expectation kind: {}", bad),
     }
   }
   ret.diagnostics.sort_unstable();
   ret.hovers.sort_unstable();
   ret.no_hovers.sort_unstable();
+  ret.struct_uses.sort_unstable();
+  ret.fn_uses.sort_unstable();
+  ret.type_def_uses.sort_unstable();
   ret
 }

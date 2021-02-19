@@ -1,0 +1,19 @@
+  struct S { int a; };
+//^^^^^^^^^^^^^^^^^^^^ struct-def: S
+
+  typedef struct S* S;
+//^^^^^^^^^^^^^^^^^^^^ type-def-def: S
+
+  S mk() {
+//^ type-def-use: S
+  return alloc(struct S);
+//                    ^ struct-use: S
+}
+
+  int foo() { return 123; }
+//^^^^^^^^^^^^^^^^^^^^^^^^^ fn-def: foo
+
+int main() {
+  return foo() + mk()->a;
+//       ^^^^^ fn-use: foo
+}

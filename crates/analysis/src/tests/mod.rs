@@ -23,6 +23,11 @@ fn decl_in_for() {
 }
 
 #[test]
+fn def() {
+  check(include_str!("data/def.c0"))
+}
+
+#[test]
 fn deref_null() {
   check(include_str!("data/deref_null.c0"))
 }
