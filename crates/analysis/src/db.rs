@@ -2,7 +2,7 @@
 
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uses::{get as get_use, UseKind};
+use crate::uses::{get as get_uses, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
 use statics::{
@@ -42,15 +42,8 @@ impl Db {
       let lexed = lex::get(&contents);
       let parsed = parse::get(lexed.tokens);
       let lowered = lower::get(parsed.root.clone());
-      let mut us = Vec::with_capacity(lexed.uses.len());
-      let mut uses_errors = Vec::new();
-      for u in lexed.uses {
-        match get_use(&uris, id, u) {
-          Ok(u) => us.push(u),
-          Err(e) => uses_errors.push(e),
-        }
-      }
-      uses.insert(id, us);
+      let u = get_uses(&uris, id, lexed.uses);
+      uses.insert(id, u.uses);
       syntax_data.insert(
         id,
         SyntaxData {
@@ -60,7 +53,7 @@ impl Db {
           ptrs: lowered.ptrs,
           errors: SyntaxErrors {
             lex: lexed.errors,
-            uses: uses_errors,
+            uses: u.errors,
             parse: parsed.errors,
             lower: lowered.errors,
           },

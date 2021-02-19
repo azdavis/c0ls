@@ -1,34 +1,36 @@
 use std::fmt;
 use std::path::{Component, Path, PathBuf};
 use std_lib::Lib;
+use syntax::rowan::TextRange;
 use uri_db::{UriDb, UriId};
 
-pub(crate) fn get(
-  map: &UriDb,
-  id: UriId,
-  u: lex::Use<'_>,
-) -> Result<Use, Error> {
-  match get_impl(map, id, u.path, u.kind) {
-    Ok(kind) => Ok(Use {
-      range: u.range,
-      kind,
-    }),
-    Err(kind) => Err(Error {
-      range: u.range,
-      kind,
-    }),
-  }
+#[derive(Debug, Default)]
+pub(crate) struct Uses {
+  pub(crate) uses: Vec<Use>,
+  pub(crate) errors: Vec<Error>,
 }
 
-fn get_impl(
-  map: &UriDb,
+pub(crate) fn get(uris: &UriDb, id: UriId, uses: Vec<lex::Use<'_>>) -> Uses {
+  let mut ret = Uses::default();
+  for u in uses {
+    let range = u.range;
+    match get_one(uris, id, u.path, u.kind) {
+      Ok(kind) => ret.uses.push(Use { range, kind }),
+      Err(kind) => ret.errors.push(Error { range, kind }),
+    }
+  }
+  ret
+}
+
+fn get_one(
+  uris: &UriDb,
   id: UriId,
   path: &str,
   kind: lex::UseKind,
 ) -> Result<UseKind, ErrorKind> {
   match kind {
     lex::UseKind::Local => {
-      let uri = map.get(id);
+      let uri = uris.get(id);
       let mut buf = PathBuf::from(uri.path()).parent().unwrap().to_owned();
       for c in Path::new(path).components() {
         match c {
@@ -46,7 +48,7 @@ fn get_impl(
       }
       let mut new_uri = uri.clone();
       new_uri.set_path(buf.as_os_str().to_str().unwrap());
-      match map.get_id(&new_uri) {
+      match uris.get_id(&new_uri) {
         Some(x) => Ok(UseKind::File(x)),
         None => Err(ErrorKind::NoSuchPath),
       }
@@ -73,7 +75,7 @@ pub(crate) enum UseKind {
 #[derive(Debug)]
 pub(crate) struct Error {
   pub kind: ErrorKind,
-  pub range: syntax::rowan::TextRange,
+  pub range: TextRange,
 }
 
 #[derive(Debug)]
