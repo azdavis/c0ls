@@ -43,6 +43,7 @@ pub(crate) fn check(s: &str) {
   }
 }
 
+#[derive(Debug, Default)]
 struct Expectations {
   diagnostics: Vec<Diagnostic>,
   hovers: Vec<Hover>,
@@ -71,9 +72,7 @@ fn parse_expected(s: &str) -> Expectations {
   let mut cs = s.chars().peekable();
   let mut line: u32 = 0;
   let mut col: u32 = 0;
-  let mut diagnostics = Vec::new();
-  let mut hovers = Vec::new();
-  let mut no_hovers = Vec::new();
+  let mut ret = Expectations::default();
   while let Some(c) = cs.next() {
     if c == '\n' {
       line += 1;
@@ -138,15 +137,15 @@ fn parse_expected(s: &str) -> Expectations {
       }
     }
     match kind.as_str() {
-      "error" => diagnostics.push(Diagnostic {
+      "error" => ret.diagnostics.push(Diagnostic {
         range,
         message: content,
       }),
       "hover" => {
         if content == "<none>" {
-          no_hovers.push(range)
+          ret.no_hovers.push(range)
         } else {
-          hovers.push(Hover {
+          ret.hovers.push(Hover {
             range,
             contents: CodeBlock::new(content),
           })
@@ -155,11 +154,8 @@ fn parse_expected(s: &str) -> Expectations {
       bad => panic!("unknown expectation kind: {}", bad),
     }
   }
-  diagnostics.sort_unstable();
-  hovers.sort_unstable();
-  Expectations {
-    diagnostics,
-    hovers,
-    no_hovers,
-  }
+  ret.diagnostics.sort_unstable();
+  ret.hovers.sort_unstable();
+  ret.no_hovers.sort_unstable();
+  ret
 }
