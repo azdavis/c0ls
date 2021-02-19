@@ -2,12 +2,10 @@
 
 use crate::lines::Lines;
 use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
-use crate::uses::{get as get_uses, Use, UseKind};
+use crate::uses::{self, Use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{
-  get as get_statics, Cx, Env, FileId, Id, Import, InFile, TyData, TyDb,
-};
+use statics::{Cx, Env, FileId, Id, Import, InFile, TyData, TyDb};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Cast as _, Expr, Root as AstRoot, Syntax as _, Ty};
 use syntax::rowan::{TextRange, TokenAtOffset};
@@ -41,7 +39,7 @@ impl Db {
       let lexed = lex::get(&contents);
       let parsed = parse::get(lexed.tokens);
       let lowered = lower::get(parsed.root.clone());
-      let uses = get_uses(&uris, id, lexed.uses);
+      let uses = uses::get(&uris, id, lexed.uses);
       syntax_data.insert(
         id,
         SyntaxData {
@@ -116,7 +114,7 @@ impl Db {
           import.type_defs.insert(name.clone(), file_id.wrap(ty));
         }
       }
-      let env = get_statics(
+      let env = statics::get(
         &mut cx,
         &import,
         FileId::Uri(id),
