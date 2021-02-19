@@ -5,9 +5,11 @@ use crate::types::{CodeBlock, Diagnostic, Hover, Location, Position, Range};
 use crate::uses::{get as get_use, UseKind};
 use lower::{AstPtr, Ptrs};
 use rustc_hash::FxHashMap;
-use statics::{get as get_statics, Cx, Env, FileId, Id, Import, InFile, TyDb};
+use statics::{
+  get as get_statics, Cx, Env, FileId, Id, Import, InFile, TyData, TyDb,
+};
 use std::hash::BuildHasherDefault;
-use syntax::ast::{CallExpr, Cast as _, Expr, Root as AstRoot, Syntax as _};
+use syntax::ast::{Cast as _, Expr, Root as AstRoot, StructTy, Syntax as _};
 use syntax::rowan::TextRange;
 use syntax::rowan::TokenAtOffset;
 use syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
@@ -197,31 +199,47 @@ impl Db {
     }
     let node = tok.parent();
     let semantic_data = &done.semantic_data[&id];
-    if CallExpr::cast(node.into()).is_some() {
-      let def_uri_id = semantic_data
-        .import
-        .fns
-        .get(tok.text())
-        .and_then(|x| x.file().uri())
-        .or_else(|| {
-          semantic_data.env.fns.contains_key(tok.text()).then(|| id)
-        })?;
-      let def_syntax_data = &self.syntax_data[&def_uri_id];
-      let item_id =
-        *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
-          match def_syntax_data.hir_root.arenas.item[id] {
-            hir::Item::Fn(ref name, _, _, _) => name == tok.text(),
-            _ => false,
-          }
-        })?;
-      let def_range = def_syntax_data.ptrs.item_back[item_id]
-        .to_node(def_syntax_data.ast_root.syntax().clone())
-        .syntax()
-        .text_range();
-      return Some(Location {
-        uri: self.uris.get(def_uri_id).clone(),
-        range: def_syntax_data.lines.range(def_range),
-      });
+    if let Some(expr) = Expr::cast(node.clone().into()) {
+      let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
+      match syntax_data.hir_root.arenas.expr[expr] {
+        hir::Expr::Call(ref name, _) => {
+          let def_uri_id = semantic_data
+            .import
+            .fns
+            .get(name)
+            .and_then(|x| x.file().uri())
+            .or_else(|| semantic_data.env.fns.contains_key(name).then(|| id))?;
+          let def_syntax_data = &self.syntax_data[&def_uri_id];
+          let item_id =
+            *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
+              match def_syntax_data.hir_root.arenas.item[id] {
+                hir::Item::Fn(ref the_name, _, _, _) => the_name == name,
+                _ => false,
+              }
+            })?;
+          return Some(Location {
+            uri: self.uris.get(def_uri_id).clone(),
+            range: def_syntax_data.lines.range(
+              def_syntax_data.ptrs.item_back[item_id]
+                .to_node(def_syntax_data.ast_root.syntax().clone())
+                .syntax()
+                .text_range(),
+            ),
+          });
+        }
+        hir::Expr::Dot(expr, _) => {
+          let name = match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
+            TyData::None => return None,
+            TyData::Struct(name) => name,
+            data => unreachable!("bad ty: {:?}", data),
+          };
+          return get_struct_loc(self, semantic_data, id, name.as_str());
+        }
+        _ => return None,
+      }
+    }
+    if StructTy::cast(node.into()).is_some() {
+      return get_struct_loc(self, semantic_data, id, tok.text());
     }
     None
   }
@@ -370,6 +388,36 @@ fn priority(kind: SyntaxKind) -> u8 {
     | SyntaxKind::Invalid => 0,
     _ => 1,
   }
+}
+
+fn get_struct_loc(
+  db: &Db,
+  semantic_data: &SemanticData,
+  id: UriId,
+  name: &str,
+) -> Option<Location> {
+  let def_uri_id = semantic_data
+    .import
+    .structs
+    .get(name)
+    .and_then(|x| x.file().uri())
+    .or_else(|| semantic_data.env.structs.contains_key(name).then(|| id))?;
+  let def_syntax_data = &db.syntax_data[&def_uri_id];
+  let item_id = *def_syntax_data.hir_root.items.iter().rev().find(|&&id| {
+    match def_syntax_data.hir_root.arenas.item[id] {
+      hir::Item::Struct(ref the_name, _) => the_name == name,
+      _ => false,
+    }
+  })?;
+  Some(Location {
+    uri: db.uris.get(def_uri_id).clone(),
+    range: def_syntax_data.lines.range(
+      def_syntax_data.ptrs.item_back[item_id]
+        .to_node(def_syntax_data.ast_root.syntax().clone())
+        .syntax()
+        .text_range(),
+    ),
+  })
 }
 
 #[derive(Debug)]

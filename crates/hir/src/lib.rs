@@ -202,6 +202,10 @@ impl Name {
   pub fn new(s: &str) -> Self {
     Self(s.into())
   }
+
+  pub fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
 }
 
 impl fmt::Display for Name {
