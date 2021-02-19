@@ -43,21 +43,12 @@ impl<T> InFile<T> {
   }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum Defined {
-  /// Must not be defined.
-  MustNot,
-  /// Ought to be defined, but isn't yet.
-  NotYet,
-  /// Should be and is defined.
-  Yes,
-}
-
 #[derive(Debug, Clone)]
 pub struct FnSig {
   pub params: Vec<Param>,
   pub ret_ty: Ty,
-  pub defined: Defined,
+  pub is_defined: bool,
+  pub should_define: bool,
 }
 
 impl FnSig {
@@ -137,7 +128,8 @@ impl Import {
       FileId::StdLib.wrap(FnSig {
         params: vec![],
         ret_ty: Ty::Int,
-        defined: Defined::NotYet,
+        is_defined: false,
+        should_define: true,
       }),
     );
     ret

@@ -16,6 +16,5 @@ pub use util::error::{Error, ErrorKind, ErrorKindDisplay};
 pub use util::id::Id;
 pub use util::ty::{Ty, TyData, TyDb, TyDisplay};
 pub use util::types::{
-  Cx, Defined, Env, ExprTys, FileId, FnData, FnSig, Import, InFile, NameToTy,
-  Param,
+  Cx, Env, ExprTys, FileId, FnData, FnSig, Import, InFile, NameToTy, Param,
 };

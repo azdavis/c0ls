@@ -2,8 +2,8 @@ use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::types::{
-  Cx, Defined, Env, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy,
-  Param, VarData,
+  Cx, Env, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy, Param,
+  VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
 use hir::{Arenas, Item, ItemId};
@@ -46,17 +46,12 @@ pub(crate) fn get(
       let mut sig = FnSig {
         params: sig_params,
         ret_ty: fn_cx.ret_ty,
-        defined: match file {
-          FileId::StdLib => Defined::MustNot,
+        is_defined: body.is_some(),
+        should_define: match file {
+          FileId::StdLib => false,
           FileId::Uri(uri) => match uri.kind() {
-            UriKind::Header => Defined::MustNot,
-            UriKind::Source => {
-              if body.is_some() {
-                Defined::Yes
-              } else {
-                Defined::NotYet
-              }
-            }
+            UriKind::Header => false,
+            UriKind::Source => true,
           },
         },
       };
@@ -82,20 +77,13 @@ pub(crate) fn get(
           unify(cx, old.ty, new.ty, p.ty);
         }
         sig.ret_ty = unify(cx, old_sig.ret_ty, sig.ret_ty, ret_ty);
-        sig.defined = match (old_sig.defined, sig.defined) {
-          (Defined::MustNot, _) | (_, Defined::MustNot) => Defined::MustNot,
-          (Defined::Yes, Defined::Yes) => {
-            dup = true;
-            Defined::Yes
-          }
-          (Defined::Yes, _) | (_, Defined::Yes) => Defined::Yes,
-          (Defined::NotYet, Defined::NotYet) => Defined::NotYet,
-        }
+        sig.should_define = sig.should_define && old_sig.should_define;
+        dup = dup || (sig.is_defined && old_sig.is_defined);
       }
       if dup {
         cx.err(item, ErrorKind::Duplicate(name.clone()));
       }
-      if matches!(sig.defined, Defined::MustNot) && body.is_some() {
+      if !sig.should_define && sig.is_defined {
         cx.err(item, ErrorKind::DefnHeaderFn)
       }
       let ret_ty = sig.ret_ty;
