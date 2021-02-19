@@ -15,4 +15,7 @@ cargo build
 mkdir -p "$vscode/out"
 cp target/debug/c0ls "$vscode/out/c0ls"
 cd "$vscode"
+if ! [ -e node_modules ]; then
+  npm install
+fi
 npm run build
