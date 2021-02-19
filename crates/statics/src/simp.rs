@@ -129,7 +129,7 @@ fn get_lv<'a>(
       UnOp::Not | UnOp::BitNot | UnOp::Neg => None,
       UnOp::Deref => get_lv(import, arenas, expr).map(|_| Lv::Other),
     },
-    Expr::Dot(expr, _) | Expr::Subscript(expr, _) => {
+    Expr::FieldGet(expr, _) | Expr::Subscript(expr, _) => {
       get_lv(import, arenas, expr).map(|_| Lv::Other)
     }
     Expr::None

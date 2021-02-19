@@ -86,7 +86,7 @@ pub enum Expr {
   UnOp(UnOp, ExprId),
   Ternary(ExprId, ExprId, ExprId),
   Call(Name, Vec<ExprId>),
-  Dot(ExprId, Name),
+  FieldGet(ExprId, Name),
   Subscript(ExprId, ExprId),
   Alloc(TyId),
   AllocArray(TyId, ExprId),

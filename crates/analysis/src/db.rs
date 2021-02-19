@@ -215,7 +215,7 @@ impl Db {
             },
           );
         }
-        hir::Expr::Dot(expr, _) => {
+        hir::Expr::FieldGet(expr, _) => {
           let name = match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
             TyData::None => return None,
             TyData::Struct(name) => name,

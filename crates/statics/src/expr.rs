@@ -108,7 +108,7 @@ pub(crate) fn get(
         }
       }
     }
-    Expr::Dot(inner, ref field) => {
+    Expr::FieldGet(inner, ref field) => {
       let ty = get(cx, env, fn_cx, inner);
       let mut ret = Ty::None;
       match cx.tys.get(ty) {

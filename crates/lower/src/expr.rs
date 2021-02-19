@@ -59,7 +59,7 @@ fn get_impl(cx: &mut Cx, expr: Expr) -> hir::Expr {
     Expr::FieldGetExpr(expr) => {
       let field = unwrap_or!(expr.ident(), return hir::Expr::None);
       let expr = get(cx, expr.expr());
-      hir::Expr::Dot(expr, field.text().into())
+      hir::Expr::FieldGet(expr, field.text().into())
     }
     Expr::DerefFieldGetExpr(ref inner) => {
       let field = unwrap_or!(inner.ident(), return hir::Expr::None);
@@ -67,9 +67,9 @@ fn get_impl(cx: &mut Cx, expr: Expr) -> hir::Expr {
       let expr = get(cx, inner.expr());
       let deref = cx.arenas.expr.alloc(hir::Expr::UnOp(UnOp::Deref, expr));
       // no entry for `cx.ptrs.expr`, since we'll have an entry from expr to the
-      // id of the Dot
+      // id of the FieldGet
       cx.ptrs.expr_back.insert(deref, ptr);
-      hir::Expr::Dot(deref, field.text().into())
+      hir::Expr::FieldGet(deref, field.text().into())
     }
     Expr::SubscriptExpr(expr) => {
       let array = get(cx, expr.array());
