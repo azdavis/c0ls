@@ -109,7 +109,7 @@ pub(crate) fn get(
           sig.ret_ty
         }
         None => {
-          cx.err(expr, ErrorKind::UndefinedFn);
+          cx.err(expr, ErrorKind::UndefinedFn(name.clone()));
           Ty::None
         }
       }
@@ -125,9 +125,12 @@ pub(crate) fn get(
             .get(name)
             .or_else(|| fn_cx.import.structs.get(name).map(InFile::val));
           match sig {
-            None => cx.err(inner, ErrorKind::UndefinedStruct),
+            None => {
+              let name = name.clone();
+              cx.err(inner, ErrorKind::UndefinedStruct(name))
+            }
             Some(sig) => match sig.get(field) {
-              None => cx.err(expr, ErrorKind::UndefinedField),
+              None => cx.err(expr, ErrorKind::UndefinedField(field.clone())),
               Some(&ty) => ret = ty,
             },
           }
@@ -175,12 +178,12 @@ pub(crate) fn get_name<I: Into<Id>>(
 ) -> Ty {
   match vars.get(name) {
     None => {
-      cx.err(id, ErrorKind::UndefinedVar);
+      cx.err(id, ErrorKind::UndefinedVar(name.clone()));
       Ty::None
     }
     Some(var_data) => {
       if !var_data.init {
-        cx.err(id, ErrorKind::UninitializedVar);
+        cx.err(id, ErrorKind::UninitializedVar(name.clone()));
       }
       var_data.ty
     }

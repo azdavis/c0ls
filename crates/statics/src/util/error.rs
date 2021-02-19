@@ -1,5 +1,6 @@
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
+use hir::Name;
 use std::fmt;
 
 #[derive(Debug)]
@@ -30,12 +31,12 @@ pub enum ErrorKind {
   ReturnExprVoid,
   ReturnNothingNonVoid(Ty),
   SubscriptNonArrayTy(Ty),
-  UndefinedField,
-  UndefinedFn,
-  UndefinedStruct,
-  UndefinedTypeDef,
-  UndefinedVar,
-  UninitializedVar,
+  UndefinedField(Name),
+  UndefinedFn(Name),
+  UndefinedStruct(Name),
+  UndefinedTypeDef(Name),
+  UndefinedVar(Name),
+  UninitializedVar(Name),
 }
 
 impl ErrorKind {
@@ -124,12 +125,24 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         "cannot subscript non-array type `{}`",
         t.display(self.tys)
       ),
-      ErrorKind::UndefinedField => write!(f, "undefined field"),
-      ErrorKind::UndefinedFn => write!(f, "undefined function"),
-      ErrorKind::UndefinedStruct => write!(f, "undefined struct"),
-      ErrorKind::UndefinedTypeDef => write!(f, "undefined typedef"),
-      ErrorKind::UndefinedVar => write!(f, "undefined variable"),
-      ErrorKind::UninitializedVar => write!(f, "uninitialized variable"),
+      ErrorKind::UndefinedField(name) => {
+        write!(f, "undefined field `{}`", name)
+      }
+      ErrorKind::UndefinedFn(name) => {
+        write!(f, "undefined function `{}`", name)
+      }
+      ErrorKind::UndefinedStruct(name) => {
+        write!(f, "undefined struct `{}`", name)
+      }
+      ErrorKind::UndefinedTypeDef(name) => {
+        write!(f, "undefined typedef `{}`", name)
+      }
+      ErrorKind::UndefinedVar(name) => {
+        write!(f, "undefined variable `{}`", name)
+      }
+      ErrorKind::UninitializedVar(name) => {
+        write!(f, "uninitialized variable `{}`", name)
+      }
     }
   }
 }

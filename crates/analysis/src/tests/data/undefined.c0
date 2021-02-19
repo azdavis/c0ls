@@ -1,15 +1,18 @@
 struct unit {};
 
 int main() {
+  int a;
   struct unit *u = alloc(struct unit);
+  a + 1;
+//^ error: uninitialized variable `a`
   u->foo;
-//^^^^^^ error: undefined field
+//^^^^^^ error: undefined field `foo`
   bar();
-//^^^^^ error: undefined function
+//^^^^^ error: undefined function `bar`
   quz y;
-//^^^ error: undefined typedef
+//^^^ error: undefined typedef `quz`
   alloc(struct what);
-//      ^^^^^^^^^^^ error: undefined struct
+//      ^^^^^^^^^^^ error: undefined struct `what`
   return x;
-  //     ^ error: undefined variable
+  //     ^ error: undefined variable `x`
 }

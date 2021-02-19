@@ -38,7 +38,7 @@ pub(crate) fn get(
       } else if let Some(type_def) = import.type_defs.get(name) {
         *type_def.val()
       } else {
-        cx.err(ty, ErrorKind::UndefinedTypeDef);
+        cx.err(ty, ErrorKind::UndefinedTypeDef(name.clone()));
         ty::Ty::None
       }
     }

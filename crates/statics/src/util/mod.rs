@@ -62,7 +62,8 @@ pub(crate) fn no_unsized<I: Into<Id> + Copy>(
   no_void(cx, ty, id);
   if let TyData::Struct(name) = cx.tys.get(ty) {
     if !import.structs.contains_key(name) && !env.structs.contains_key(name) {
-      cx.err(id, ErrorKind::UndefinedStruct);
+      let name = name.clone();
+      cx.err(id, ErrorKind::UndefinedStruct(name));
     }
   }
 }
