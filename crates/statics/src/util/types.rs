@@ -1,7 +1,7 @@
 use crate::util::error::{Error, ErrorKind};
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
-use hir::{la_arena::ArenaMap, Arenas, ExprId, Name};
+use hir::{la_arena::ArenaMap, Arenas, ExprId, ItemId, Name};
 use rustc_hash::FxHashMap;
 use std::fmt;
 use uri_db::UriId;
@@ -150,6 +150,20 @@ pub struct Env {
   pub structs: FxHashMap<Name, NameToTy>,
   pub type_defs: FxHashMap<Name, Ty>,
   pub expr_tys: ExprTys,
+}
+
+#[derive(Debug, Default)]
+pub struct EnvIds {
+  pub fns: FxHashMap<Name, ItemId>,
+  pub structs: FxHashMap<Name, ItemId>,
+  pub type_defs: FxHashMap<Name, ItemId>,
+}
+
+/// TODO not great. this and [`EnvIds`] are only used for imports.
+#[derive(Debug, Default)]
+pub struct EnvWithIds {
+  pub env: Env,
+  pub ids: EnvIds,
 }
 
 #[derive(Debug, Default)]

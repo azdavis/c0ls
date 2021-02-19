@@ -58,7 +58,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
       hir::Expr::Call(ref name, _) => get_item_loc(
         db,
         &semantic_data.import.fns,
-        &semantic_data.env.fns,
+        &semantic_data.env.env.fns,
         id,
         name,
         |item| match *item {
@@ -67,7 +67,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
         },
       ),
       hir::Expr::FieldGet(expr, _) => {
-        match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
+        match done.cx.tys.get(semantic_data.env.env.expr_tys[expr]) {
           TyData::None => None,
           TyData::Struct(name) => get_struct_loc(db, semantic_data, id, name),
           data => unreachable!("bad ty: {:?}", data),
@@ -82,7 +82,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
       hir::Ty::Name(ref name) => get_item_loc(
         db,
         &semantic_data.import.type_defs,
-        &semantic_data.env.type_defs,
+        &semantic_data.env.env.type_defs,
         id,
         name,
         |item| match *item {
@@ -106,7 +106,7 @@ fn get_struct_loc(
   get_item_loc(
     db,
     &semantic_data.import.structs,
-    &semantic_data.env.structs,
+    &semantic_data.env.env.structs,
     id,
     name,
     |item| match *item {

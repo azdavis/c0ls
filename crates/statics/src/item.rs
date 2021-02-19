@@ -2,7 +2,7 @@ use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::types::{
-  Cx, Env, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy, Param,
+  Cx, EnvWithIds, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy, Param,
   VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
@@ -13,10 +13,12 @@ pub(crate) fn get(
   import: &Import,
   arenas: &Arenas,
   cx: &mut Cx,
-  env: &mut Env,
+  env: &mut EnvWithIds,
   file: FileId,
   item: ItemId,
 ) {
+  let ids = &mut env.ids;
+  let env = &mut env.env;
   match arenas.item[item] {
     Item::Fn(ref name, ref params, ret_ty, body) => {
       let mut fn_cx = FnCx {
@@ -88,6 +90,7 @@ pub(crate) fn get(
       }
       let ret_ty = sig.ret_ty;
       env.fns.insert(name.clone(), FnData { sig });
+      ids.fns.insert(name.clone(), item);
       if let Some(body) = body {
         let diverges = get_stmt(cx, env, &mut fn_cx, false, body);
         if !diverges && ret_ty != Ty::Void {
@@ -107,6 +110,7 @@ pub(crate) fn get(
       if env.structs.insert(name.clone(), sig).is_some() {
         cx.err(item, ErrorKind::Duplicate(name.clone()))
       }
+      ids.structs.insert(name.clone(), item);
     }
     Item::TypeDef(ref name, ty) => {
       let got_ty = get_ty(import, arenas, cx, env, ty);
@@ -118,6 +122,7 @@ pub(crate) fn get(
       if dup {
         cx.err(item, ErrorKind::Duplicate(name.clone()))
       }
+      ids.type_defs.insert(name.clone(), item);
     }
   }
 }

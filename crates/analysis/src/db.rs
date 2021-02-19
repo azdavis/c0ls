@@ -5,7 +5,7 @@ use crate::types::{Diagnostic, Hover, Location};
 use crate::util::map_with_capacity;
 use lower::Ptrs;
 use rustc_hash::FxHashMap;
-use statics::{Cx, Env, FileId, Import};
+use statics::{Cx, EnvWithIds, FileId, Import};
 use syntax::ast::{Root as AstRoot, Syntax as _};
 use syntax::SyntaxNode;
 use text_pos::{Position, PositionDb};
@@ -75,25 +75,11 @@ impl Db {
     for &id in ordering.iter() {
       let mut import = Import::with_main();
       for u in syntax_data[&id].uses.iter() {
-        let (file_id, env) = match u.kind {
+        let (file, env) = match u.kind {
           UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
           UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
         };
-        for (name, data) in env.fns.iter() {
-          // TODO this should actually be the logic that checks for compatible
-          // function declarations
-          let val = file_id.wrap(data.sig.clone());
-          import.fns.insert(name.clone(), val);
-        }
-        for (name, sig) in env.structs.iter() {
-          // TODO this should error if dupe
-          let val = file_id.wrap(sig.clone());
-          import.structs.insert(name.clone(), val);
-        }
-        for (name, &ty) in env.type_defs.iter() {
-          // TODO this should error if dupe
-          import.type_defs.insert(name.clone(), file_id.wrap(ty));
-        }
+        statics::add_env(&mut cx, &mut import, env, file);
       }
       let env = statics::get(
         &mut cx,
@@ -210,6 +196,6 @@ pub(crate) struct SyntaxErrors {
 #[derive(Debug)]
 pub(crate) struct SemanticData {
   pub(crate) import: Import,
-  pub(crate) env: Env,
+  pub(crate) env: EnvWithIds,
   pub(crate) errors: Vec<statics::Error>,
 }

@@ -3,23 +3,23 @@
 #![deny(missing_debug_implementations)]
 #![deny(rust_2018_idioms)]
 
-use statics::{Cx, Env, FileId as FI, Import};
+use statics::{Cx, EnvWithIds, FileId as FI, Import};
 use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct StdLib {
-  args: Env,
-  conio: Env,
-  file: Env,
-  img: Env,
-  parse: Env,
-  rand: Env,
-  string: Env,
-  util: Env,
+  args: EnvWithIds,
+  conio: EnvWithIds,
+  file: EnvWithIds,
+  img: EnvWithIds,
+  parse: EnvWithIds,
+  rand: EnvWithIds,
+  string: EnvWithIds,
+  util: EnvWithIds,
 }
 
 impl StdLib {
-  pub fn get(&self, lib: Lib) -> &Env {
+  pub fn get(&self, lib: Lib) -> &EnvWithIds {
     match lib {
       Lib::Args => &self.args,
       Lib::Conio => &self.conio,
@@ -80,7 +80,7 @@ pub fn get() -> (Cx, StdLib) {
   (cx, std_lib)
 }
 
-fn get_one(cx: &mut Cx, contents: &str) -> Env {
+fn get_one(cx: &mut Cx, contents: &str) -> EnvWithIds {
   let lexed = lex::get(contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root);

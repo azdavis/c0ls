@@ -27,10 +27,11 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
       .fns
       .get(name)
       .map(InFile::val)
-      .or_else(|| semantic_data.env.fns.get(name).map(|x| &x.sig))?
+      .or_else(|| semantic_data.env.env.fns.get(name).map(|x| &x.sig))?
       .display(name, &done.cx.tys)
       .to_string(),
     _ => semantic_data
+      .env
       .env
       .expr_tys
       .get(expr)?
