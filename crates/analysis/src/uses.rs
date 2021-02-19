@@ -10,7 +10,7 @@ pub(crate) struct Uses {
   pub(crate) errors: Vec<Error>,
 }
 
-pub(crate) fn get(uris: &UriDb, id: UriId, uses: Vec<lex::Use<'_>>) -> Uses {
+pub(crate) fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use<'_>>) -> Uses {
   let mut ret = Uses::default();
   for u in uses {
     let range = u.range;
@@ -26,10 +26,10 @@ fn get_one(
   uris: &UriDb,
   id: UriId,
   path: &str,
-  kind: lex::UseKind,
+  kind: syntax::UseKind,
 ) -> Result<UseKind, ErrorKind> {
   match kind {
-    lex::UseKind::Local => {
+    syntax::UseKind::Local => {
       let uri = uris.get(id);
       let mut buf = PathBuf::from(uri.path()).parent().unwrap().to_owned();
       for c in Path::new(path).components() {
@@ -53,7 +53,7 @@ fn get_one(
         None => Err(ErrorKind::NoSuchPath),
       }
     }
-    lex::UseKind::Lib => match path.parse::<Lib>() {
+    syntax::UseKind::Lib => match path.parse::<Lib>() {
       Ok(lib) => Ok(UseKind::Lib(lib)),
       Err(()) => Err(ErrorKind::NoSuchLib),
     },
