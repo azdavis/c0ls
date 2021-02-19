@@ -2,6 +2,7 @@ use crate::item::get as get_item;
 use crate::util::{Cx, Lowered};
 use syntax::ast::Root;
 
+/// Lowers an AST root into an HIR root, and records how that was done.
 pub fn get(root: Root) -> Lowered {
   let mut cx = Cx::default();
   let mut items = Vec::new();

@@ -1,6 +1,7 @@
 //! Generates the Rust code for the `syntax` crate.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 mod alt;
@@ -18,12 +19,16 @@ enum Kind {
   Alt,
 }
 
+/// The generated Rust code.
 #[derive(Debug)]
 pub struct Gen {
+  /// The code for `mod kind`.
   pub kind: String,
+  /// The code for `mod ast`.
   pub ast: String,
 }
 
+/// Returns the generated Rust code.
 pub fn gen() -> Gen {
   let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
   let tokens = token::TokenDb::new(&grammar);

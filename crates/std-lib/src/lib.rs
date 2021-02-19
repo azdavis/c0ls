@@ -1,11 +1,13 @@
-//! The C0 standard library.
+//! The C0 standard libraries.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use statics::{Cx, EnvWithIds, FileId as FI, Import};
 use std::str::FromStr;
 
+/// The standard libraries.
 #[derive(Debug)]
 pub struct StdLib {
   args: EnvWithIds,
@@ -19,6 +21,7 @@ pub struct StdLib {
 }
 
 impl StdLib {
+  /// Returns the environment of the given library.
   pub fn get(&self, lib: Lib) -> &EnvWithIds {
     match lib {
       Lib::Args => &self.args,
@@ -33,7 +36,9 @@ impl StdLib {
   }
 }
 
+/// A standard library.
 #[derive(Debug, Clone, Copy)]
+#[allow(missing_docs)]
 pub enum Lib {
   Args,
   Conio,
@@ -63,8 +68,8 @@ impl FromStr for Lib {
   }
 }
 
-/// the Cx will always have no errors. the TyDb inside the Cx allows getting
-/// information about the returned Envs inside the StdLib.
+/// The [`Cx`] will always have no errors. The `TyDb` inside the `Cx` allows
+/// getting information about the returned `Env`s inside the [`StdLib`].
 pub fn get() -> (Cx, StdLib) {
   let mut cx = Cx::default();
   let std_lib = StdLib {

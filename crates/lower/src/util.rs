@@ -8,7 +8,17 @@ use std::fmt;
 use syntax::ast::{Expr, Item, Simp, Stmt, Ty};
 use syntax::rowan::TextRange;
 
+/// Pointers between the AST and the HIR.
+///
+/// For example, we may wish to pass only HIR to some function (e.g. when
+/// checking the statics for some construct), but then if the construct has an
+/// error, we need to know where it was in the source so we can show the error
+/// in the right place.
+///
+/// Or, we may have a location in the source, and want to translate that into a
+/// HIR construct.
 #[derive(Debug, Default)]
+#[allow(missing_docs)]
 pub struct Ptrs {
   pub item: FxHashMap<AstPtr<Item>, ItemId>,
   pub item_back: ArenaMap<ItemId, AstPtr<Item>>,
@@ -22,8 +32,10 @@ pub struct Ptrs {
   pub simp_back: ArenaMap<SimpId, AstPtr<Simp>>,
 }
 
+/// An error for when a pragma appeared after some non-pragma item.
 #[derive(Debug)]
 pub struct PragmaError {
+  /// The range of the pragma.
   pub range: TextRange,
 }
 
@@ -33,10 +45,15 @@ impl fmt::Display for PragmaError {
   }
 }
 
+/// The result of lowering.
 #[derive(Debug)]
 pub struct Lowered {
+  /// The HIR root.
   pub root: hir::Root,
+  /// The pointers between the HIR root and the AST root that it was lowered
+  /// from.
   pub ptrs: Ptrs,
+  /// The errors encountered when lowering.
   pub errors: Vec<PragmaError>,
 }
 

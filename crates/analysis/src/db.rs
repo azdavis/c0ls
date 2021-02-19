@@ -13,6 +13,7 @@ use topo_sort::Graph;
 use uri_db::{Uri, UriDb, UriId};
 use uses::{Use, UseKind};
 
+/// A database of C0 files, which can be queried for interesting facts.
 #[derive(Debug)]
 pub struct Db {
   pub(crate) uris: UriDb,
@@ -22,6 +23,7 @@ pub struct Db {
 }
 
 impl Db {
+  /// Returns a new `Db` for the given files.
   pub fn new(files: FxHashMap<Uri, String>) -> Self {
     // assign file IDs.
     let num_files = files.len();
@@ -104,6 +106,7 @@ impl Db {
     }
   }
 
+  /// Formats the file at the given URI.
   pub fn format(&self, uri: &Uri) -> Option<String> {
     let id = self.uris.get_id(uri)?;
     let errors = &self.syntax_data[&id].errors;
@@ -114,19 +117,23 @@ impl Db {
     }
   }
 
+  /// Returns the parse tree of the file at the given URI.
   pub fn syntax(&self, uri: &Uri) -> Option<SyntaxNode> {
     let id = self.uris.get_id(uri)?;
     Some(self.syntax_data[&id].ast_root.syntax().clone())
   }
 
+  /// Returns all diagnostics of every file.
   pub fn all_diagnostics(&self) -> Vec<(Uri, Vec<Diagnostic>)> {
     all_diagnostics::get(self)
   }
 
+  /// Returns the location of the definition of the thing being pointed at.
   pub fn go_to_def(&self, uri: &Uri, pos: Position) -> Option<Location> {
     go_to_def::get(self, uri, pos)
   }
 
+  /// Returns hover information about the thing being pointed at.
   pub fn hover(&self, uri: &Uri, pos: Position) -> Option<Hover> {
     hover::get(self, uri, pos)
   }
@@ -167,13 +174,14 @@ impl DbKind {
   }
 }
 
+/// Information contained in a 'done' database that had no cycle errors.
 #[derive(Debug)]
 pub(crate) struct Done {
   pub(crate) cx: Cx,
   pub(crate) semantic_data: FxHashMap<UriId, SemanticData>,
 }
 
-/// not really 'syntax', but more in contrast to semantic info from statics.
+/// Not really 'syntax', but more in contrast to semantic info from statics.
 #[derive(Debug)]
 pub(crate) struct SyntaxData {
   pub(crate) positions: PositionDb,
@@ -184,6 +192,7 @@ pub(crate) struct SyntaxData {
   pub(crate) errors: SyntaxErrors,
 }
 
+/// Syntax errors from a file.
 #[derive(Debug)]
 pub(crate) struct SyntaxErrors {
   pub(crate) lex: Vec<lex::Error>,
@@ -192,6 +201,7 @@ pub(crate) struct SyntaxErrors {
   pub(crate) lower: Vec<lower::PragmaError>,
 }
 
+/// Semantic data about a file.
 #[derive(Debug)]
 pub(crate) struct SemanticData {
   pub(crate) import: Import,

@@ -1,6 +1,7 @@
 //! Positions in text.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use std::fmt;
@@ -14,12 +15,14 @@ struct Line {
   non_ascii: Vec<(TextSize, u32)>,
 }
 
+/// A database allowing translations between [`Position`]s and [`TextSize`]s.
 #[derive(Debug)]
 pub struct PositionDb {
   lines: Vec<Line>,
 }
 
 impl PositionDb {
+  /// Returns a `PositionDb` for the input.
   pub fn new(s: &str) -> Self {
     let mut end = TextSize::from(0);
     let mut col = TextSize::from(0);
@@ -46,6 +49,9 @@ impl PositionDb {
     Self { lines }
   }
 
+  /// Translates a `TextSize` into a `Position`.
+  ///
+  /// The `TextSize` must be within the bounds of the original input.
   pub fn position(&self, text_size: TextSize) -> Position {
     let line = self
       .lines
@@ -70,6 +76,9 @@ impl PositionDb {
     }
   }
 
+  /// Translates a `Position` into a `TextSize`.
+  ///
+  /// The `Position` must be within the bounds of the original input.
   pub fn text_size(&self, pos: Position) -> TextSize {
     let line = pos.line as usize;
     let start = line
@@ -86,6 +95,9 @@ impl PositionDb {
     start + TextSize::from(col)
   }
 
+  /// Translates a `TextRange` into a `Range`.
+  ///
+  /// The `TextRange` must be within the bounds of the original input.
   pub fn range(&self, text_range: TextRange) -> Range {
     Range {
       start: self.position(text_range.start()),
@@ -99,9 +111,14 @@ impl PositionDb {
   }
 }
 
+/// A position in text by line and character.
+///
+/// Suitable for when the text is represented in UTF-16.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position {
+  /// The line, zero-based.
   pub line: u32,
+  /// The character, zero-based.
   pub character: u32,
 }
 
@@ -111,9 +128,14 @@ impl fmt::Display for Position {
   }
 }
 
+/// A pair of start and end positions.
+///
+/// `start` comes before `end`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Range {
+  /// The start.
   pub start: Position,
+  /// The end.
   pub end: Position,
 }
 

@@ -1,10 +1,7 @@
-//! Parses tokens into a concrete syntax tree, while tracking typedefs.
-//!
-//! Because of the typedef-name: identifier problem, we need to know which
-//! typedefs are in scope in order to parse correctly. So, the parser takes in a
-//! set of in-scope typedefs and updates it as it parses.
+//! Parses tokens into a concrete syntax tree.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use std::fmt;
@@ -21,20 +18,28 @@ mod stmt;
 mod ty;
 mod util;
 
+/// The result of a parse.
 #[derive(Debug)]
 pub struct Parse {
+  /// The root.
   pub root: Root,
+  /// The errors encountered when parsing.
   pub errors: Vec<Error>,
 }
 
+/// A parse error.
 #[derive(Debug)]
 pub struct Error {
+  /// The range of the unexpected token.
   pub range: TextRange,
+  /// The tokens that would have been allowed.
   pub expected: Expected,
 }
 
+/// A list of expected tokens.
 #[derive(Debug)]
 pub struct Expected {
+  /// The token kinds.
   pub kinds: Vec<SK>,
 }
 
@@ -52,6 +57,7 @@ impl fmt::Display for Expected {
   }
 }
 
+/// Returns a parse of the tokens.
 pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
   let mut p = Parser::new(tokens);
   root::root(&mut p);

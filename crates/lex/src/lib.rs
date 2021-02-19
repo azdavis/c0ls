@@ -1,16 +1,13 @@
-//! Lexes a string into tokens, and parses pragmas.
+//! Lexes a string into tokens, and parses `#use` and `#ref` pragmas.
 //!
-//! We parse pragmas here because we need to know a file's dependencies before
-//! we can parse it. This is because in order to parse a file correctly, we need
-//! to know which typedefs are in scope, because of the typedef-name: identifier
-//! problem.
-//!
-//! Pragmas are also problematic (and thus handled here) because of library
-//! literals. Namely, if we see `<`, some characters, and `>`, this might be a
-//! library literal, but only if we just saw `#use` and didn't yet see a
-//! newline.
+//! We deal with pragmas here because:
+//! - Pragmas can contain arbitrary tokens before the newline.
+//! - Library literals would be annoying to deal with. We'd have to keep track
+//!   of whether we saw `#use` or `#ref` to know that we're then perhaps
+//!   expecting a `<` to show up. (The lexer used to do that.)
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use std::convert::TryInto;
@@ -19,20 +16,31 @@ use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
 use syntax::{SyntaxKind as SK, Use, UseKind};
 
+/// A lexed input.
 #[derive(Debug)]
 pub struct Lex<'input> {
+  /// The tokens of the input.
+  ///
+  /// Concatenated in sequence, they form the original input.
   pub tokens: Vec<Token<'input, SK>>,
+  /// The `#use` and `#ref` pragmas parsed from the input.
   pub uses: Vec<Use<'input>>,
+  /// The errors encountered.
   pub errors: Vec<Error>,
 }
 
+/// An error encountered when lexing.
 #[derive(Debug)]
 pub struct Error {
+  /// The range of the error.
   pub range: TextRange,
+  /// The kind of error.
   pub kind: ErrorKind,
 }
 
+/// An error kind.
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub enum ErrorKind {
   UnclosedBlockComment,
   InvalidPragma,
@@ -66,6 +74,7 @@ impl fmt::Display for ErrorKind {
   }
 }
 
+/// Returns a [`Lex`] of the input.
 pub fn get(s: &str) -> Lex<'_> {
   let bs = s.as_bytes();
   let mut tokens = Vec::new();

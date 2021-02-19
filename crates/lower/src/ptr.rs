@@ -45,6 +45,7 @@ impl<N> AstPtr<N>
 where
   N: Syntax,
 {
+  /// Returns a new `AstPtr` for the given node.
   pub fn new(node: &N) -> Self {
     Self {
       raw: SyntaxNodePtr::new(node.syntax()),
@@ -57,6 +58,8 @@ impl<N> AstPtr<N>
 where
   N: Cast,
 {
+  /// Given the root node (i.e. it has no parent) that contains the original
+  /// node that the AstPtr was constructed from, return that original node.
   pub fn to_node(&self, root: SyntaxNode) -> N {
     N::cast(self.raw.to_node(root).into()).unwrap()
   }

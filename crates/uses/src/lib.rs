@@ -1,6 +1,7 @@
 //! Resolves `#use` pragmas.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
 use std::fmt;
@@ -9,12 +10,17 @@ use std_lib::Lib;
 use syntax::rowan::TextRange;
 use uri_db::{UriDb, UriId};
 
+/// The processed use pragmas.
 #[derive(Debug, Default)]
 pub struct Uses {
+  /// The uses.
   pub uses: Vec<Use>,
+  /// The errors encountered.
   pub errors: Vec<Error>,
 }
 
+/// Translates the `uses` for the file at the given `id` into fully resolved
+/// uses.
 pub fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use<'_>>) -> Uses {
   let mut ret = Uses::default();
   for u in uses {
@@ -65,28 +71,41 @@ fn get_one(
   }
 }
 
+/// A use.
 #[derive(Debug)]
 pub struct Use {
+  /// The kind of use.
   pub kind: UseKind,
+  /// The text range of the original pragma.
   pub range: TextRange,
 }
 
+/// A kind of use.
 #[derive(Debug, Clone, Copy)]
 pub enum UseKind {
+  /// A file use, like `use "foo.h0"`.
   File(UriId),
+  /// A lib use, like `#use <conio>`.
   Lib(Lib),
 }
 
+/// An error when translating uses.
 #[derive(Debug)]
 pub struct Error {
+  /// The kind of error.
   pub kind: ErrorKind,
+  /// The range of the problematic pragma.
   pub range: TextRange,
 }
 
+/// A kind of error.
 #[derive(Debug)]
 pub enum ErrorKind {
+  /// No such library, e.g. `#use <foo>`.
   NoSuchLib,
+  /// No such path, e.g. `#use "nope.java"`.
   NoSuchPath,
+  /// An absolute path, e.g. `#use "/tmp/foo.c0"`.
   AbsolutePath,
 }
 
