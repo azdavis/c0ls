@@ -140,7 +140,6 @@ pub type ExprTys = ArenaMap<ExprId, Ty>;
 #[derive(Debug)]
 pub struct FnData {
   pub sig: FnSig,
-  // pub expr_tys: ExprTys,
 }
 
 #[derive(Debug, Default)]
@@ -193,6 +192,4 @@ pub(crate) struct FnCx<'a> {
   pub arenas: &'a Arenas,
   pub vars: Vars,
   pub ret_ty: Ty,
-  // pub decl_tys: DeclTys,
-  // pub expr_tys: ExprTys,
 }
