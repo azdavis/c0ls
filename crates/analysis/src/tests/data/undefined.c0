@@ -14,5 +14,5 @@ int main() {
   alloc(struct what);
 //      ^^^^^^^^^^^ error: undefined struct `what`
   return x;
-  //     ^ error: undefined variable `x`
+//       ^ error: undefined variable `x`
 }

@@ -1,4 +1,4 @@
 void foo() {
   for (int i = 0; i < 3; int z = 4) {}
-  //                     ^^^^^^^^^ error: cannot declare
+//                       ^^^^^^^^^ error: cannot declare
 }

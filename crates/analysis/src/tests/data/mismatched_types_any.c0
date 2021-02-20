@@ -1,8 +1,8 @@
 void foo() {
   bool x = true < false;
-  //       ^^^^ error: mismatched types: expected any of {`int`, `char`}, found `bool`
+//         ^^^^ error: mismatched types: expected any of {`int`, `char`}, found `bool`
   bool y = foo() == foo();
-  //       ^^^^^ error: mismatched types
+//         ^^^^^ error: mismatched types
   bool b = 3 && 3;
-  //       ^ error: mismatched types: expected `bool`, found `int`
+//         ^ error: mismatched types: expected `bool`, found `int`
 }

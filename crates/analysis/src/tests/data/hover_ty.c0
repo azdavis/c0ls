@@ -11,13 +11,13 @@ typedef struct s* fella;
   fella
 //^^^^^ hover: struct s*
 mk(int x) {
-  //      ^ hover: <none>
+//        ^ hover: <none>
   struct s* ret = alloc(struct s);
-  //              ^^^^^^^^^^^^^^^ hover: struct s*
+//                ^^^^^^^^^^^^^^^ hover: struct s*
   ret->x = x;
-  //       ^ hover: int
+//         ^ hover: int
   ret->y = false;
-  //       ^^^^^ hover: bool
+//         ^^^^^ hover: bool
   return ret;
 }
 
@@ -25,29 +25,29 @@ int consume(struct s* guy) {
   fella nil =
 //^^^^^ hover: struct s*
     NULL;
-  //^^^^ hover: <any>*
+//  ^^^^ hover: <any>*
   if (guy == nil) {
-  //         ^^^ hover: struct s*
+//           ^^^ hover: struct s*
     return 123;
-  //       ^^^ hover: int
+//         ^^^ hover: int
   }
   if (guy == NULL) {
-  //         ^^^^ hover: <any>*
+//           ^^^^ hover: <any>*
     return 234;
-  //       ^^^ hover: int
+//         ^^^ hover: int
   }
   int ret =
 //^^^ hover: int
     guy->x;
-  //^^^ hover: struct s*
+//  ^^^ hover: struct s*
   if (guy->y) {
     ret += 1;
-  //       ^ hover: int
+//         ^ hover: int
   }
   guy = mk(3);
-  //    ^^^^^ hover: struct s* mk(int x)
+//      ^^^^^ hover: struct s* mk(int x)
   ret += consume(guy->next);
-  //     ^^^^^^^^^^^^^^^^^^ hover: int consume(struct s* guy)
+//       ^^^^^^^^^^^^^^^^^^ hover: int consume(struct s* guy)
   return ret;
-  //     ^^^ hover: int
+//       ^^^ hover: int
 }
