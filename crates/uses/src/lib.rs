@@ -41,7 +41,7 @@ fn get_one(
 ) -> Result<UseKind, ErrorKind> {
   match kind {
     syntax::UseKind::Local => {
-      let uri = uris.get(id);
+      let uri = &uris[id];
       let mut buf = PathBuf::from(uri.path()).parent().unwrap().to_owned();
       for c in Path::new(path).components() {
         match c {

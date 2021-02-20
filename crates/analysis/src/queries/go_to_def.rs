@@ -139,7 +139,7 @@ where
     .rev()
     .find(|&&id| f(&def_syntax_data.hir_root.arenas.item[id]))?;
   Some(Location {
-    uri: db.uris.get(def_uri_id).clone(),
+    uri: db.uris[def_uri_id].clone(),
     range: def_syntax_data.positions.range(
       def_syntax_data.ptrs.item_back[item_id]
         .to_node(def_syntax_data.ast_root.syntax().clone())

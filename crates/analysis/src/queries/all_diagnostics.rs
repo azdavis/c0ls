@@ -18,7 +18,7 @@ pub(crate) fn get(db: &Db) -> Vec<(Uri, Vec<Diagnostic>)> {
           &done.semantic_data[&id],
           &done.cx.tys,
         );
-        (db.uris.get(id).clone(), ds)
+        (db.uris[id].clone(), ds)
       })
       .collect(),
     DbKind::CycleError(witness) => db
@@ -26,7 +26,7 @@ pub(crate) fn get(db: &Db) -> Vec<(Uri, Vec<Diagnostic>)> {
       .iter()
       .map(|&id| {
         let ds = get_diagnostics_cycle_error(&db.syntax_data[&id], id, witness);
-        (db.uris.get(id).clone(), ds)
+        (db.uris[id].clone(), ds)
       })
       .collect(),
   }
