@@ -32,7 +32,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
           }
         };
         // work backward up the body of the fn, checking each decl.
-        let range = loop {
+        loop {
           if let Stmt::SimpStmt(ref stmt) = stmt_node {
             let tok = match stmt.simp() {
               Some(Simp::DeclSimp(simp)) => simp.ident(),
@@ -40,7 +40,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
               _ => None,
             };
             if tok.map_or(false, |tok| name == tok.text()) {
-              break syntax_data.positions.range(stmt.syntax().text_range());
+              break;
             }
           }
           // might have a prev sibling be an expr (if we're e.g. in an IfStmt)
@@ -49,10 +49,10 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
             .prev_sibling()
             .and_then(|x| Stmt::cast(x.into()))
             .or_else(|| Stmt::cast(stmt_node.syntax().parent()?.into()))?;
-        };
+        }
         Some(Location {
           uri: uri.clone(),
-          range,
+          range: syntax_data.positions.range(stmt_node.syntax().text_range()),
         })
       }
       hir::Expr::Call(ref name, _) => get_item_loc(
