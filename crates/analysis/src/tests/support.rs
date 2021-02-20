@@ -3,10 +3,8 @@ use rustc_hash::FxHashMap;
 use uri_db::Uri;
 
 pub(crate) fn check(s: &str) {
-  let mut files = FxHashMap::default();
   let uri = Uri::from_file_path("/tmp/main.c0").unwrap();
-  files.insert(uri.clone(), s.to_owned());
-  let db = Db::new(files);
+  let db = Db::new(std::iter::once((uri.clone(), s.to_owned())));
   let want = parse_expected(s);
   let mut got_all = db.all_diagnostics();
   let (got_uri, mut got) = got_all.pop().unwrap();

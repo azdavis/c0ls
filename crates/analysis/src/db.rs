@@ -24,20 +24,23 @@ pub struct Db {
 
 impl Db {
   /// Returns a new `Db` for the given files.
-  pub fn new(files: FxHashMap<Uri, String>) -> Self {
+  pub fn new<I>(files: I) -> Self
+  where
+    I: Iterator<Item = (Uri, String)>,
+  {
     // assign file IDs.
-    let num_files = files.len();
     let mut uris = UriDb::default();
-    for uri in files.keys() {
-      uris.insert(uri.clone());
-    }
+    let files: FxHashMap<_, _> = files
+      .into_iter()
+      .map(|(uri, contents)| {
+        let id = uris.insert(uri);
+        (id, contents)
+      })
+      .collect();
     // get syntax data for each file.
     let syntax_data: FxHashMap<_, _> = files
       .into_iter()
-      .map(|(uri, contents)| {
-        let id = uris.get_id(&uri).unwrap();
-        (id, get_syntax_data(&uris, id, &contents))
-      })
+      .map(|(id, contents)| (id, get_syntax_data(&uris, id, &contents)))
       .collect();
     // determine a topo ordering of the file dependencies.
     let graph: Graph<_> = syntax_data
@@ -72,7 +75,8 @@ impl Db {
     drop(graph);
     // run statics in the order of the topo order, update errors.
     let (mut cx, std_lib) = std_lib::get();
-    let mut semantic_data = map_with_capacity::<UriId, SemanticData>(num_files);
+    let mut semantic_data =
+      map_with_capacity::<UriId, SemanticData>(syntax_data.len());
     for &id in ordering.iter() {
       let mut import = Import::with_main();
       for u in syntax_data[&id].uses.iter() {

@@ -11,7 +11,6 @@ use lsp_types::request::{GotoDefinition, HoverRequest};
 use lsp_types::{
   GotoDefinitionResponse, InitializeParams, PublishDiagnosticsParams, Url,
 };
-use rustc_hash::FxHashMap;
 use std::fs::read_to_string;
 use walkdir::WalkDir;
 
@@ -81,32 +80,28 @@ fn handle_notif(
       let change = params.content_changes.pop().unwrap();
       assert!(params.content_changes.is_empty());
       assert!(change.range.is_none());
-      let mut files = get_initial_files(root);
-      files.insert(params.text_document.uri, change.text);
-      *db = Db::new(files);
+      let one = (params.text_document.uri, change.text);
+      *db = Db::new(get_initial_files(root).chain(std::iter::once(one)));
       send_all_diagnostics(conn, db);
     })
 }
 
-fn get_initial_files(root: &Url) -> FxHashMap<Url, String> {
-  WalkDir::new(root.path())
-    .into_iter()
-    .filter_map(|entry| {
-      let entry = entry.unwrap();
-      let path = entry.path();
-      if !path.is_file() {
-        return None;
-      }
-      let ext = path.extension()?;
-      if ext != "c0" && ext != "h0" {
-        return None;
-      }
-      let path = path.as_os_str().to_str().unwrap();
-      let uri = Url::from_file_path(path).unwrap();
-      let contents = read_to_string(entry.path()).unwrap();
-      Some((uri, contents))
-    })
-    .collect()
+fn get_initial_files(root: &Url) -> impl Iterator<Item = (Url, String)> {
+  WalkDir::new(root.path()).into_iter().filter_map(|entry| {
+    let entry = entry.unwrap();
+    let path = entry.path();
+    if !path.is_file() {
+      return None;
+    }
+    let ext = path.extension()?;
+    if ext != "c0" && ext != "h0" {
+      return None;
+    }
+    let path = path.as_os_str().to_str().unwrap();
+    let uri = Url::from_file_path(path).unwrap();
+    let contents = read_to_string(entry.path()).unwrap();
+    Some((uri, contents))
+  })
 }
 
 fn send_all_diagnostics(conn: &Connection, db: &Db) {

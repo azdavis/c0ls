@@ -38,7 +38,7 @@ fn run(conf: Config) -> Option<bool> {
     files.insert(uri.clone(), contents);
     paths.insert(path, uri);
   }
-  let db = Db::new(files);
+  let db = Db::new(files.into_iter());
   let diagnostics = db.all_diagnostics();
   for &(ref uri, ref ds) in diagnostics.iter() {
     for d in ds.iter() {
