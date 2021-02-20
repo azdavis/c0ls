@@ -1,4 +1,19 @@
 int foo() {
+  int i = 0;
+  while (i < 3) {
+    i++;
+    break;
+  }
+  while (i < 4) {
+    i++;
+    continue;
+  }
+  for (i = 0; i < 4; i++) {
+    break;
+  }
+  for (i = 0; i < 4; i++) {
+    continue;
+  }
   break;
 //^^^^^^ error: cannot use this statement outside of a loop
   continue;

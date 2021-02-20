@@ -3,6 +3,8 @@ bool coin() {
 }
 
 void foo() {
-  int* x = *(coin() ? NULL : NULL);
-//         ^^^^^^^^^^^^^^^^^^^^^^^ error: cannot dereference `NULL`
+  *NULL;
+//^^^^^ error: cannot dereference `NULL`
+  int x = *(coin() ? NULL : NULL);
+//        ^^^^^^^^^^^^^^^^^^^^^^^ error: cannot dereference `NULL`
 }
