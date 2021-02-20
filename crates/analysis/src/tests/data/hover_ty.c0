@@ -1,11 +1,17 @@
 struct s {
   int x;
+//^^^ hover: int
   bool y;
+//^^^^ hover: bool
   struct s* next;
 };
 
-struct s* mk(int x) {
-  //                ^ hover: <none>
+typedef struct s* fella;
+
+  fella
+//^^^^^ hover: struct s*
+mk(int x) {
+  //      ^ hover: <none>
   struct s* ret = alloc(struct s);
   //              ^^^^^^^^^^^^^^^ hover: struct s*
   ret->x = x;
@@ -16,8 +22,10 @@ struct s* mk(int x) {
 }
 
 int consume(struct s* guy) {
-  struct s* nil = NULL;
-  //              ^^^^ hover: <any>*
+  fella nil =
+//^^^^^ hover: struct s*
+    NULL;
+  //^^^^ hover: <any>*
   if (guy == nil) {
   //         ^^^ hover: struct s*
     return 123;
@@ -28,12 +36,16 @@ int consume(struct s* guy) {
     return 234;
   //       ^^^ hover: int
   }
-  int ret = guy->x;
-  //        ^^^ hover: struct s*
+  int ret =
+//^^^ hover: int
+    guy->x;
+  //^^^ hover: struct s*
   if (guy->y) {
     ret += 1;
   //       ^ hover: int
   }
+  guy = mk(3);
+  //    ^^^^^ hover: struct s* mk(int x)
   ret += consume(guy->next);
   //     ^^^^^^^^^^^^^^^^^^ hover: int consume(struct s* guy)
   return ret;

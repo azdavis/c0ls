@@ -1,7 +1,7 @@
 use crate::util::error::{Error, ErrorKind};
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyDb};
-use hir::{la_arena::ArenaMap, Arenas, ExprId, ItemId, Name};
+use hir::{la_arena::ArenaMap, Arenas, ExprId, ItemId, Name, TyId};
 use rustc_hash::FxHashMap;
 use std::fmt;
 use uri_db::UriId;
@@ -137,6 +137,11 @@ impl Import {
 
 pub type ExprTys = ArenaMap<ExprId, Ty>;
 
+/// this is useful when resolving typedefs to display a given type, but not
+/// strictly necessary since we could just traverse to know what typedefs are in
+/// scope
+pub type TyTys = ArenaMap<TyId, Ty>;
+
 #[derive(Debug)]
 pub struct FnData {
   pub sig: FnSig,
@@ -148,6 +153,7 @@ pub struct Env {
   pub structs: FxHashMap<Name, NameToTy>,
   pub type_defs: FxHashMap<Name, Ty>,
   pub expr_tys: ExprTys,
+  pub ty_tys: TyTys,
 }
 
 #[derive(Debug, Default)]

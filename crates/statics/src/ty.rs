@@ -7,10 +7,10 @@ pub(crate) fn get(
   import: &Import,
   arenas: &Arenas,
   cx: &mut Cx,
-  env: &Env,
+  env: &mut Env,
   ty: TyId,
 ) -> ty::Ty {
-  match arenas.ty[ty] {
+  let ret = match arenas.ty[ty] {
     Ty::None => ty::Ty::None,
     Ty::Any => ty::Ty::Any,
     Ty::Int => ty::Ty::Int,
@@ -42,5 +42,7 @@ pub(crate) fn get(
         ty::Ty::None
       }
     }
-  }
+  };
+  env.ty_tys.insert(ty, ret);
+  ret
 }

@@ -3,7 +3,7 @@ use crate::types::{CodeBlock, Hover};
 use crate::util::get_token;
 use lower::AstPtr;
 use statics::InFile;
-use syntax::ast::{Cast as _, Expr, Syntax as _};
+use syntax::ast::{Cast as _, Expr, Syntax as _, Ty};
 use text_pos::Position;
 use uri_db::Uri;
 
@@ -36,6 +36,21 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
       return Some(Hover {
         contents: CodeBlock::new(contents),
         range: syntax_data.positions.range(expr_node.syntax().text_range()),
+      });
+    }
+    if let Some(ty_node) = Ty::cast(node.clone().into()) {
+      let ty = *syntax_data.ptrs.ty.get(&AstPtr::new(&ty_node))?;
+      return Some(Hover {
+        contents: CodeBlock::new(
+          semantic_data
+            .env
+            .env
+            .ty_tys
+            .get(ty)?
+            .display(&done.cx.tys)
+            .to_string(),
+        ),
+        range: syntax_data.positions.range(ty_node.syntax().text_range()),
       });
     }
     node = node.parent()?;
