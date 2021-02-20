@@ -30,7 +30,7 @@ pub fn add_env(
         cx.err(item, ErrorKind::Duplicate(name.clone()));
       }
       if !sig.should_define && sig.is_defined {
-        cx.err(item, ErrorKind::DefnHeaderFn)
+        cx.err(item, ErrorKind::CannotDefnFn)
       }
     }
     import.fns.insert(name.clone(), file.wrap(sig));

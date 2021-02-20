@@ -13,7 +13,6 @@ use rustc_hash::FxHashMap;
 use std::borrow::Borrow;
 use std::hash::Hash;
 use std::ops::Index;
-use std::path::Path;
 
 /// A URI database.
 #[derive(Debug, Default)]
@@ -32,17 +31,7 @@ impl UriDb {
     if let Some(ret) = self.get_id(&uri) {
       return ret;
     }
-    let ext = Path::new(uri.path())
-      .extension()
-      .expect("no extension")
-      .to_str()
-      .expect("extension is not UTF-8");
-    let kind = match ext {
-      "h0" => UriKind::Header,
-      "c0" => UriKind::Source,
-      _ => panic!("bad extension: {}", ext),
-    };
-    let ret = UriId::new(self.next, kind);
+    let ret = UriId(self.next);
     self.next += 1;
     assert!(self.id_to_uri.insert(ret, uri.clone()).is_none());
     assert!(self.uri_to_id.insert(uri, ret).is_none());
@@ -82,37 +71,3 @@ impl Index<UriId> for UriDb {
 /// avoid cloning URIs all over the place.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UriId(u32);
-
-const TOP: u32 = 1 << 31;
-
-impl UriId {
-  /// Panics if the MSB of `id` is 1.
-  fn new(id: u32, kind: UriKind) -> Self {
-    assert_eq!(id & TOP, 0);
-    let raw = match kind {
-      UriKind::Source => id | TOP,
-      UriKind::Header => id,
-    };
-    Self(raw)
-  }
-}
-
-impl UriId {
-  /// Returns the kind of the URI that this is an ID for.
-  pub fn kind(&self) -> UriKind {
-    if (self.0 & TOP) == TOP {
-      UriKind::Source
-    } else {
-      UriKind::Header
-    }
-  }
-}
-
-/// A kind of C0 file.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum UriKind {
-  /// A source file, with extension `c0`.
-  Source,
-  /// A header file, with extension `h0`.
-  Header,
-}

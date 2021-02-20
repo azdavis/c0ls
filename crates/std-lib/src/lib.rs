@@ -4,7 +4,7 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use statics::{Cx, EnvWithIds, FileId as FI, Import};
+use statics::{Cx, EnvWithIds, Import};
 use std::str::FromStr;
 
 /// The standard libraries.
@@ -89,7 +89,7 @@ fn get_one(cx: &mut Cx, contents: &str) -> EnvWithIds {
   let lexed = lex::get(contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root);
-  let ret = statics::get(cx, &Import::default(), FI::StdLib, &lowered.root);
+  let ret = statics::get(cx, &Import::default(), false, &lowered.root);
   assert!(lexed.errors.is_empty());
   assert!(parsed.errors.is_empty());
   assert!(lowered.errors.is_empty());

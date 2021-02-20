@@ -2,19 +2,17 @@ use crate::stmt::get as get_stmt;
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::types::{
-  Cx, EnvWithIds, FileId, FnCx, FnData, FnSig, Import, InFile, NameToTy, Param,
-  VarData,
+  Cx, EnvWithIds, FnCx, FnData, FnSig, Import, InFile, NameToTy, Param, VarData,
 };
 use crate::util::{no_struct, no_unsized, no_void, ty::Ty, unify};
 use hir::{Arenas, Item, ItemId};
-use uri_db::UriKind;
 
 pub(crate) fn get(
   import: &Import,
   arenas: &Arenas,
   cx: &mut Cx,
   env: &mut EnvWithIds,
-  file: FileId,
+  should_define: bool,
   item: ItemId,
 ) {
   let ids = &mut env.ids;
@@ -49,13 +47,7 @@ pub(crate) fn get(
         params: sig_params,
         ret_ty: fn_cx.ret_ty,
         is_defined: body.is_some(),
-        should_define: match file {
-          FileId::StdLib => false,
-          FileId::Uri(uri) => match uri.kind() {
-            UriKind::Header => false,
-            UriKind::Source => true,
-          },
-        },
+        should_define,
       };
       let old_sig = env
         .fns
@@ -86,7 +78,7 @@ pub(crate) fn get(
         cx.err(item, ErrorKind::Duplicate(name.clone()));
       }
       if !sig.should_define && sig.is_defined {
-        cx.err(item, ErrorKind::DefnHeaderFn)
+        cx.err(item, ErrorKind::CannotDefnFn)
       }
       let ret_ty = sig.ret_ty;
       env.fns.insert(name.clone(), FnData { sig });

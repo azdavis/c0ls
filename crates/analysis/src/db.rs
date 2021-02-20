@@ -82,10 +82,15 @@ impl Db {
         };
         statics::add_env(&mut cx, &mut import, env, file);
       }
+      // we used to store this directly in the id itself, but that's a bit of a
+      // pain. could go back to doing that as a micro-optimization.
+      let should_define = std::path::Path::new(uris[id].path())
+        .extension()
+        .map_or(true, |x| x != "h0");
       let env = statics::get(
         &mut cx,
         &import,
-        FileId::Uri(id),
+        should_define,
         &syntax_data[&id].hir_root,
       );
       semantic_data.insert(

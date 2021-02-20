@@ -13,9 +13,9 @@ pub struct Error {
 pub enum ErrorKind {
   CallNonFnTy(Ty),
   CannotAssign,
+  CannotDefnFn,
   CannotIncDec(hir::IncDec),
   DeclInForStep,
-  DefnHeaderFn,
   DerefNonPtrTy(Ty),
   DerefNull,
   Duplicate(Name),
@@ -57,11 +57,13 @@ impl fmt::Display for ErrorKindDisplay<'_> {
         write!(f, "cannot call non-function type `{}`", t.display(self.tys))
       }
       ErrorKind::CannotAssign => write!(f, "cannot assign to this expression"),
+      ErrorKind::CannotDefnFn => {
+        write!(f, "cannot provide a body for this function here")
+      }
       ErrorKind::CannotIncDec(x) => write!(f, "cannot {} this expression", x),
       ErrorKind::DeclInForStep => {
         write!(f, "cannot declare a variable in `for` loop step")
       }
-      ErrorKind::DefnHeaderFn => write!(f, "cannot define a header function"),
       ErrorKind::DerefNonPtrTy(t) => write!(
         f,
         "cannot dereference non-pointer type `{}`",
