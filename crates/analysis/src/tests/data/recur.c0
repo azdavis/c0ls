@@ -1,0 +1,16 @@
+struct node {
+  int data;
+  struct node* next;
+};
+
+int foo(int a) {
+  return foo(a + 1) - 1;
+}
+
+void bad() {
+  int b = b;
+//        ^ error: undefined variable `b`
+}
+
+typedef heh heh;
+//      ^^^ error: undefined typedef `heh`

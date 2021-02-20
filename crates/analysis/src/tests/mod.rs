@@ -63,6 +63,11 @@ fn not_in_loop() {
 }
 
 #[test]
+fn recur() {
+  check(include_str!("data/recur.c0"))
+}
+
+#[test]
 fn return_bad() {
   check(include_str!("data/return_bad.c0"))
 }
