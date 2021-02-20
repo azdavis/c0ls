@@ -1,4 +1,4 @@
-struct image {};
+struct image { /* private */ };
 typedef struct image* image_t;
 int image_width(image_t image);
 int image_height(image_t image);

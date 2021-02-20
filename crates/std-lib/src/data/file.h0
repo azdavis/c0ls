@@ -1,4 +1,4 @@
-struct file {};
+struct file { /* private */ };
 typedef struct file* file_t;
 bool file_closed(file_t f);
 file_t file_read(string path);

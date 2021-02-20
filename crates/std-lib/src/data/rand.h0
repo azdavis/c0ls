@@ -1,4 +1,4 @@
-struct rand {};
+struct rand { /* private */ };
 typedef struct rand* rand_t;
 rand_t init_rand(int seed);
 int rand(rand_t gen);
