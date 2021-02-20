@@ -2,10 +2,10 @@
 
 use crate::queries::{all_diagnostics, go_to_def, hover};
 use crate::types::{Diagnostic, Hover, Location};
-use crate::util::map_with_capacity;
 use lower::Ptrs;
 use rustc_hash::FxHashMap;
 use statics::{Cx, EnvWithIds, FileId, Import};
+use std::hash::BuildHasherDefault;
 use syntax::ast::{Root as AstRoot, Syntax as _};
 use syntax::SyntaxNode;
 use text_pos::{Position, PositionDb};
@@ -142,6 +142,10 @@ impl Db {
   pub fn hover(&self, uri: &Uri, pos: Position) -> Option<Hover> {
     hover::get(self, uri, pos)
   }
+}
+
+fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
+  FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
 
 fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {

@@ -1,13 +1,7 @@
 use crate::db::SyntaxData;
-use rustc_hash::FxHashMap;
-use std::hash::BuildHasherDefault;
 use syntax::rowan::TokenAtOffset;
 use syntax::{ast::Syntax as _, SyntaxKind, SyntaxToken};
 use text_pos::Position;
-
-pub(crate) fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
-  FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
-}
 
 pub(crate) fn get_token(
   syntax_data: &SyntaxData,
