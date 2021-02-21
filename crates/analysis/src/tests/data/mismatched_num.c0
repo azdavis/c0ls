@@ -1,0 +1,15 @@
+int f(int x);
+  int f();
+//^^^^^^^^ error: mismatched number of parameters: expected 1, found 0
+  int f(int x, int y);
+//^^^^^^^^^^^^^^^^^^^^ error: mismatched number of parameters: expected 0, found 2
+
+int foo(int a);
+
+void bar() {
+  foo();
+//^^^^^ error: mismatched number of arguments: expected 1, found 0
+  foo(1);
+  foo(1, 2);
+//^^^^^^^^^ error: mismatched number of arguments: expected 1, found 2
+}

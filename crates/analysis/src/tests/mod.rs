@@ -53,6 +53,11 @@ fn lv_bad() {
 }
 
 #[test]
+fn mismatched_num() {
+  check(include_str!("data/mismatched_num.c0"))
+}
+
+#[test]
 fn mismatched_types_any() {
   check(include_str!("data/mismatched_types_any.c0"))
 }
