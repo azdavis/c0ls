@@ -4,7 +4,7 @@ use crate::util::get_token;
 use lower::AstPtr;
 use rustc_hash::FxHashMap;
 use statics::{InFile, TyData};
-use syntax::ast::{Cast as _, Expr, Simp, Stmt, Syntax as _, Ty};
+use syntax::ast::{Cast as _, Expr, Simp, SimpOpt, SimpStmt, Syntax as _, Ty};
 use syntax::SyntaxKind;
 use text_pos::Position;
 use uri_db::{Uri, UriId};
@@ -22,37 +22,31 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
       hir::Expr::Name(ref name) => {
-        // find the stmt containing this expr. we know tok.parent() is an expr,
+        // find the simp declaring this name. we know tok.parent() is an expr,
         // so go up again to start off.
         let mut node = tok.parent().parent()?;
-        let mut stmt_node = loop {
-          match Stmt::cast(node.clone().into()) {
-            Some(x) => break x,
-            None => node = node.parent()?,
-          }
-        };
-        // work backward up the body of the fn, checking each decl.
         loop {
-          if let Stmt::SimpStmt(ref stmt) = stmt_node {
-            let tok = match stmt.simp() {
-              Some(Simp::DeclSimp(simp)) => simp.ident(),
-              Some(Simp::AmbiguousSimp(simp)) => simp.lhs(),
+          let declares = SimpStmt::cast(node.clone().into())
+            .and_then(|x| x.simp())
+            .or_else(|| {
+              SimpOpt::cast(node.clone().into()).and_then(|x| x.simp())
+            })
+            .and_then(|simp| match simp {
+              Simp::DeclSimp(simp) => simp.ident(),
+              Simp::AmbiguousSimp(simp) => simp.lhs(),
               _ => None,
-            };
-            if tok.map_or(false, |tok| name == tok.text()) {
-              break;
-            }
+            })
+            .map_or(false, |tok| name == tok.text());
+          if declares {
+            break;
           }
-          // might have a prev sibling be an expr (if we're e.g. in an IfStmt)
-          stmt_node = stmt_node
-            .syntax()
-            .prev_sibling()
-            .and_then(|x| Stmt::cast(x.into()))
-            .or_else(|| Stmt::cast(stmt_node.syntax().parent()?.into()))?;
+          // go up and to the left. not quite correct in the case of a decl in
+          // the step of a for loop, but that's an error anyway.
+          node = node.prev_sibling().or_else(|| node.parent())?;
         }
         Some(Location {
           uri: uri.clone(),
-          range: syntax_data.positions.range(stmt_node.syntax().text_range()),
+          range: syntax_data.positions.range(node.text_range()),
         })
       }
       hir::Expr::Call(ref name, _) => get_item_loc(
