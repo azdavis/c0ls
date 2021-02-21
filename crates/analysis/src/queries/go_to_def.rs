@@ -93,7 +93,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
 fn simp_def(simp: Simp) -> Option<SyntaxToken> {
   match simp {
     Simp::DeclSimp(simp) => simp.ident(),
-    Simp::AmbiguousSimp(simp) => simp.lhs(),
+    Simp::AmbiguousSimp(simp) => simp.rhs(),
     _ => None,
   }
 }
