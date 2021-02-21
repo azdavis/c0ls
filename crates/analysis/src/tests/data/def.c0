@@ -15,6 +15,22 @@
   int foo() { int ret = 123; return ret; }
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ fn-def: foo
 
+int bar(
+  int fst,
+//^^^^^^^^ var-def: fst
+  int snd
+//^^^^^^^ var-def: snd
+) {
+  int thd = 123;
+//^^^^^^^^^^^^^^ var-def: thd
+  return thd
+//       ^^^ var-use: thd
+    + snd
+//    ^^^ var-use: snd
+    + fst;
+//    ^^^ var-use: fst
+}
+
 int main() {
   int ret = 123;
 //^^^^^^^^^^^^^^ var-def: ret

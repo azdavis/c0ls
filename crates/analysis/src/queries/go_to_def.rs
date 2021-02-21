@@ -4,8 +4,10 @@ use crate::util::get_token;
 use lower::AstPtr;
 use rustc_hash::FxHashMap;
 use statics::{InFile, TyData};
-use syntax::ast::{Cast as _, Expr, Simp, SimpOpt, SimpStmt, Syntax as _, Ty};
-use syntax::SyntaxKind;
+use syntax::ast::{
+  Cast as _, Expr, Param, Simp, SimpOpt, SimpStmt, Syntax as _, Ty,
+};
+use syntax::{SyntaxKind, SyntaxToken};
 use text_pos::Position;
 use uri_db::{Uri, UriId};
 
@@ -22,19 +24,16 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
       hir::Expr::Name(ref name) => {
-        // find the simp declaring this name. we know tok.parent() is an expr,
-        // so go up again to start off.
         let mut node = tok.parent().parent()?;
         loop {
           let declares = SimpStmt::cast(node.clone().into())
-            .and_then(|x| x.simp())
+            .and_then(|x| simp_def(x.simp()?))
             .or_else(|| {
-              SimpOpt::cast(node.clone().into()).and_then(|x| x.simp())
+              SimpOpt::cast(node.clone().into())
+                .and_then(|x| simp_def(x.simp()?))
             })
-            .and_then(|simp| match simp {
-              Simp::DeclSimp(simp) => simp.ident(),
-              Simp::AmbiguousSimp(simp) => simp.lhs(),
-              _ => None,
+            .or_else(|| {
+              Param::cast(node.clone().into()).and_then(|x| x.ident())
             })
             .map_or(false, |tok| name == tok.text());
           if declares {
@@ -88,6 +87,14 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
     }
   } else {
     None
+  }
+}
+
+fn simp_def(simp: Simp) -> Option<SyntaxToken> {
+  match simp {
+    Simp::DeclSimp(simp) => simp.ident(),
+    Simp::AmbiguousSimp(simp) => simp.lhs(),
+    _ => None,
   }
 }
 
