@@ -2,12 +2,12 @@ void foo() {
   int x;
   {
     int x;
-//  ^^^^^ error: duplicate
+//  ^^^^^ error: duplicate definitions for `x`
   }
   int x;
-//^^^^^ error: duplicate
+//^^^^^ error: duplicate definitions for `x`
   int y;
   int z;
   int x;
-//^^^^^ error: duplicate
+//^^^^^ error: duplicate definitions for `x`
 }
