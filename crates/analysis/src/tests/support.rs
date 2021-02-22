@@ -2,6 +2,10 @@ use crate::{CodeBlock, Db, Diagnostic, Hover, Position, Range};
 use rustc_hash::FxHashMap;
 use uri_db::Uri;
 
+pub(crate) fn uri(s: &str) -> Uri {
+  Uri::from_file_path(s).unwrap()
+}
+
 pub(crate) fn check(s: &str) {
   check_many(&[("/main.c0", s)])
 }
@@ -9,7 +13,7 @@ pub(crate) fn check(s: &str) {
 pub(crate) fn check_many(items: &[(&str, &str)]) {
   let files: FxHashMap<_, _> = items
     .iter()
-    .map(|&(name, contents)| (Uri::from_file_path(name).unwrap(), contents))
+    .map(|&(name, contents)| (uri(name), contents))
     .collect();
   let db = Db::new(
     files
