@@ -21,11 +21,11 @@ pub struct Uses {
 
 /// Translates the `uses` for the file at the given `id` into fully resolved
 /// uses.
-pub fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use<'_>>) -> Uses {
+pub fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use>) -> Uses {
   let mut ret = Uses::default();
   for u in uses {
     let range = u.range;
-    match get_one(uris, id, u.path, u.kind) {
+    match get_one(uris, id, &u.path, u.kind) {
       Ok(kind) => ret.uses.push(Use { range, kind }),
       Err(kind) => ret.errors.push(Error { range, kind }),
     }

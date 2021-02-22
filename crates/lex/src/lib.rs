@@ -24,7 +24,7 @@ pub struct Lex<'input> {
   /// Concatenated in sequence, they form the original input.
   pub tokens: Vec<Token<'input, SK>>,
   /// The `#use` and `#ref` pragmas parsed from the input.
-  pub uses: Vec<Use<'input>>,
+  pub uses: Vec<Use>,
   /// The errors encountered.
   pub errors: Vec<Error>,
 }
@@ -95,10 +95,10 @@ pub fn get(s: &str) -> Lex<'_> {
 }
 
 #[derive(Default)]
-struct Cx<'input> {
+struct Cx {
   errors: Vec<Error>,
   i: usize,
-  uses: Vec<Use<'input>>,
+  uses: Vec<Use>,
 }
 
 const MAX: u32 = 1 << 31;
@@ -106,7 +106,7 @@ const MAX: u32 = 1 << 31;
 /// requires bs is a valid &str. returns sk and updates cx.i from start to end
 /// such that bs[start..end] is a str and sk is the kind for that str.
 #[inline]
-fn go<'input>(cx: &mut Cx<'input>, bs: &'input [u8]) -> SK {
+fn go(cx: &mut Cx, bs: &[u8]) -> SK {
   let b = bs[cx.i];
   let start = cx.i;
   // comments
@@ -195,7 +195,9 @@ fn go<'input>(cx: &mut Cx<'input>, bs: &'input [u8]) -> SK {
         cx.uses.push(Use {
           kind,
           range: range(start, cx.i),
-          path: std::str::from_utf8(&bs[start_lit..end_lit]).unwrap(),
+          path: std::str::from_utf8(&bs[start_lit..end_lit])
+            .unwrap()
+            .to_owned(),
         });
       }
       None => err(cx, start, ErrorKind::UnclosedPragmaLit),
@@ -330,7 +332,7 @@ fn go<'input>(cx: &mut Cx<'input>, bs: &'input [u8]) -> SK {
   SK::Invalid
 }
 
-fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
+fn advance_while(cx: &mut Cx, bs: &[u8], p: fn(&u8) -> bool) {
   while let Some(b) = bs.get(cx.i) {
     if p(b) {
       cx.i += 1;
@@ -340,7 +342,7 @@ fn advance_while(cx: &mut Cx<'_>, bs: &[u8], p: fn(&u8) -> bool) {
   }
 }
 
-fn err(cx: &mut Cx<'_>, start: usize, kind: ErrorKind) {
+fn err(cx: &mut Cx, start: usize, kind: ErrorKind) {
   cx.errors.push(Error {
     range: range(start, cx.i),
     kind,
