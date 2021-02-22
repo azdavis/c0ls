@@ -3,15 +3,49 @@ use rustc_hash::FxHashMap;
 use uri_db::Uri;
 
 pub(crate) fn check(s: &str) {
-  let uri = Uri::from_file_path("/tmp/main.c0").unwrap();
-  let db = Db::new(std::iter::once((uri.clone(), s.to_owned())));
-  let want = parse_expected(s);
-  let mut got_all = db.all_diagnostics();
-  let (got_uri, mut got) = got_all.pop().unwrap();
-  assert!(got_all.is_empty());
-  assert_eq!(uri, got_uri);
-  got.sort_unstable();
-  for (want, got) in want.diagnostics.iter().zip(got.iter()) {
+  check_many(&[("/main.c0", s)])
+}
+
+pub(crate) fn check_many(items: &[(&str, &str)]) {
+  let files: FxHashMap<_, _> = items
+    .iter()
+    .map(|&(name, contents)| (Uri::from_file_path(name).unwrap(), contents))
+    .collect();
+  let db = Db::new(
+    files
+      .iter()
+      .map(|(uri, &contents)| (uri.clone(), contents.to_owned())),
+  );
+  let all_diagnostics = db.all_diagnostics();
+  let mut want_len: usize = 0;
+  let mut got_len: usize = 0;
+  for (uri, contents) in files {
+    let want = parse_expected(contents);
+    want_len += want.diagnostics.len();
+    let diagnostics = all_diagnostics
+      .iter()
+      .find_map(|(x, ds)| {
+        (*x == uri).then(|| {
+          let mut ds = ds.clone();
+          ds.sort_unstable();
+          ds
+        })
+      })
+      .unwrap();
+    got_len += diagnostics.len();
+    check_one(&db, uri, want, diagnostics);
+  }
+  assert_eq!(want_len, got_len, "mismatched number of diagnostics");
+}
+
+#[inline]
+fn check_one(
+  db: &Db,
+  uri: Uri,
+  want: Expectations,
+  diagnostics: Vec<Diagnostic>,
+) {
+  for (want, got) in want.diagnostics.iter().zip(diagnostics.iter()) {
     assert!(
       want.range == got.range,
       "mismatched ranges: want {}, got {} with message: '{}'",
@@ -27,11 +61,6 @@ pub(crate) fn check(s: &str) {
       want.message
     );
   }
-  assert_eq!(
-    want.diagnostics.len(),
-    got.len(),
-    "mismatched number of diagnostics"
-  );
   for hover in want.hovers.iter() {
     let got_hover = match db.hover(&uri, hover.range.start) {
       None => panic!("no hover at {}", hover.range.start),
