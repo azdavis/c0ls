@@ -1,0 +1,6 @@
+#use "2.h0"
+
+int bar() {
+  return foo();
+//       ^^^^^ error: undefined function `foo`
+}

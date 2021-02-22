@@ -1,6 +1,16 @@
 mod support;
 
-use support::check;
+use support::{check, check_many};
+
+#[test]
+fn transitive() {
+  // TODO environments maybe ought to contain that which they import
+  check_many(&[
+    ("/1.h0", include_str!("data/transitive/1.h0")),
+    ("/2.h0", include_str!("data/transitive/2.h0")),
+    ("/3.c0", include_str!("data/transitive/3.c0")),
+  ])
+}
 
 #[test]
 fn arrow() {
@@ -40,6 +50,12 @@ fn div() {
 #[test]
 fn duplicate_var() {
   check(include_str!("data/duplicate_var.c0"))
+}
+
+#[test]
+fn hover_ambig() {
+  // TODO hovering `a * b;` should work
+  check(include_str!("data/hover_ambig.c0"))
 }
 
 #[test]

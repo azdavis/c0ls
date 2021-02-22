@@ -1,0 +1,12 @@
+typedef int t;
+
+void bar(int a, int b) {
+  a *
+//^ hover: <none>
+  b;
+//^ hover: <none>
+  t *
+//^ hover: <none>
+  c;
+//^ hover: <none>
+}
