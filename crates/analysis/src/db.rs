@@ -42,77 +42,7 @@ impl Db {
       .into_iter()
       .map(|(id, contents)| (id, get_syntax_data(&uris, id, &contents)))
       .collect();
-    // determine a topo ordering of the file dependencies.
-    let graph: Graph<_> = syntax_data
-      .iter()
-      .map(|(&id, sd)| {
-        let neighbors = sd
-          .uses
-          .iter()
-          .filter_map(|u| match u.kind {
-            UseKind::File(id) => Some(id),
-            UseKind::Lib(_) => None,
-          })
-          .collect();
-        (id, neighbors)
-      })
-      .collect();
-    let ordering = match topo_sort::get(&graph) {
-      Ok(x) => x,
-      Err(e) => {
-        // give up on further processing. conjure up a stable but arbitrary
-        // ordering.
-        let mut ordering: Vec<_> = uris.iter().collect();
-        ordering.sort_unstable();
-        return Self {
-          uris,
-          syntax_data,
-          ordering,
-          kind: DbKind::CycleError(e.witness()),
-        };
-      }
-    };
-    drop(graph);
-    // run statics in the order of the topo order, update errors.
-    let (mut cx, std_lib) = std_lib::get();
-    let mut semantic_data =
-      map_with_capacity::<UriId, SemanticData>(syntax_data.len());
-    for &id in ordering.iter() {
-      let mut import = Import::with_main();
-      for u in syntax_data[&id].uses.iter() {
-        let (file, env) = match u.kind {
-          UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
-          UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
-        };
-        statics::add_env(&mut cx, &mut import, env, file);
-      }
-      // we used to store this directly in the id itself, but that's a bit of a
-      // pain. could go back to doing that as a micro-optimization.
-      let should_define = std::path::Path::new(uris[id].path())
-        .extension()
-        .map_or(true, |x| x != "h0");
-      let env = statics::get(
-        &mut cx,
-        &import,
-        should_define,
-        &syntax_data[&id].hir_root,
-      );
-      semantic_data.insert(
-        id,
-        SemanticData {
-          import,
-          env,
-          errors: std::mem::take(&mut cx.errors),
-        },
-      );
-    }
-    // return.
-    Self {
-      uris,
-      syntax_data,
-      ordering,
-      kind: DbKind::Done(Box::new(Done { cx, semantic_data })),
-    }
+    get_all_semantic_data(uris, syntax_data)
   }
 
   /// Formats the file at the given URI.
@@ -169,6 +99,79 @@ fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
       parse: parsed.errors,
       lower: lowered.errors,
     },
+  }
+}
+
+fn get_all_semantic_data(
+  uris: UriDb,
+  syntax_data: FxHashMap<UriId, SyntaxData>,
+) -> Db {
+  // determine a topo ordering of the file dependencies.
+  let graph: Graph<_> = syntax_data
+    .iter()
+    .map(|(&id, sd)| {
+      let neighbors = sd
+        .uses
+        .iter()
+        .filter_map(|u| match u.kind {
+          UseKind::File(id) => Some(id),
+          UseKind::Lib(_) => None,
+        })
+        .collect();
+      (id, neighbors)
+    })
+    .collect();
+  let ordering = match topo_sort::get(&graph) {
+    Ok(x) => x,
+    Err(e) => {
+      // give up on further processing. conjure up a stable but arbitrary
+      // ordering.
+      let mut ordering: Vec<_> = uris.iter().collect();
+      ordering.sort_unstable();
+      return Db {
+        uris,
+        syntax_data,
+        ordering,
+        kind: DbKind::CycleError(e.witness()),
+      };
+    }
+  };
+  drop(graph);
+  // run statics in the order of the topo order, update errors.
+  let (mut cx, std_lib) = std_lib::get();
+  let mut semantic_data =
+    map_with_capacity::<UriId, SemanticData>(syntax_data.len());
+  for &id in ordering.iter() {
+    let mut import = Import::with_main();
+    for u in syntax_data[&id].uses.iter() {
+      let (file, env) = match u.kind {
+        UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
+        UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
+      };
+      statics::add_env(&mut cx, &mut import, env, file);
+    }
+    // we used to store this directly in the id itself, but that's a bit of a
+    // pain. could go back to doing that as a micro-optimization.
+    let should_define = std::path::Path::new(uris[id].path())
+      .extension()
+      .map_or(true, |x| x != "h0");
+    let env =
+      statics::get(&mut cx, &import, should_define, &syntax_data[&id].hir_root);
+    semantic_data.insert(
+      id,
+      SemanticData {
+        import,
+        env,
+        errors: std::mem::take(&mut cx.errors),
+      },
+    );
+  }
+  // return.
+  Db {
+    uris,
+    syntax_data,
+    ordering,
+    kind: DbKind::Done(Box::new(Done { cx, semantic_data })),
   }
 }
 
