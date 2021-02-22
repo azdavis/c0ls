@@ -9,7 +9,7 @@ pub(crate) fn get() -> ServerCapabilities {
     text_document_sync: Some(TextDocumentSyncCapability::Options(
       TextDocumentSyncOptions {
         open_close: Some(false),
-        change: Some(TextDocumentSyncKind::Full),
+        change: Some(TextDocumentSyncKind::Incremental),
         will_save: Some(false),
         will_save_wait_until: Some(false),
         save: Some(TextDocumentSyncSaveOptions::Supported(false)),

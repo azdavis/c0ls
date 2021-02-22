@@ -1,7 +1,9 @@
-//! TODO implement incremental updating
+//! TODO could be way more incremental: only recalculate envs for the
+//! transitive closure of the files that import this file, stopping if
+//! updated envs are the same. use `salsa` for that?
 
 use crate::queries::{all_diagnostics, go_to_def, hover};
-use crate::types::{Diagnostic, Hover, Location};
+use crate::types::{Diagnostic, Edit, Hover, Location, Update};
 use lower::Ptrs;
 use rustc_hash::FxHashMap;
 use statics::{Cx, EnvWithIds, FileId, Import};
@@ -43,6 +45,67 @@ impl Db {
       .map(|(id, contents)| (id, get_syntax_data(&uris, id, contents)))
       .collect();
     get_all_semantic_data(uris, syntax_data)
+  }
+
+  /// Edit a single file.
+  ///
+  /// The file must already be in the `Db`.
+  pub fn edit_file<I>(&mut self, uri: &Uri, edits: I)
+  where
+    I: Iterator<Item = Edit>,
+  {
+    let uris = std::mem::take(&mut self.uris);
+    let mut syntax_data = std::mem::take(&mut self.syntax_data);
+    let id = uris.get_id(uri).expect("no ID for URI in edit_file");
+    let mut sd = syntax_data.remove(&id).unwrap();
+    let mut positions = sd.positions;
+    let mut contents = sd.contents;
+    for edit in edits {
+      match edit.range {
+        None => contents = edit.text,
+        Some(range) => {
+          let text_range = positions.text_range(range);
+          let range = std::ops::Range::<usize>::from(text_range);
+          contents.replace_range(range, &edit.text);
+        }
+      }
+      // TODO could only invalidate `positions` based on the range of the edits
+      positions = PositionDb::new(&contents);
+    }
+    sd = get_syntax_data(&uris, id, contents);
+    assert!(syntax_data.insert(id, sd).is_none());
+    *self = get_all_semantic_data(uris, syntax_data)
+  }
+
+  /// Update some files.
+  ///
+  /// The files may or may not be in the `Db`.
+  pub fn update_files<I>(&mut self, updates: I)
+  where
+    I: Iterator<Item = Update>,
+  {
+    let mut uris = std::mem::take(&mut self.uris);
+    let mut syntax_data = std::mem::take(&mut self.syntax_data);
+    let mut new_contents = FxHashMap::default();
+    for update in updates {
+      match update {
+        Update::Create(uri, contents) => {
+          let id = uris.insert(uri);
+          new_contents.insert(id, contents);
+        }
+        Update::Delete(uri) => {
+          // can't delete from the `UriDb`.
+          let id = uris.get_id(&uri).expect("no ID for URI in update_files");
+          assert!(syntax_data.remove(&id).is_some());
+        }
+      }
+    }
+    // do these all after getting all the new `UriId`s.
+    for (id, contents) in new_contents {
+      let sd = get_syntax_data(&uris, id, contents);
+      syntax_data.insert(id, sd);
+    }
+    *self = get_all_semantic_data(uris, syntax_data)
   }
 
   /// Formats the file at the given URI.

@@ -105,6 +105,13 @@ impl PositionDb {
     }
   }
 
+  /// Translates a `Range` into a `TextRange`.
+  ///
+  /// The `Range` must be within the bounds of the original input.
+  pub fn text_range(&self, range: Range) -> TextRange {
+    TextRange::new(self.text_size(range.start), self.text_size(range.end))
+  }
+
   fn start(&self, line: usize) -> TextSize {
     // 1 for the newline
     self.lines[line].end + TextSize::from(1)

@@ -40,3 +40,15 @@ pub struct Hover {
   pub contents: CodeBlock,
   pub range: Range,
 }
+
+#[derive(Debug)]
+pub struct Edit {
+  pub text: String,
+  pub range: Option<Range>,
+}
+
+#[derive(Debug)]
+pub enum Update {
+  Create(Uri, String),
+  Delete(Uri),
+}

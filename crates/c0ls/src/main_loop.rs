@@ -2,14 +2,15 @@
 
 use crate::from::CrateFrom;
 use crate::wrapper::{Handled, Notif, Req};
-use analysis::Db;
+use analysis::{Db, Edit, Update};
 use lsp_server::{Connection, Message, Response};
 use lsp_types::notification::{
   DidChangeTextDocument, DidChangeWatchedFiles, PublishDiagnostics,
 };
 use lsp_types::request::{GotoDefinition, HoverRequest};
 use lsp_types::{
-  GotoDefinitionResponse, InitializeParams, PublishDiagnosticsParams, Url,
+  FileChangeType, GotoDefinitionResponse, InitializeParams,
+  PublishDiagnosticsParams, Url,
 };
 use std::fs::read_to_string;
 use walkdir::WalkDir;
@@ -33,7 +34,7 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
       }
       Message::Response(res) => log::warn!("ignoring response: {:?}", res),
       Message::Notification(notif) => {
-        match handle_notif(&conn, &root, &mut db, Notif::new(notif)) {
+        match handle_notif(&conn, &mut db, Notif::new(notif)) {
           Ok(notif) => log::warn!("ignoring notification: {}", notif.method()),
           Err(Handled) => {}
         }
@@ -63,25 +64,32 @@ fn handle_req(db: &Db, req: Req) -> Result<Req, Response> {
 
 fn handle_notif(
   conn: &Connection,
-  root: &Url,
   db: &mut Db,
   notif: Notif,
 ) -> Result<Notif, Handled> {
   notif
-    .handle::<DidChangeWatchedFiles, _>(|_| {
-      // TODO impl incremental updating
+    .handle::<DidChangeWatchedFiles, _>(|params| {
       log::info!("watched files changed");
-      *db = Db::new(get_initial_files(root));
+      db.update_files(params.changes.into_iter().map(
+        |change| match change.typ {
+          FileChangeType::Created | FileChangeType::Changed => {
+            let contents = read_to_string(change.uri.path()).unwrap();
+            Update::Create(change.uri, contents)
+          }
+          FileChangeType::Deleted => Update::Delete(change.uri),
+        },
+      ));
       send_all_diagnostics(conn, db);
     })?
-    .handle::<DidChangeTextDocument, _>(|mut params| {
-      // TODO impl incremental updating
+    .handle::<DidChangeTextDocument, _>(|params| {
       log::info!("did change a text document");
-      let change = params.content_changes.pop().unwrap();
-      assert!(params.content_changes.is_empty());
-      assert!(change.range.is_none());
-      let one = (params.text_document.uri, change.text);
-      *db = Db::new(get_initial_files(root).chain(std::iter::once(one)));
+      db.edit_file(
+        &params.text_document.uri,
+        params.content_changes.into_iter().map(|edit| Edit {
+          range: edit.range.map(CrateFrom::from),
+          text: edit.text,
+        }),
+      );
       send_all_diagnostics(conn, db);
     })
 }

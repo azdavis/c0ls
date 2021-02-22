@@ -16,4 +16,4 @@ mod util;
 
 pub use db::Db;
 pub use text_pos::{Position, Range};
-pub use types::{CodeBlock, Diagnostic, Hover, Location};
+pub use types::{CodeBlock, Diagnostic, Edit, Hover, Location, Update};
