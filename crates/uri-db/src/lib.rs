@@ -59,7 +59,7 @@ impl UriDb {
 impl Index<UriId> for UriDb {
   type Output = Uri;
   fn index(&self, index: UriId) -> &Self::Output {
-    self.get(index).expect("no URI for id")
+    self.get(index).expect("no URI for ID")
   }
 }
 
