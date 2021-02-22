@@ -40,7 +40,7 @@ impl Db {
     // get syntax data for each file.
     let syntax_data: FxHashMap<_, _> = files
       .into_iter()
-      .map(|(id, contents)| (id, get_syntax_data(&uris, id, &contents)))
+      .map(|(id, contents)| (id, get_syntax_data(&uris, id, contents)))
       .collect();
     get_all_semantic_data(uris, syntax_data)
   }
@@ -82,19 +82,23 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
 
-fn get_syntax_data(uris: &UriDb, id: UriId, contents: &str) -> SyntaxData {
-  let lexed = lex::get(contents);
+fn get_syntax_data(uris: &UriDb, id: UriId, contents: String) -> SyntaxData {
+  let lexed = lex::get(&contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root.clone());
   let uses = uses::get(&uris, id, lexed.uses);
+  let positions = PositionDb::new(&contents);
+  // satisfy borrowck
+  let lexed_errors = lexed.errors;
   SyntaxData {
-    positions: PositionDb::new(contents),
+    contents,
+    positions,
     ast_root: parsed.root,
     hir_root: lowered.root,
     ptrs: lowered.ptrs,
     uses: uses.uses,
     errors: SyntaxErrors {
-      lex: lexed.errors,
+      lex: lexed_errors,
       uses: uses.errors,
       parse: parsed.errors,
       lower: lowered.errors,
@@ -197,9 +201,13 @@ pub(crate) struct Done {
   pub(crate) semantic_data: FxHashMap<UriId, SemanticData>,
 }
 
-/// Not really 'syntax', but more in contrast to semantic info from statics.
+/// Syntax data for a file.
+///
+/// Everything in this struct is derived from either the `contents` alone or
+/// that and the global `UriDb`.
 #[derive(Debug)]
 pub(crate) struct SyntaxData {
+  pub(crate) contents: String,
   pub(crate) positions: PositionDb,
   pub(crate) ast_root: AstRoot,
   pub(crate) hir_root: hir::Root,
