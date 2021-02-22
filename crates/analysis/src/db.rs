@@ -28,7 +28,7 @@ impl Db {
   /// Returns a new `Db` for the given files.
   pub fn new<I>(files: I) -> Self
   where
-    I: Iterator<Item = (Uri, String)>,
+    I: IntoIterator<Item = (Uri, String)>,
   {
     // assign file IDs.
     let mut uris = UriDb::default();
@@ -52,7 +52,7 @@ impl Db {
   /// The file must already be in the `Db`.
   pub fn edit_file<I>(&mut self, uri: &Uri, edits: I)
   where
-    I: Iterator<Item = Edit>,
+    I: IntoIterator<Item = Edit>,
   {
     let uris = std::mem::take(&mut self.uris);
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
@@ -82,7 +82,7 @@ impl Db {
   /// The files may or may not be in the `Db`.
   pub fn update_files<I>(&mut self, updates: I)
   where
-    I: Iterator<Item = Update>,
+    I: IntoIterator<Item = Update>,
   {
     let mut uris = std::mem::take(&mut self.uris);
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
