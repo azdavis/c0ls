@@ -9,7 +9,7 @@ pub use event_parse;
 pub use kind::*;
 pub use rowan;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Use {
   pub kind: UseKind,
   pub range: rowan::TextRange,

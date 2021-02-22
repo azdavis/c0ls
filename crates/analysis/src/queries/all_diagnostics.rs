@@ -38,7 +38,13 @@ fn get_diagnostics(
   tys: &TyDb,
 ) -> Vec<Diagnostic> {
   get_syntax_diagnostics(syntax_data)
-    .chain(semantic_data.errors.iter().map(|x| {
+    .chain(
+      semantic_data
+        .uses_errors
+        .iter()
+        .map(|x| (x.range, x.kind.to_string())),
+    )
+    .chain(semantic_data.statics_errors.iter().map(|x| {
       let range =
         get_text_range(&syntax_data.ptrs, &syntax_data.ast_root, x.id);
       (range, x.kind.display(tys).to_string())
@@ -78,14 +84,13 @@ fn get_syntax_diagnostics(
   sd: &SyntaxData,
 ) -> impl Iterator<Item = (TextRange, String)> + '_ {
   let lex = sd.errors.lex.iter().map(|x| (x.range, x.kind.to_string()));
-  let uses = sd.errors.uses.iter().map(|x| (x.range, x.kind.to_string()));
   let parse = sd
     .errors
     .parse
     .iter()
     .map(|x| (x.range, x.expected.to_string()));
   let lower = sd.errors.lower.iter().map(|x| (x.range, x.to_string()));
-  lex.chain(uses).chain(parse).chain(lower)
+  lex.chain(parse).chain(lower)
 }
 
 fn get_text_range(ptrs: &Ptrs, ast_root: &Root, id: Id) -> TextRange {

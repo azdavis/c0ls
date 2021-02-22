@@ -13,7 +13,7 @@ use syntax::SyntaxNode;
 use text_pos::{Position, PositionDb};
 use topo_sort::Graph;
 use uri_db::{Uri, UriDb, UriId};
-use uses::{Use, UseKind};
+use uses::UseKind;
 
 /// A database of C0 files, which can be queried for interesting facts.
 #[derive(Debug)]
@@ -30,19 +30,10 @@ impl Db {
   where
     I: IntoIterator<Item = (Uri, String)>,
   {
-    // assign file IDs.
     let mut uris = UriDb::default();
-    let files: FxHashMap<_, _> = files
-      .into_iter()
-      .map(|(uri, contents)| {
-        let id = uris.insert(uri);
-        (id, contents)
-      })
-      .collect();
-    // get syntax data for each file.
     let syntax_data: FxHashMap<_, _> = files
       .into_iter()
-      .map(|(id, contents)| (id, get_syntax_data(&uris, id, contents)))
+      .map(|(uri, contents)| (uris.insert(uri), get_syntax_data(contents)))
       .collect();
     get_all_semantic_data(uris, syntax_data)
   }
@@ -57,7 +48,7 @@ impl Db {
     let uris = std::mem::take(&mut self.uris);
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
     let id = uris.get_id(uri).expect("no ID for URI in edit_file");
-    let mut sd = syntax_data.remove(&id).unwrap();
+    let sd = syntax_data.remove(&id).unwrap();
     let mut positions = sd.positions;
     let mut contents = sd.contents;
     for edit in edits {
@@ -72,8 +63,7 @@ impl Db {
       // TODO could only invalidate `positions` based on the range of the edits
       positions = PositionDb::new(&contents);
     }
-    sd = get_syntax_data(&uris, id, contents);
-    assert!(syntax_data.insert(id, sd).is_none());
+    assert!(syntax_data.insert(id, get_syntax_data(contents)).is_none());
     *self = get_all_semantic_data(uris, syntax_data)
   }
 
@@ -86,12 +76,11 @@ impl Db {
   {
     let mut uris = std::mem::take(&mut self.uris);
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
-    let mut new_contents = FxHashMap::default();
     for update in updates {
       match update {
         Update::Create(uri, contents) => {
           let id = uris.insert(uri);
-          new_contents.insert(id, contents);
+          syntax_data.insert(id, get_syntax_data(contents));
         }
         Update::Delete(uri) => {
           // can't delete from the `UriDb`.
@@ -99,11 +88,6 @@ impl Db {
           assert!(syntax_data.remove(&id).is_some());
         }
       }
-    }
-    // do these all after getting all the new `UriId`s.
-    for (id, contents) in new_contents {
-      let sd = get_syntax_data(&uris, id, contents);
-      syntax_data.insert(id, sd);
     }
     *self = get_all_semantic_data(uris, syntax_data)
   }
@@ -145,24 +129,23 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
   FxHashMap::with_capacity_and_hasher(cap, BuildHasherDefault::default())
 }
 
-fn get_syntax_data(uris: &UriDb, id: UriId, contents: String) -> SyntaxData {
+fn get_syntax_data(contents: String) -> SyntaxData {
   let lexed = lex::get(&contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root.clone());
-  let uses = uses::get(&uris, id, lexed.uses);
   let positions = PositionDb::new(&contents);
   // satisfy borrowck
+  let lexed_uses = lexed.uses;
   let lexed_errors = lexed.errors;
   SyntaxData {
     contents,
     positions,
     ast_root: parsed.root,
     hir_root: lowered.root,
+    uses: lexed_uses,
     ptrs: lowered.ptrs,
-    uses: uses.uses,
     errors: SyntaxErrors {
       lex: lexed_errors,
-      uses: uses.errors,
       parse: parsed.errors,
       lower: lowered.errors,
     },
@@ -173,12 +156,18 @@ fn get_all_semantic_data(
   uris: UriDb,
   syntax_data: FxHashMap<UriId, SyntaxData>,
 ) -> Db {
+  let mut uses = map_with_capacity(syntax_data.len());
+  let mut uses_errors = map_with_capacity(syntax_data.len());
+  for (&id, sd) in syntax_data.iter() {
+    let us = uses::get(&uris, id, sd.uses.clone());
+    assert!(uses.insert(id, us.uses).is_none());
+    assert!(uses_errors.insert(id, us.errors).is_none());
+  }
   // determine a topo ordering of the file dependencies.
   let graph: Graph<_> = syntax_data
-    .iter()
-    .map(|(&id, sd)| {
-      let neighbors = sd
-        .uses
+    .keys()
+    .map(|&id| {
+      let neighbors = uses[&id]
         .iter()
         .filter_map(|u| match u.kind {
           UseKind::File(id) => Some(id),
@@ -210,7 +199,7 @@ fn get_all_semantic_data(
     map_with_capacity::<UriId, SemanticData>(syntax_data.len());
   for &id in ordering.iter() {
     let mut import = Import::with_main();
-    for u in syntax_data[&id].uses.iter() {
+    for u in uses[&id].iter() {
       let (file, env) = match u.kind {
         UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
         UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
@@ -229,7 +218,8 @@ fn get_all_semantic_data(
       SemanticData {
         import,
         env,
-        errors: std::mem::take(&mut cx.errors),
+        uses_errors: uses_errors.remove(&id).unwrap(),
+        statics_errors: std::mem::take(&mut cx.errors),
       },
     );
   }
@@ -266,8 +256,7 @@ pub(crate) struct Done {
 
 /// Syntax data for a file.
 ///
-/// Everything in this struct is derived from either the `contents` alone or
-/// that and the global `UriDb`.
+/// Everything in this struct is derived from `contents`.
 #[derive(Debug)]
 pub(crate) struct SyntaxData {
   pub(crate) contents: String,
@@ -275,7 +264,7 @@ pub(crate) struct SyntaxData {
   pub(crate) ast_root: AstRoot,
   pub(crate) hir_root: hir::Root,
   pub(crate) ptrs: Ptrs,
-  pub(crate) uses: Vec<Use>,
+  pub(crate) uses: Vec<syntax::Use>,
   pub(crate) errors: SyntaxErrors,
 }
 
@@ -283,7 +272,6 @@ pub(crate) struct SyntaxData {
 #[derive(Debug)]
 pub(crate) struct SyntaxErrors {
   pub(crate) lex: Vec<lex::Error>,
-  pub(crate) uses: Vec<uses::Error>,
   pub(crate) parse: Vec<parse::Error>,
   pub(crate) lower: Vec<lower::PragmaError>,
 }
@@ -293,5 +281,6 @@ pub(crate) struct SyntaxErrors {
 pub(crate) struct SemanticData {
   pub(crate) import: Import,
   pub(crate) env: EnvWithIds,
-  pub(crate) errors: Vec<statics::Error>,
+  pub(crate) uses_errors: Vec<uses::Error>,
+  pub(crate) statics_errors: Vec<statics::Error>,
 }
