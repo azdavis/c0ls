@@ -1,4 +1,5 @@
 mod support;
+mod other;
 
 use support::{check, check_many};
 
