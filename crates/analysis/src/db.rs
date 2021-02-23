@@ -86,7 +86,6 @@ impl Db {
           syntax_data.insert(id, get_syntax_data(contents));
         }
         Update::Delete(uri) => {
-          // can't delete from the `UriDb`.
           let id = uris.remove(&uri).expect("delete when wasn't present");
           assert!(syntax_data.remove(&id).is_some());
         }
