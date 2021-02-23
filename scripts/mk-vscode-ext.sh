@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 cd ..
 
 vscode='extensions/vscode'
-cargo build
+cargo build -p c0ls
 mkdir -p "$vscode/out"
 cp target/debug/c0ls "$vscode/out/c0ls"
 cd "$vscode"
