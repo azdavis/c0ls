@@ -49,19 +49,22 @@ impl Db {
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
     let id = uris.get_id(uri).expect("no ID for URI in edit_file");
     let sd = syntax_data.remove(&id).unwrap();
-    let mut positions = sd.positions;
+    let mut positions = Some(sd.positions);
     let mut contents = sd.contents;
     for edit in edits {
       match edit.range {
         None => contents = edit.text,
         Some(range) => {
-          let text_range = positions.text_range(range);
+          // TODO could only invalidate `positions` based on the range of the
+          // edits
+          let text_range = positions
+            .unwrap_or_else(|| PositionDb::new(&contents))
+            .text_range(range);
           let range = std::ops::Range::<usize>::from(text_range);
           contents.replace_range(range, &edit.text);
         }
       }
-      // TODO could only invalidate `positions` based on the range of the edits
-      positions = PositionDb::new(&contents);
+      positions = None;
     }
     assert!(syntax_data.insert(id, get_syntax_data(contents)).is_none());
     *self = get_all_semantic_data(uris, syntax_data)
