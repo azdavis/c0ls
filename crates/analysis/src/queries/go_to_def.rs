@@ -1,15 +1,15 @@
-use crate::db::{Db, SemanticData};
+use crate::db::Db;
 use crate::types::Location;
 use crate::util::get_token;
 use lower::AstPtr;
 use rustc_hash::FxHashMap;
-use statics::{InFile, TyData};
+use statics::{ItemData, TyData};
 use syntax::ast::{
   Cast as _, Expr, Param, Simp, SimpOpt, SimpStmt, Syntax as _, Ty,
 };
 use syntax::{SyntaxKind, SyntaxToken};
 use text_pos::Position;
-use uri_db::{Uri, UriId};
+use uri_db::Uri;
 
 pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
   let done = db.kind.done()?;
@@ -48,21 +48,15 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
           range: syntax_data.positions.range(node.text_range()),
         })
       }
-      hir::Expr::Call(ref name, _) => get_item_loc(
-        db,
-        &semantic_data.import.fns,
-        &semantic_data.env.env.fns,
-        id,
-        name,
-        |item| match *item {
-          hir::Item::Fn(ref the_name, _, _, _) => the_name == name,
-          _ => false,
-        },
-      ),
+      hir::Expr::Call(ref name, _) => {
+        get_item_loc(db, &semantic_data.env.fns, name)
+      }
       hir::Expr::FieldGet(expr, _) => {
-        match done.cx.tys.get(semantic_data.env.env.expr_tys[expr]) {
+        match done.cx.tys.get(semantic_data.env.expr_tys[expr]) {
           TyData::None => None,
-          TyData::Struct(name) => get_struct_loc(db, semantic_data, id, name),
+          TyData::Struct(name) => {
+            get_item_loc(db, &semantic_data.env.structs, name)
+          }
           data => unreachable!("bad ty: {:?}", data),
         }
       }
@@ -71,18 +65,12 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
   } else if let Some(ty) = Ty::cast(tok.parent().into()) {
     let ty = syntax_data.ptrs.ty[&AstPtr::new(&ty)];
     match syntax_data.hir_root.arenas.ty[ty] {
-      hir::Ty::Struct(ref name) => get_struct_loc(db, semantic_data, id, name),
-      hir::Ty::Name(ref name) => get_item_loc(
-        db,
-        &semantic_data.import.type_defs,
-        &semantic_data.env.env.type_defs,
-        id,
-        name,
-        |item| match *item {
-          hir::Item::TypeDef(ref the_name, _) => the_name == name,
-          _ => false,
-        },
-      ),
+      hir::Ty::Struct(ref name) => {
+        get_item_loc(db, &semantic_data.env.structs, name)
+      }
+      hir::Ty::Name(ref name) => {
+        get_item_loc(db, &semantic_data.env.type_defs, name)
+      }
       _ => None,
     }
   } else {
@@ -98,51 +86,17 @@ fn simp_def(simp: Simp) -> Option<SyntaxToken> {
   }
 }
 
-fn get_struct_loc(
+fn get_item_loc<T>(
   db: &Db,
-  semantic_data: &SemanticData,
-  id: UriId,
+  items: &FxHashMap<hir::Name, ItemData<T>>,
   name: &hir::Name,
 ) -> Option<Location> {
-  get_item_loc(
-    db,
-    &semantic_data.import.structs,
-    &semantic_data.env.env.structs,
-    id,
-    name,
-    |item| match *item {
-      hir::Item::Struct(ref the_name, _) => the_name == name,
-      _ => false,
-    },
-  )
-}
-
-fn get_item_loc<IT, ET, F>(
-  db: &Db,
-  import_items: &FxHashMap<hir::Name, InFile<IT>>,
-  env_items: &FxHashMap<hir::Name, ET>,
-  id: UriId,
-  name: &hir::Name,
-  f: F,
-) -> Option<Location>
-where
-  F: Fn(&hir::Item) -> bool,
-{
-  let def_uri_id = import_items
-    .get(name)
-    .and_then(|x| x.file().uri())
-    .or_else(|| env_items.contains_key(name).then(|| id))?;
-  let def_syntax_data = &db.syntax_data[&def_uri_id];
-  let item_id = *def_syntax_data
-    .hir_root
-    .items
-    .iter()
-    .rev()
-    .find(|&&id| f(&def_syntax_data.hir_root.arenas.item[id]))?;
+  let (uri, item) = items.get(name)?.id()?;
+  let def_syntax_data = &db.syntax_data[&uri];
   Some(Location {
-    uri: db.uris[def_uri_id].clone(),
+    uri: db.uris[uri].clone(),
     range: def_syntax_data.positions.range(
-      def_syntax_data.ptrs.item_back[item_id]
+      def_syntax_data.ptrs.item_back[item]
         .to_node(def_syntax_data.ast_root.syntax().clone())
         .syntax()
         .text_range(),

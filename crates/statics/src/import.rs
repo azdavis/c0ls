@@ -1,6 +1,6 @@
 use crate::util::error::ErrorKind;
 use crate::util::ty::Ty;
-use crate::util::types::{Cx, Env, FileId, Import};
+use crate::util::types::{Cx, Env};
 use crate::util::unify_impl;
 
 /// TODO this has not great error message IDs (which determine the locations of
@@ -8,46 +8,42 @@ use crate::util::unify_impl;
 pub fn add_env(
   cx: &mut Cx,
   errors: &mut Vec<ErrorKind>,
-  import: &mut Import,
+  import: &mut Env,
   env: &Env,
-  file: FileId,
 ) {
-  for (name, data) in env.fns.iter() {
-    let mut sig = data.sig.clone();
+  for (name, sig) in env.fns.iter() {
+    let mut sig = sig.clone();
     if let Some(old_sig) = import.fns.get(name) {
       let old_sig = old_sig.val();
       let want_len = old_sig.params.len();
-      let got_len = sig.params.len();
+      let got_len = sig.val().params.len();
       if want_len != got_len {
         errors.push(ErrorKind::MismatchedNumParams(want_len, got_len));
       }
-      let params_iter = old_sig.params.iter().zip(sig.params.iter());
+      let params_iter = old_sig.params.iter().zip(sig.val().params.iter());
       for (old, new) in params_iter {
         unify(cx, errors, old.ty, new.ty);
       }
-      sig.ret_ty = unify(cx, errors, old_sig.ret_ty, sig.ret_ty);
-      sig.should_define = sig.should_define && old_sig.should_define;
-      if sig.is_defined && old_sig.is_defined {
+      sig.val_mut().ret_ty =
+        unify(cx, errors, old_sig.ret_ty, sig.val().ret_ty);
+      sig.val_mut().should_define =
+        sig.val().should_define && old_sig.should_define;
+      if sig.val().is_defined && old_sig.is_defined {
         errors.push(ErrorKind::Duplicate(name.clone()));
       }
-      if !sig.should_define && sig.is_defined {
+      if !sig.val().should_define && sig.val().is_defined {
         errors.push(ErrorKind::CannotDefnFn)
       }
     }
-    import.fns.insert(name.clone(), file.wrap(sig));
+    import.fns.insert(name.clone(), sig);
   }
   for (name, sig) in env.structs.iter() {
-    let val = file.wrap(sig.clone());
-    if import.structs.insert(name.clone(), val).is_some() {
+    if import.structs.insert(name.clone(), sig.clone()).is_some() {
       errors.push(ErrorKind::Duplicate(name.clone()));
     }
   }
   for (name, &ty) in env.type_defs.iter() {
-    if import
-      .type_defs
-      .insert(name.clone(), file.wrap(ty))
-      .is_some()
-    {
+    if import.type_defs.insert(name.clone(), ty).is_some() {
       errors.push(ErrorKind::Duplicate(name.clone()));
     }
   }

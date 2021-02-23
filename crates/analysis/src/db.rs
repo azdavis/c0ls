@@ -6,7 +6,7 @@ use crate::queries::{all_diagnostics, go_to_def, hover};
 use crate::types::{Diagnostic, Edit, Hover, Location, Update};
 use lower::Ptrs;
 use rustc_hash::FxHashMap;
-use statics::{Cx, EnvWithIds, FileId, Import};
+use statics::{Cx, Env, FileId};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Root as AstRoot, Syntax as _};
 use syntax::rowan::TextRange;
@@ -201,15 +201,15 @@ fn get_all_semantic_data(
   let mut semantic_data =
     map_with_capacity::<UriId, SemanticData>(syntax_data.len());
   for &id in ordering.iter() {
-    let mut import = Import::with_main();
+    let mut import = Env::with_main();
     let mut import_errors = Vec::new();
     for u in uses[&id].iter() {
-      let (file, env) = match u.kind {
-        UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
-        UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
+      let env = match u.kind {
+        UseKind::File(id) => &semantic_data[&id].env,
+        UseKind::Lib(lib) => std_lib.get(lib),
       };
       let mut errors = Vec::new();
-      statics::add_env(&mut cx, &mut errors, &mut import, &env.env, file);
+      statics::add_env(&mut cx, &mut errors, &mut import, env);
       import_errors.extend(errors.into_iter().map(|kind| ImportError {
         range: u.range,
         kind,
@@ -217,15 +217,18 @@ fn get_all_semantic_data(
     }
     // we used to store this directly in the id itself, but that's a bit of a
     // pain. could go back to doing that as a micro-optimization.
-    let should_define = std::path::Path::new(uris[id].path())
+    let is_header = std::path::Path::new(uris[id].path())
       .extension()
-      .map_or(true, |x| x != "h0");
-    let env =
-      statics::get(&mut cx, &import, should_define, &syntax_data[&id].hir_root);
+      .map_or(true, |x| x == "h0");
+    let file = if is_header {
+      FileId::Header(id)
+    } else {
+      FileId::Source(id)
+    };
+    let env = statics::get(&mut cx, import, file, &syntax_data[&id].hir_root);
     semantic_data.insert(
       id,
       SemanticData {
-        import,
         env,
         uses_errors: uses_errors.remove(&id).unwrap(),
         import_errors,
@@ -289,8 +292,7 @@ pub(crate) struct SyntaxErrors {
 /// Semantic data about a file.
 #[derive(Debug)]
 pub(crate) struct SemanticData {
-  pub(crate) import: Import,
-  pub(crate) env: EnvWithIds,
+  pub(crate) env: Env,
   pub(crate) uses_errors: Vec<uses::Error>,
   pub(crate) import_errors: Vec<ImportError>,
   pub(crate) statics_errors: Vec<statics::Error>,

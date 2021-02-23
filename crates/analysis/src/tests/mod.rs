@@ -1,11 +1,10 @@
-mod support;
 mod other;
+mod support;
 
 use support::{check, check_many};
 
 #[test]
 fn transitive() {
-  // TODO environments maybe ought to contain that which they import
   check_many(&[
     ("/1.h0", include_str!("data/transitive/1.h0")),
     ("/2.h0", include_str!("data/transitive/2.h0")),

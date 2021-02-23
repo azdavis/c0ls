@@ -2,7 +2,7 @@ use crate::expr::{get as get_expr, get_name as get_name_expr};
 use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::ty::{Ty, TyData};
-use crate::util::types::{Cx, Env, FnCx, Import, InFile, VarData};
+use crate::util::types::{Cx, Env, FnCx, VarData};
 use crate::util::{no_struct, no_void, unify};
 use hir::{Arenas, AssignOp, Expr, ExprId, Name, Simp, SimpId, UnOp};
 
@@ -30,7 +30,7 @@ pub(crate) fn get<'a>(
           Ty::Int
         }
       };
-      match get_lv(fn_cx.import, fn_cx.arenas, lhs) {
+      match get_lv(fn_cx.arenas, lhs) {
         Some(Lv::Name(name)) => {
           if matches!(op, AssignOp::Eq) {
             if let Some(data) = fn_cx.vars.get_mut(name) {
@@ -46,14 +46,14 @@ pub(crate) fn get<'a>(
       unify(cx, want_lhs_ty, lhs_ty, lhs);
     }
     Simp::IncDec(expr, inc_dec) => {
-      if get_lv(fn_cx.import, fn_cx.arenas, expr).is_none() {
+      if get_lv(fn_cx.arenas, expr).is_none() {
         cx.err(expr, ErrorKind::CannotIncDec(inc_dec));
       }
       let ty = get_expr(cx, env, fn_cx, expr);
       unify(cx, Ty::Int, ty, expr);
     }
     Simp::Decl(ref name, ty, expr) => {
-      let got_ty = get_ty(fn_cx.import, fn_cx.arenas, cx, env, ty);
+      let got_ty = get_ty(fn_cx.arenas, cx, env, ty);
       let init = match expr {
         None => false,
         Some(expr) => {
@@ -66,8 +66,7 @@ pub(crate) fn get<'a>(
       no_struct(cx, got_ty, ty);
       let data = VarData { ty: got_ty, init };
       let dup = fn_cx.vars.insert(name.clone(), data).is_some()
-        || env.type_defs.contains_key(name)
-        || fn_cx.import.type_defs.contains_key(name);
+        || env.type_defs.contains_key(name);
       if dup {
         cx.err(simp, ErrorKind::Duplicate(name.clone()));
       }
@@ -79,10 +78,7 @@ pub(crate) fn get<'a>(
     }
     // hacky. using `simp` as the ID for the error is not great.
     Simp::Ambiguous(ref lhs, ref rhs) => {
-      let ty = env
-        .type_defs
-        .get(lhs)
-        .or_else(|| fn_cx.import.type_defs.get(lhs).map(InFile::val));
+      let ty = env.type_defs.get(lhs);
       match ty {
         // multiplication.
         None => {
@@ -92,14 +88,13 @@ pub(crate) fn get<'a>(
           unify(cx, Ty::Int, rhs_ty, simp);
         }
         // declaration. largely duplicated from Simp::Decl.
-        Some(&ty) => {
-          let ty = cx.tys.mk(TyData::Ptr(ty));
+        Some(ty) => {
+          let ty = cx.tys.mk(TyData::Ptr(*ty.val()));
           no_void(cx, ty, simp);
           no_struct(cx, ty, simp);
           let data = VarData { ty, init: false };
           let dup = fn_cx.vars.insert(rhs.clone(), data).is_some()
-            || env.type_defs.contains_key(rhs)
-            || fn_cx.import.type_defs.contains_key(rhs);
+            || env.type_defs.contains_key(rhs);
           if dup {
             cx.err(simp, ErrorKind::Duplicate(rhs.clone()));
           }
@@ -116,19 +111,15 @@ enum Lv<'a> {
   Other,
 }
 
-fn get_lv<'a>(
-  import: &Import,
-  arenas: &'a Arenas,
-  expr: ExprId,
-) -> Option<Lv<'a>> {
+fn get_lv(arenas: &Arenas, expr: ExprId) -> Option<Lv<'_>> {
   match arenas.expr[expr] {
     Expr::Name(ref name) => Some(Lv::Name(name)),
     Expr::UnOp(op, expr) => match op {
       UnOp::Not | UnOp::BitNot | UnOp::Neg => None,
-      UnOp::Deref => get_lv(import, arenas, expr).map(|_| Lv::Other),
+      UnOp::Deref => get_lv(arenas, expr).map(|_| Lv::Other),
     },
     Expr::FieldGet(expr, _) | Expr::Subscript(expr, _) => {
-      get_lv(import, arenas, expr).map(|_| Lv::Other)
+      get_lv(arenas, expr).map(|_| Lv::Other)
     }
     Expr::None
     | Expr::Int

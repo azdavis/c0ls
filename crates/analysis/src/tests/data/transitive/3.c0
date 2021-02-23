@@ -2,5 +2,4 @@
 
 int bar() {
   return foo();
-//       ^^^^^ error: undefined function `foo`
 }

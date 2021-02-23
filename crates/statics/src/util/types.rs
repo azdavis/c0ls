@@ -8,38 +8,36 @@ use uri_db::UriId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FileId {
-  /// Not a real file the user wrote, just the standard library.
   StdLib,
-  /// A real file that exists at a URI.
-  Uri(UriId),
+  Source(UriId),
+  Header(UriId),
 }
 
-impl FileId {
-  pub fn wrap<T>(self, val: T) -> InFile<T> {
-    InFile { file: self, val }
-  }
-
-  pub fn uri(&self) -> Option<UriId> {
-    match *self {
-      Self::StdLib => None,
-      Self::Uri(uri) => Some(uri),
-    }
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct InFile<T> {
-  file: FileId,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ItemData<T> {
+  id: Option<(UriId, ItemId)>,
   val: T,
 }
 
-impl<T> InFile<T> {
-  pub fn file(&self) -> FileId {
-    self.file
+impl<T> ItemData<T> {
+  pub(crate) fn new(file: FileId, item: ItemId, val: T) -> Self {
+    let id = match file {
+      FileId::StdLib => None,
+      FileId::Source(uri) | FileId::Header(uri) => Some((uri, item)),
+    };
+    Self { id, val }
+  }
+
+  pub fn id(&self) -> Option<(UriId, ItemId)> {
+    self.id
   }
 
   pub fn val(&self) -> &T {
     &self.val
+  }
+
+  pub fn val_mut(&mut self) -> &mut T {
+    &mut self.val
   }
 }
 
@@ -111,30 +109,6 @@ impl fmt::Display for ParamDisplay<'_> {
   }
 }
 
-#[derive(Debug, Default)]
-pub struct Import {
-  pub fns: FxHashMap<Name, InFile<FnSig>>,
-  pub structs: FxHashMap<Name, InFile<NameToTy>>,
-  pub type_defs: FxHashMap<Name, InFile<Ty>>,
-}
-
-impl Import {
-  pub fn with_main() -> Self {
-    let mut ret = Self::default();
-    ret.fns.insert(
-      "main".into(),
-      // this is the only thing 'from' the std lib that can be defined.
-      FileId::StdLib.wrap(FnSig {
-        params: vec![],
-        ret_ty: Ty::Int,
-        is_defined: false,
-        should_define: true,
-      }),
-    );
-    ret
-  }
-}
-
 pub type ExprTys = ArenaMap<ExprId, Ty>;
 
 /// this is useful when resolving typedefs to display a given type, but not
@@ -142,32 +116,32 @@ pub type ExprTys = ArenaMap<ExprId, Ty>;
 /// scope
 pub type TyTys = ArenaMap<TyId, Ty>;
 
-#[derive(Debug)]
-pub struct FnData {
-  pub sig: FnSig,
-}
-
 #[derive(Debug, Default)]
 pub struct Env {
-  pub fns: FxHashMap<Name, FnData>,
-  pub structs: FxHashMap<Name, NameToTy>,
-  pub type_defs: FxHashMap<Name, Ty>,
+  pub fns: FxHashMap<Name, ItemData<FnSig>>,
+  pub structs: FxHashMap<Name, ItemData<NameToTy>>,
+  pub type_defs: FxHashMap<Name, ItemData<Ty>>,
   pub expr_tys: ExprTys,
   pub ty_tys: TyTys,
 }
 
-#[derive(Debug, Default)]
-pub struct EnvIds {
-  pub fns: FxHashMap<Name, ItemId>,
-  pub structs: FxHashMap<Name, ItemId>,
-  pub type_defs: FxHashMap<Name, ItemId>,
-}
-
-/// TODO not great. this and [`EnvIds`] are only used for imports.
-#[derive(Debug, Default)]
-pub struct EnvWithIds {
-  pub env: Env,
-  pub ids: EnvIds,
+impl Env {
+  pub fn with_main() -> Self {
+    let mut ret = Self::default();
+    ret.fns.insert(
+      "main".into(),
+      ItemData {
+        id: None,
+        val: FnSig {
+          params: vec![],
+          ret_ty: Ty::Int,
+          is_defined: false,
+          should_define: true,
+        },
+      },
+    );
+    ret
+  }
 }
 
 #[derive(Debug, Default)]
@@ -194,7 +168,6 @@ impl Cx {
 }
 
 pub(crate) struct FnCx<'a> {
-  pub import: &'a Import,
   pub arenas: &'a Arenas,
   pub vars: Vars,
   pub ret_ty: Ty,

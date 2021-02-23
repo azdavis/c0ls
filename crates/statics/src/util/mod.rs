@@ -6,7 +6,7 @@ pub(crate) mod types;
 use error::ErrorKind;
 use id::Id;
 use ty::{Ty, TyData, TyDb};
-use types::{Cx, Env, Import};
+use types::{Cx, Env};
 
 pub(crate) fn unify<I: Into<Id>>(cx: &mut Cx, want: Ty, got: Ty, id: I) -> Ty {
   match unify_impl(&mut cx.tys, want, got) {
@@ -54,14 +54,13 @@ pub(crate) fn no_struct<I: Into<Id>>(cx: &mut Cx, ty: Ty, id: I) {
 
 pub(crate) fn no_unsized<I: Into<Id> + Copy>(
   cx: &mut Cx,
-  import: &Import,
   env: &Env,
   ty: Ty,
   id: I,
 ) {
   no_void(cx, ty, id);
   if let TyData::Struct(name) = cx.tys.get(ty) {
-    if !import.structs.contains_key(name) && !env.structs.contains_key(name) {
+    if !env.structs.contains_key(name) {
       let name = name.clone();
       cx.err(id, ErrorKind::UndefinedStruct(name));
     }

@@ -2,7 +2,7 @@ use crate::ty::get as get_ty;
 use crate::util::error::ErrorKind;
 use crate::util::id::Id;
 use crate::util::ty::{Ty, TyData};
-use crate::util::types::{Cx, Env, FnCx, InFile, Vars};
+use crate::util::types::{Cx, Env, FnCx, ItemData, Vars};
 use crate::util::{no_struct, no_unsized, no_void, unify, unify_impl};
 use hir::{BinOp, Expr, ExprId, Name, UnOp};
 
@@ -91,11 +91,7 @@ pub(crate) fn get(
       if let Some(data) = fn_cx.vars.get(name) {
         cx.err(expr, ErrorKind::CallNonFnTy(data.ty));
       }
-      let sig = env
-        .fns
-        .get(name)
-        .map(|x| &x.sig)
-        .or_else(|| fn_cx.import.fns.get(name).map(InFile::val));
+      let sig = env.fns.get(name).map(ItemData::val);
       match sig {
         Some(sig) => {
           let want_len = sig.params.len();
@@ -119,10 +115,7 @@ pub(crate) fn get(
       match cx.tys.get(ty) {
         TyData::None => {}
         TyData::Struct(name) => {
-          let sig = env
-            .structs
-            .get(name)
-            .or_else(|| fn_cx.import.structs.get(name).map(InFile::val));
+          let sig = env.structs.get(name).map(ItemData::val);
           match sig {
             None => {
               let name = name.clone();
@@ -152,13 +145,13 @@ pub(crate) fn get(
       }
     }
     Expr::Alloc(ty) => {
-      let got_ty = get_ty(fn_cx.import, fn_cx.arenas, cx, env, ty);
-      no_unsized(cx, fn_cx.import, env, got_ty, ty);
+      let got_ty = get_ty(fn_cx.arenas, cx, env, ty);
+      no_unsized(cx, env, got_ty, ty);
       cx.tys.mk(TyData::Ptr(got_ty))
     }
     Expr::AllocArray(ty, len) => {
-      let got_ty = get_ty(fn_cx.import, fn_cx.arenas, cx, env, ty);
-      no_unsized(cx, fn_cx.import, env, got_ty, ty);
+      let got_ty = get_ty(fn_cx.arenas, cx, env, ty);
+      no_unsized(cx, env, got_ty, ty);
       let len_ty = get(cx, env, fn_cx, len);
       unify(cx, Ty::Int, len_ty, len);
       cx.tys.mk(TyData::Array(got_ty))

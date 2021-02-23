@@ -2,7 +2,6 @@ use crate::db::Db;
 use crate::types::{CodeBlock, Hover};
 use crate::util::get_token;
 use lower::AstPtr;
-use statics::InFile;
 use syntax::ast::{Cast as _, Expr, Syntax as _, Ty};
 use text_pos::Position;
 use uri_db::Uri;
@@ -18,15 +17,13 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
       let expr = *syntax_data.ptrs.expr.get(&AstPtr::new(&expr_node))?;
       let contents = match syntax_data.hir_root.arenas.expr[expr] {
         hir::Expr::Call(ref name, _) => semantic_data
-          .import
+          .env
           .fns
-          .get(name)
-          .map(InFile::val)
-          .or_else(|| semantic_data.env.env.fns.get(name).map(|x| &x.sig))?
+          .get(name)?
+          .val()
           .display(name, &done.cx.tys)
           .to_string(),
         _ => semantic_data
-          .env
           .env
           .expr_tys
           .get(expr)?
@@ -43,7 +40,6 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
       return Some(Hover {
         contents: CodeBlock::new(
           semantic_data
-            .env
             .env
             .ty_tys
             .get(ty)?

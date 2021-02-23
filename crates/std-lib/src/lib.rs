@@ -4,25 +4,25 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use statics::{Cx, EnvWithIds, Import};
+use statics::{Cx, Env, FileId};
 use std::str::FromStr;
 
 /// The standard libraries.
 #[derive(Debug)]
 pub struct StdLib {
-  args: EnvWithIds,
-  conio: EnvWithIds,
-  file: EnvWithIds,
-  img: EnvWithIds,
-  parse: EnvWithIds,
-  rand: EnvWithIds,
-  string: EnvWithIds,
-  util: EnvWithIds,
+  args: Env,
+  conio: Env,
+  file: Env,
+  img: Env,
+  parse: Env,
+  rand: Env,
+  string: Env,
+  util: Env,
 }
 
 impl StdLib {
   /// Returns the environment of the given library.
-  pub fn get(&self, lib: Lib) -> &EnvWithIds {
+  pub fn get(&self, lib: Lib) -> &Env {
     match lib {
       Lib::Args => &self.args,
       Lib::Conio => &self.conio,
@@ -85,11 +85,11 @@ pub fn get() -> (Cx, StdLib) {
   (cx, std_lib)
 }
 
-fn get_one(cx: &mut Cx, contents: &str) -> EnvWithIds {
+fn get_one(cx: &mut Cx, contents: &str) -> Env {
   let lexed = lex::get(contents);
   let parsed = parse::get(lexed.tokens);
   let lowered = lower::get(parsed.root);
-  let ret = statics::get(cx, &Import::default(), false, &lowered.root);
+  let ret = statics::get(cx, Env::default(), FileId::StdLib, &lowered.root);
   assert!(lexed.errors.is_empty());
   assert!(parsed.errors.is_empty());
   assert!(lowered.errors.is_empty());
