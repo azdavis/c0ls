@@ -44,6 +44,12 @@ fn get_diagnostics(
         .iter()
         .map(|x| (x.range, x.kind.to_string())),
     )
+    .chain(
+      semantic_data
+        .import_errors
+        .iter()
+        .map(|x| (x.range, x.kind.display(tys).to_string())),
+    )
     .chain(semantic_data.statics_errors.iter().map(|x| {
       let range =
         get_text_range(&syntax_data.ptrs, &syntax_data.ast_root, x.id);

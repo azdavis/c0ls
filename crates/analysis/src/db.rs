@@ -9,6 +9,7 @@ use rustc_hash::FxHashMap;
 use statics::{Cx, EnvWithIds, FileId, Import};
 use std::hash::BuildHasherDefault;
 use syntax::ast::{Root as AstRoot, Syntax as _};
+use syntax::rowan::TextRange;
 use syntax::SyntaxNode;
 use text_pos::{Position, PositionDb};
 use topo_sort::Graph;
@@ -201,12 +202,18 @@ fn get_all_semantic_data(
     map_with_capacity::<UriId, SemanticData>(syntax_data.len());
   for &id in ordering.iter() {
     let mut import = Import::with_main();
+    let mut import_errors = Vec::new();
     for u in uses[&id].iter() {
       let (file, env) = match u.kind {
         UseKind::File(id) => (FileId::Uri(id), &semantic_data[&id].env),
         UseKind::Lib(lib) => (FileId::StdLib, std_lib.get(lib)),
       };
-      statics::add_env(&mut cx, &mut import, env, file);
+      let mut errors = Vec::new();
+      statics::add_env(&mut cx, &mut errors, &mut import, &env.env, file);
+      import_errors.extend(errors.into_iter().map(|kind| ImportError {
+        range: u.range,
+        kind,
+      }));
     }
     // we used to store this directly in the id itself, but that's a bit of a
     // pain. could go back to doing that as a micro-optimization.
@@ -221,6 +228,7 @@ fn get_all_semantic_data(
         import,
         env,
         uses_errors: uses_errors.remove(&id).unwrap(),
+        import_errors,
         statics_errors: std::mem::take(&mut cx.errors),
       },
     );
@@ -284,5 +292,12 @@ pub(crate) struct SemanticData {
   pub(crate) import: Import,
   pub(crate) env: EnvWithIds,
   pub(crate) uses_errors: Vec<uses::Error>,
+  pub(crate) import_errors: Vec<ImportError>,
   pub(crate) statics_errors: Vec<statics::Error>,
+}
+
+#[derive(Debug)]
+pub(crate) struct ImportError {
+  pub range: TextRange,
+  pub kind: statics::ErrorKind,
 }
