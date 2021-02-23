@@ -2,6 +2,8 @@
 
 A language server for C0.
 
+See [architecture.md](docs/architecture.md) for more information.
+
 ## Setup
 
 ### Install the dependencies
