@@ -104,6 +104,11 @@ fn undefined() {
 }
 
 #[test]
+fn unreachable() {
+  check(include_str!("data/unreachable.c0"))
+}
+
+#[test]
 fn use_lib() {
   check(include_str!("data/use_lib.c0"))
 }

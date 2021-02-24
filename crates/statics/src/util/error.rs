@@ -37,6 +37,7 @@ pub enum ErrorKind {
   UndefinedTypeDef(Name),
   UndefinedVar(Name),
   UninitializedVar(Name),
+  Unreachable,
 }
 
 impl ErrorKind {
@@ -146,6 +147,7 @@ impl fmt::Display for ErrorKindDisplay<'_> {
       ErrorKind::UninitializedVar(name) => {
         write!(f, "uninitialized variable `{}`", name)
       }
+      ErrorKind::Unreachable => write!(f, "unreachable code"),
     }
   }
 }

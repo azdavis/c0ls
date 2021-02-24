@@ -1,0 +1,28 @@
+void foo() {
+  int i = 0;
+  while (i < 5) {
+    i++;
+    if (i == 0) {
+      break;
+      i++;
+//    ^^^^ error: unreachable
+      i++;
+    }
+    if (i == 1) {
+      continue;
+      i++;
+//    ^^^^ error: unreachable
+      i++;
+    }
+    if (i == 2) {
+      return;
+      i++;
+//    ^^^^ error: unreachable
+      i++;
+    }
+  }
+  return;
+  i++;
+//^^^^ error: unreachable
+  i++;
+}

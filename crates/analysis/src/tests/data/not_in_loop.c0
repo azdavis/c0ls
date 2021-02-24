@@ -1,4 +1,4 @@
-int foo() {
+int good() {
   int i = 0;
   while (i < 3) {
     i++;
@@ -14,9 +14,15 @@ int foo() {
   for (i = 0; i < 4; i++) {
     continue;
   }
+  return i;
+}
+
+void bad_break() {
   break;
 //^^^^^^ error: cannot use this statement outside of a loop
+}
+
+void bad_continue() {
   continue;
 //^^^^^^^^^ error: cannot use this statement outside of a loop
-  return 3;
 }

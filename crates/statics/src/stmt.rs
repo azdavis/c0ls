@@ -85,15 +85,19 @@ pub(crate) fn get(
     }
     Stmt::Block(ref stmts) => {
       let vars = fn_cx.vars.clone();
-      let mut ret = false;
+      let mut ret = BlockRet::No;
       for &stmt in stmts {
-        if get(cx, env, fn_cx, in_loop, stmt) {
-          ret = true;
+        if matches!(ret, BlockRet::Yes) {
+          cx.err(stmt, ErrorKind::Unreachable);
+          ret = BlockRet::YesWithUnreachable;
+        }
+        if get(cx, env, fn_cx, in_loop, stmt) && matches!(ret, BlockRet::No) {
+          ret = BlockRet::Yes;
         }
       }
       let block_vars = std::mem::replace(&mut fn_cx.vars, vars);
       initialize(&mut fn_cx.vars, |name| block_vars[name].init);
-      ret
+      matches!(ret, BlockRet::Yes | BlockRet::YesWithUnreachable)
     }
     Stmt::Assert(expr) | Stmt::Error(expr) => {
       let ty = get_expr(cx, env, fn_cx, expr);
@@ -108,6 +112,12 @@ pub(crate) fn get(
       true
     }
   }
+}
+
+enum BlockRet {
+  No,
+  Yes,
+  YesWithUnreachable,
 }
 
 /// it used to be we would assert that if `data.init`, then `f(name)`. this was
