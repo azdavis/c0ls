@@ -53,7 +53,7 @@
     },
     "controlKw": {
       "name": "keyword.control.c0",
-      "match": "\\b(assert|else|error|for|if|return|while)\\b"
+      "match": "\\b(assert|break|continue|else|error|for|if|return|while)\\b"
     },
     "otherKw": {
       "name": "keyword.other.c0",
