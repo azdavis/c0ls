@@ -16,6 +16,7 @@
   },
   "main": "./out/main.js",
   "activationEvents": [
+    "onLanguage:c0",
     "workspaceContains:**/*.c0"
   ],
   "contributes": {
