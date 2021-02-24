@@ -1,6 +1,7 @@
 //! Utilities for working with identifiers in different cases.
 
 #![deny(missing_debug_implementations)]
+#![deny(missing_doc_code_examples)]
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
@@ -32,6 +33,7 @@ pub fn snake_to_pascal(s: &str) -> String {
 ///
 ///```
 /// # use identifier_case::pascal_to_snake;
+/// assert_eq!(pascal_to_snake("Hey"), "hey");
 /// assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
 /// assert_eq!(pascal_to_snake("readFile"), "read_file");
 /// assert_eq!(pascal_to_snake("GetLine"), "get_line");
