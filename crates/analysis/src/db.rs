@@ -46,10 +46,13 @@ impl Db {
   where
     I: IntoIterator<Item = Edit>,
   {
+    let id = match self.uris.get_id(uri) {
+      Some(x) => x,
+      None => return,
+    };
     let uris = std::mem::take(&mut self.uris);
     let mut syntax_data = std::mem::take(&mut self.syntax_data);
-    let id = uris.get_id(uri).expect("no ID for URI in edit_file");
-    let sd = syntax_data.remove(&id).unwrap();
+    let sd = syntax_data.remove(&id).expect("got URI but no syntax data");
     let mut positions = Some(sd.positions);
     let mut contents = sd.contents;
     for edit in edits {
@@ -86,10 +89,12 @@ impl Db {
           let id = uris.insert(uri);
           syntax_data.insert(id, get_syntax_data(contents));
         }
-        Update::Delete(uri) => {
-          let id = uris.remove(&uri).expect("delete when wasn't present");
-          assert!(syntax_data.remove(&id).is_some());
-        }
+        Update::Delete(uri) => match uris.remove(&uri) {
+          Some(id) => {
+            syntax_data.remove(&id);
+          }
+          None => continue,
+        },
       }
     }
     *self = get_all_semantic_data(uris, syntax_data)
@@ -230,7 +235,7 @@ fn get_all_semantic_data(
       id,
       SemanticData {
         env,
-        uses_errors: uses_errors.remove(&id).unwrap(),
+        uses_errors: uses_errors.remove(&id).expect("missing uses errors"),
         import_errors,
         statics_errors: std::mem::take(&mut cx.errors),
       },

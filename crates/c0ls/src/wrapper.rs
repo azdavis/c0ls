@@ -16,7 +16,7 @@ impl Req {
     match self.0.extract::<R::Params>(R::METHOD) {
       Ok((id, params)) => {
         let result = f(id.clone(), params);
-        let val = serde_json::to_value(&result).unwrap();
+        let val = serde_json::to_value(&result).expect("couldn't make JSON");
         Err(Response {
           id,
           result: Some(val),

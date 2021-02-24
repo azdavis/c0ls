@@ -5,31 +5,43 @@ use crate::wrapper::{Handled, Notif, Req};
 use analysis::{Db, Edit, Update};
 use lsp_server::{Connection, Message, Response};
 use lsp_types::notification::{
-  DidChangeTextDocument, DidChangeWatchedFiles, PublishDiagnostics,
+  DidChangeTextDocument, DidChangeWatchedFiles, PublishDiagnostics, ShowMessage,
 };
 use lsp_types::request::{GotoDefinition, HoverRequest};
 use lsp_types::{
-  FileChangeType, GotoDefinitionResponse, InitializeParams,
-  PublishDiagnosticsParams, Url,
+  FileChangeType, GotoDefinitionResponse, InitializeParams, MessageType,
+  PublishDiagnosticsParams, ShowMessageParams, Url,
 };
 use std::fs::read_to_string;
 use walkdir::WalkDir;
 
 pub(crate) fn run(conn: &Connection, init: InitializeParams) {
   log::info!("starting");
-  let root = init.root_uri.expect("no root");
-  let mut db = Db::new(get_initial_files(&root));
+  let root = match init.root_uri {
+    None => {
+      show_error(conn, "cannot activate c0ls: no root".to_owned());
+      return;
+    }
+    Some(x) => x,
+  };
+  let mut db = Db::new(get_initial_files(conn, &root));
   send_all_diagnostics(conn, &db);
   for msg in conn.receiver.iter() {
     match msg {
       Message::Request(req) => {
-        if conn.handle_shutdown(&req).unwrap() {
+        if conn
+          .handle_shutdown(&req)
+          .expect("couldn't handle shutdown")
+        {
           log::info!("shutting down");
           return;
         }
         match handle_req(&db, Req::new(req)) {
           Ok(req) => log::warn!("ignoring request: {}", req.method()),
-          Err(res) => conn.sender.send(res.into()).unwrap(),
+          Err(res) => conn
+            .sender
+            .send(res.into())
+            .expect("couldn't send response"),
         }
       }
       Message::Response(res) => log::warn!("ignoring response: {:?}", res),
@@ -70,15 +82,21 @@ fn handle_notif(
   notif
     .handle::<DidChangeWatchedFiles, _>(|params| {
       log::info!("watched files changed");
-      db.update_files(params.changes.into_iter().map(
-        |change| match change.typ {
+      db.update_files(params.changes.into_iter().filter_map(|change| {
+        match change.typ {
           FileChangeType::Created | FileChangeType::Changed => {
-            let contents = read_to_string(change.uri.path()).unwrap();
-            Update::Create(change.uri, contents)
+            let path = change.uri.path();
+            match read_to_string(path) {
+              Ok(contents) => Some(Update::Create(change.uri, contents)),
+              Err(e) => {
+                show_error(conn, format!("{}: {}", path, e));
+                None
+              }
+            }
           }
-          FileChangeType::Deleted => Update::Delete(change.uri),
-        },
-      ));
+          FileChangeType::Deleted => Some(Update::Delete(change.uri)),
+        }
+      }));
       send_all_diagnostics(conn, db);
     })?
     .handle::<DidChangeTextDocument, _>(|params| {
@@ -94,22 +112,37 @@ fn handle_notif(
     })
 }
 
-fn get_initial_files(root: &Url) -> impl Iterator<Item = (Url, String)> {
-  WalkDir::new(root.path()).into_iter().filter_map(|entry| {
-    let entry = entry.unwrap();
-    let path = entry.path();
-    if !path.is_file() {
-      return None;
-    }
-    let ext = path.extension()?;
-    if ext != "c0" && ext != "h0" {
-      return None;
-    }
-    let path = path.as_os_str().to_str().unwrap();
-    let uri = Url::from_file_path(path).unwrap();
-    let contents = read_to_string(entry.path()).unwrap();
-    Some((uri, contents))
-  })
+fn get_initial_files<'c>(
+  conn: &'c Connection,
+  root: &Url,
+) -> impl Iterator<Item = (Url, String)> + 'c {
+  WalkDir::new(root.path())
+    .into_iter()
+    .filter_map(move |entry| {
+      let entry = match entry {
+        Ok(x) => x,
+        Err(e) => {
+          show_error(conn, e.to_string());
+          return None;
+        }
+      };
+      let path = entry.path();
+      if !path.is_file() {
+        return None;
+      }
+      let ext = path.extension()?;
+      if ext != "c0" && ext != "h0" {
+        return None;
+      }
+      let uri = Url::from_file_path(path).expect("bad path");
+      match read_to_string(entry.path()) {
+        Ok(contents) => Some((uri, contents)),
+        Err(e) => {
+          show_error(conn, format!("{}: {}", path.display(), e));
+          None
+        }
+      }
+    })
 }
 
 fn send_all_diagnostics(conn: &Connection, db: &Db) {
@@ -122,7 +155,7 @@ fn send_all_diagnostics(conn: &Connection, db: &Db) {
     conn
       .sender
       .send(mk_notif::<PublishDiagnostics>(params))
-      .unwrap();
+      .expect("couldn't send diagnostics");
   }
 }
 
@@ -132,6 +165,16 @@ where
 {
   Message::Notification(lsp_server::Notification {
     method: N::METHOD.to_owned(),
-    params: serde_json::to_value(val).unwrap(),
+    params: serde_json::to_value(val).expect("couldn't make JSON"),
   })
+}
+
+fn show_error(conn: &Connection, message: String) {
+  conn
+    .sender
+    .send(mk_notif::<ShowMessage>(ShowMessageParams {
+      typ: MessageType::Error,
+      message,
+    }))
+    .expect("couldn't show error")
 }

@@ -58,7 +58,7 @@ fn get_one(
         }
       }
       let mut new_uri = uri.clone();
-      new_uri.set_path(buf.as_os_str().to_str().unwrap());
+      new_uri.set_path(buf.as_os_str().to_string_lossy().as_ref());
       match uris.get_id(&new_uri) {
         Some(x) => Ok(UseKind::File(x)),
         None => Err(ErrorKind::NoSuchPath),
