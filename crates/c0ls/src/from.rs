@@ -1,3 +1,5 @@
+use lsp_types::DiagnosticSeverity;
+
 /// Crate-owned copy-paste of [`core::convert::From`].
 ///
 /// The orphan rules prevent us from implementing `From<T>` for `U` when both
@@ -80,10 +82,10 @@ impl CrateFrom<analysis::Diagnostic> for lsp_types::Diagnostic {
   fn from(val: analysis::Diagnostic) -> Self {
     Self {
       range: CrateFrom::from(val.range),
-      severity: None,
+      severity: Some(DiagnosticSeverity::Error),
       code: None,
       code_description: None,
-      source: None,
+      source: Some("c0ls".to_owned()),
       message: val.message,
       related_information: None,
       tags: None,
