@@ -102,13 +102,6 @@ allows answering queries about those files.
 A language server, which communicates via LSP over stdout, feeds the parsed
 queries to an `analysis::Db`, and replies with its responses.
 
-### `crates/cli`
-
-A command-line program which allows creating an `analysis::Db` on a set of files
-provided as arguments. Reports diagnostics to stdout. Can also be used to print
-out the parse trees of the files, or format them with the experimental
-formatter.
-
 ### `crates/fmt`
 
 An experimental C0 code formatter. Throws away all comments, so currently nigh
