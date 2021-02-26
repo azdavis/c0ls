@@ -10,7 +10,6 @@ See [architecture.md](docs/architecture.md) for more information.
 
 - `rustc` + `cargo` https://rustup.rs
 - `node` + `npm` https://nodejs.org
-- POSIX `sh` (pre-installed on most Unix-like systems)
 
 ### Get the repo
 

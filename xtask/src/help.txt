@@ -1,0 +1,8 @@
+usage:
+  cargo xtask <command>
+
+commands:
+  ck-test-data
+    check test data files are referenced
+  mk-vscode-ext
+    make the vscode extension

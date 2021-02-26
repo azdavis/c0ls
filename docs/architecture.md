@@ -146,9 +146,9 @@ Developer-oriented documentation for the project.
 The VSCode language client extension that communicates with the Rust language
 server.
 
-### `scripts`
+### `xtask`
 
-Miscellaneous handy shell scripts.
+Miscellaneous repo tasks. Run `cargo xtask` for a list.
 
 ## Cross-cutting concerns
 
