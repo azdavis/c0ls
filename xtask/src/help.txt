@@ -2,6 +2,8 @@ usage:
   cargo xtask <command>
 
 commands:
+  ci
+    check the repo for validity
   ck-test-data
     check test data files are referenced
   mk-vscode-ext

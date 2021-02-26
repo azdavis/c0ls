@@ -13,6 +13,18 @@ fn show_help() {
   print!("{}", include_str!("help.txt"));
 }
 
+fn ck_test_data() -> Result<()> {
+  for &cr in ["analysis", "fmt"].iter() {
+    let tests = format!("crates/{}/src/tests", cr);
+    for entry in WalkDir::new(&format!("{}/data", tests)) {
+      let entry = entry?;
+      let name = entry.path().file_name().unwrap();
+      cmd!("git grep -q {name} -- {tests}/mod.rs").run()?;
+    }
+  }
+  Ok(())
+}
+
 fn run() -> Result<()> {
   let mut args = Arguments::from_env();
   if args.contains(["-h", "--help"]) {
@@ -28,16 +40,12 @@ fn run() -> Result<()> {
   };
   let _d = pushd(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
   match subcommand.as_str() {
-    "ck-test-data" => {
-      for &cr in ["analysis", "fmt"].iter() {
-        let tests = format!("crates/{}/src/tests", cr);
-        for entry in WalkDir::new(&format!("{}/data", tests)) {
-          let entry = entry?;
-          let name = entry.path().file_name().unwrap();
-          cmd!("git grep -q {name} -- {tests}/mod.rs").run()?;
-        }
-      }
+    "ci" => {
+      ck_test_data()?;
+      cmd!("cargo clippy").run()?;
+      cmd!("cargo test").run()?;
     }
+    "ck-test-data" => ck_test_data()?,
     "mk-vscode-ext" => {
       cmd!("cargo build -p c0ls").run()?;
       mkdir_p("extensions/vscode/out")?;
