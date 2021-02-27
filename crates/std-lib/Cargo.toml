@@ -5,6 +5,9 @@ authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
 edition = "2018"
 publish = false
 
+[lib]
+doctest = false
+
 [dependencies]
 lex = { path = "../lex" }
 lower = { path = "../lower" }

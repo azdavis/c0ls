@@ -5,6 +5,10 @@ authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
 edition = "2018"
 publish = false
 
+[lib]
+doctest = false
+test = false
+
 [dependencies]
 identifier-case = { path = "../identifier-case" }
 proc-macro2 = "1"
