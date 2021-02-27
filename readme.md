@@ -1,6 +1,9 @@
 # c0ls
 
-A language server for C0.
+A language server for the C0 programming language.
+
+C0 is a C-like language used in Carnegie Mellon University's introductory
+imperative programming class.
 
 See [architecture.md](docs/architecture.md) for more information.
 
