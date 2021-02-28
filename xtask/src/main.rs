@@ -13,6 +13,14 @@ fn show_help() {
   print!("{}", include_str!("help.txt"));
 }
 
+fn finish_args(args: Arguments) -> Result<()> {
+  let args = args.finish();
+  if !args.is_empty() {
+    bail!("unused arguments: {:?}", args);
+  }
+  Ok(())
+}
+
 fn ck_test_data() -> Result<()> {
   for &cr in ["analysis", "fmt"].iter() {
     let tests = format!("crates/{}/src/tests", cr);
@@ -41,12 +49,17 @@ fn run() -> Result<()> {
   let _d = pushd(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
   match subcommand.as_str() {
     "ci" => {
+      finish_args(args)?;
       ck_test_data()?;
       cmd!("cargo clippy").run()?;
       cmd!("cargo test").run()?;
     }
-    "ck-test-data" => ck_test_data()?,
+    "ck-test-data" => {
+      finish_args(args)?;
+      ck_test_data()?
+    }
     "mk-vscode-ext" => {
+      finish_args(args)?;
       cmd!("cargo build -p c0ls").run()?;
       mkdir_p("extensions/vscode/out")?;
       cp("target/debug/c0ls", "extensions/vscode/out/c0ls")?;
