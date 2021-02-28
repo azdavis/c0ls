@@ -132,6 +132,10 @@ know what order to process the files in.
 
 Utility crate providing the macro form of `Option::unwrap_or`.
 
+### `.cargo`
+
+Configuration for Cargo, notably defining the `cargo xtask` shortcut.
+
 ### `.vscode`
 
 Configuration for VSCode, useful if you are using VSCode to develop this
