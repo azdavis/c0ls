@@ -5,6 +5,13 @@ A language server for the C0 programming language.
 C0 is a C-like language used in Carnegie Mellon University's introductory
 imperative programming class.
 
+This language server and accompanying VSCode extension provides features like:
+
+- Basic syntax highlighting and bracket matching
+- Inline errors (parse errors, type errors, etc)
+- Jump-to-definition for variables, structs, functions, typedefs
+- Hover for info: expression type, function signature, etc
+
 See [architecture.md](docs/architecture.md) for more information.
 
 ## Setup
