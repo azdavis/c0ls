@@ -136,6 +136,10 @@ Utility crate providing the macro form of `Option::unwrap_or`.
 
 Configuration for Cargo, notably defining the `cargo xtask` shortcut.
 
+### `.github`
+
+Configuration for GitHub, notably the CI via GitHub Actions.
+
 ### `.vscode`
 
 Configuration for VSCode, useful if you are using VSCode to develop this
