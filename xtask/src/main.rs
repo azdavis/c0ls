@@ -51,6 +51,8 @@ fn run() -> Result<()> {
     "ci" => {
       finish_args(args)?;
       ck_test_data()?;
+      // run this first to generate code
+      cmd!("cargo test --no-run").run()?;
       cmd!("cargo fmt -- --check").run()?;
       cmd!("cargo clippy").run()?;
       cmd!("cargo test").run()?;
