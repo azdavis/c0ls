@@ -53,9 +53,9 @@ fn duplicate_var() {
 }
 
 #[test]
-fn hover_ambig() {
+fn hover_ambiguous() {
   // TODO hovering `a * b;` should work
-  check(include_str!("data/hover_ambig.c0"))
+  check(include_str!("data/hover_ambiguous.c0"))
 }
 
 #[test]
