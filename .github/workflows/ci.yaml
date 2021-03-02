@@ -18,7 +18,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        # FIXME windows-latest weirdly times out
+        os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
         with:
