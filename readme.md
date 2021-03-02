@@ -14,6 +14,10 @@ This language server and accompanying VSCode extension provides features like:
 
 See [architecture.md](docs/architecture.md) for more information.
 
+## Note
+
+A more full-featured and well-supported alternative is [available][1].
+
 ## Setup
 
 ### Install the dependencies
@@ -29,3 +33,5 @@ Probably with a `git clone` or a ZIP download.
 
 1. In the repo root, run `cargo build`.
 2. In `extensions/vscode`, run `npm install && npm run build`.
+
+[1]: https://github.com/CalLavicka/c0-vscode-extension
