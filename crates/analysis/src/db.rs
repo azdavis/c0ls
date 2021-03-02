@@ -1,6 +1,6 @@
-//! TODO could be way more incremental: only recalculate envs for the
-//! transitive closure of the files that import this file, stopping if
-//! updated envs are the same. use `salsa` for that?
+//! FIXME could be way more incremental: only recalculate envs for the
+//! transitive closure of the files that import this file, stopping if updated
+//! envs are the same. use `salsa` for that?
 
 use crate::queries::{all_diagnostics, go_to_def, hover};
 use crate::types::{Diagnostic, Edit, Hover, Location, Update};
@@ -59,7 +59,7 @@ impl Db {
       match edit.range {
         None => contents = edit.text,
         Some(range) => {
-          // TODO could only invalidate `positions` based on the range of the
+          // FIXME could only invalidate `positions` based on the range of the
           // edits
           let text_range = positions
             .unwrap_or_else(|| PositionDb::new(&contents))

@@ -6,7 +6,7 @@ import {
 } from "vscode-languageclient/node";
 import { join } from "path";
 
-// TODO support many roots
+// this does not support many roots
 let client: LanguageClient | null = null;
 
 export function activate(cx: ExtensionContext) {

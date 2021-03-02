@@ -3,8 +3,7 @@ use crate::util::ty::Ty;
 use crate::util::types::{Cx, Env};
 use crate::util::unify_impl;
 
-/// TODO this has not great error message IDs (which determine the locations of
-/// errors) and duplicates a fair bit of the `Fn` case of `item::get`.
+/// this duplicates a fair bit of the `Fn` case of `item::get`.
 pub fn add_env(
   cx: &mut Cx,
   errors: &mut Vec<ErrorKind>,
