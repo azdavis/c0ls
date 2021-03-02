@@ -27,6 +27,6 @@ jobs:
         with:
           toolchain: 1.50.0
           profile: minimal
-          components: rustfmt
+          components: rustfmt, clippy
           override: true
       - run: cargo xtask ci
