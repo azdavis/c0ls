@@ -81,6 +81,11 @@ pub fn gen() -> Gen {
     let bs = Literal::byte_string(name.as_bytes());
     quote! { (#bs, Self::#kind) }
   });
+  let special = {
+    let mut xs: Vec<_> = tokens.special.into_iter().map(|(_, x)| x).collect();
+    xs.sort_unstable();
+    xs
+  };
   let desc_arms = punctuation
     .iter()
     .chain(keywords.iter())
@@ -88,7 +93,7 @@ pub fn gen() -> Gen {
       let name = format!("`{}`", name);
       quote! { Self::#kind => #name }
     })
-    .chain(token::CONTENT.iter().map(|&(name, desc)| {
+    .chain(special.iter().map(|&(ref name, desc)| {
       let kind = util::ident(name);
       quote! { Self::#kind => #desc }
     }));
@@ -97,7 +102,7 @@ pub fn gen() -> Gen {
     .cloned()
     .chain(punctuation.iter().cloned())
     .map(|x| x.1)
-    .chain(token::CONTENT.iter().map(|&(n, _)| util::ident(n)));
+    .chain(special.iter().map(|&(ref name, _)| util::ident(name)));
   syntax_kinds.extend(new_syntax_kinds);
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let kind = quote! {
