@@ -1,7 +1,4 @@
 use identifier_case::snake_to_pascal;
-use std::fs::OpenOptions;
-use std::io::Write as _;
-use std::process::{Command, Stdio};
 use syntax_gen::{gen, TokenKind};
 
 const CONTENT: [(&str, &str); 6] = [
@@ -38,25 +35,6 @@ fn get_kind(name: &str) -> (TokenKind, String) {
   }
 }
 
-fn write_rust_file(name: &str, contents: &str) -> std::io::Result<()> {
-  let mut proc = Command::new("rustfmt")
-    .stdin(Stdio::piped())
-    .stdout(Stdio::piped())
-    .spawn()?;
-  proc.stdin.take().unwrap().write_all(contents.as_bytes())?;
-  assert!(proc.wait()?.success());
-  let mut stdout = proc.stdout.take().unwrap();
-  let mut out_file = OpenOptions::new()
-    .write(true)
-    .create(true)
-    .truncate(true)
-    .open(name)?;
-  std::io::copy(&mut stdout, &mut out_file)?;
-  Ok(())
-}
-
 fn main() {
-  let g = gen(include_str!("c0.ungram"), get_kind);
-  write_rust_file("src/kind.rs", &g.kind).unwrap();
-  write_rust_file("src/ast.rs", &g.ast).unwrap();
+  gen(include_str!("c0.ungram"), get_kind).unwrap();
 }

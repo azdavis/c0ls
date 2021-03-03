@@ -8,6 +8,7 @@ mod alt;
 mod seq;
 mod token;
 mod util;
+mod write;
 
 pub use token::TokenKind;
 
@@ -22,17 +23,9 @@ enum Kind {
   Alt,
 }
 
-/// The generated Rust code.
-#[derive(Debug)]
-pub struct Gen {
-  /// The code for `mod kind`.
-  pub kind: String,
-  /// The code for `mod ast`.
-  pub ast: String,
-}
-
-/// Returns the generated Rust code.
-pub fn gen<F>(s: &str, get_kind: F) -> Gen
+/// Generates Rust code from the given `ungrammar` and writes it to
+/// `src/kind.rs` and `src/ast.rs`
+pub fn gen<F>(s: &str, get_kind: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
 {
@@ -216,8 +209,7 @@ where
 
     #(#types)*
   };
-  Gen {
-    kind: kind.to_string(),
-    ast: ast.to_string(),
-  }
+  write::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
+  write::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
+  Ok(())
 }
