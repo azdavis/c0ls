@@ -12,4 +12,4 @@ test = false
 [dependencies]
 hir = { path = "../hir" }
 rustc-hash = "1"
-uri-db = { path = "../uri-db" }
+uri-db = { git = "https://github.com/azdavis/language-server-util.git" }

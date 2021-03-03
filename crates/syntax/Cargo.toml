@@ -10,10 +10,10 @@ doctest = false
 test = false
 
 [dependencies]
-event-parse = { path = "../event-parse" }
+event-parse = { git = "https://github.com/azdavis/language-server-util.git" }
 rowan = "0.12"
 
 [build-dependencies]
 char-name = { git = "https://github.com/azdavis/language-server-util.git" }
-identifier-case = { path = "../identifier-case" }
-syntax-gen = { path = "../syntax-gen" }
+identifier-case = { git = "https://github.com/azdavis/language-server-util.git" }
+syntax-gen = { git = "https://github.com/azdavis/language-server-util.git" }

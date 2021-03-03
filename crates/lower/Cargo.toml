@@ -13,4 +13,4 @@ test = false
 hir = { path = "../hir" }
 rustc-hash = "1"
 syntax = { path = "../syntax" }
-unwrap-or = { path = "../unwrap-or" }
+unwrap-or = { git = "https://github.com/azdavis/language-server-util.git" }
