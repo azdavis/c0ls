@@ -167,5 +167,4 @@ for tiny projects.
 [lang-server]: https://microsoft.github.io/language-server-protocol/
 [rowan]: https://github.com/rust-analyzer/rowan
 [salsa]: https://github.com/salsa-rs/salsa
-[ungrammar]: https://github.com/rust-analyzer/ungrammar
 [elsewhere]: https://github.com/azdavis/language-server-util
