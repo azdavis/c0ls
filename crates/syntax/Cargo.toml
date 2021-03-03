@@ -14,6 +14,6 @@ event-parse = { path = "../event-parse" }
 rowan = "0.12"
 
 [build-dependencies]
-char-name = { path = "../char-name" }
+char-name = { git = "https://github.com/azdavis/language-server-util.git" }
 identifier-case = { path = "../identifier-case" }
 syntax-gen = { path = "../syntax-gen" }

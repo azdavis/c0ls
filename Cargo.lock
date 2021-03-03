@@ -80,6 +80,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
+source = "git+https://github.com/azdavis/language-server-util.git#c467a46aab8a11917db60f7fac2c14fc6994ef23"
 
 [[package]]
 name = "countme"
