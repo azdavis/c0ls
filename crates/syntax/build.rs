@@ -38,31 +38,25 @@ fn get_kind(name: &str) -> (TokenKind, String) {
   }
 }
 
-fn write_rust_file(name: &str, contents: &str) {
+fn write_rust_file(name: &str, contents: &str) -> std::io::Result<()> {
   let mut proc = Command::new("rustfmt")
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
-    .spawn()
-    .unwrap();
-  proc
-    .stdin
-    .take()
-    .unwrap()
-    .write_all(contents.as_bytes())
-    .unwrap();
-  assert!(proc.wait().unwrap().success());
+    .spawn()?;
+  proc.stdin.take().unwrap().write_all(contents.as_bytes())?;
+  assert!(proc.wait()?.success());
   let mut stdout = proc.stdout.take().unwrap();
   let mut out_file = OpenOptions::new()
     .write(true)
     .create(true)
     .truncate(true)
-    .open(name)
-    .unwrap();
-  std::io::copy(&mut stdout, &mut out_file).unwrap();
+    .open(name)?;
+  std::io::copy(&mut stdout, &mut out_file)?;
+  Ok(())
 }
 
 fn main() {
   let g = gen(include_str!("c0.ungram"), get_kind);
-  write_rust_file("src/kind.rs", &g.kind);
-  write_rust_file("src/ast.rs", &g.ast);
+  write_rust_file("src/kind.rs", &g.kind).unwrap();
+  write_rust_file("src/ast.rs", &g.ast).unwrap();
 }
