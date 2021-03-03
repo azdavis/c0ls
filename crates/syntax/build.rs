@@ -27,7 +27,7 @@ fn write_rust_file(name: &str, contents: &str) {
 }
 
 fn main() {
-  let g = gen();
+  let g = gen(include_str!("c0.ungram"));
   write_rust_file("src/kind.rs", &g.kind);
   write_rust_file("src/ast.rs", &g.ast);
 }

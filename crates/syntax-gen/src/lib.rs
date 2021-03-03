@@ -30,8 +30,8 @@ pub struct Gen {
 }
 
 /// Returns the generated Rust code.
-pub fn gen() -> Gen {
-  let grammar: Grammar = include_str!("c0.ungram").parse().unwrap();
+pub fn gen(s: &str) -> Gen {
+  let grammar: Grammar = s.parse().unwrap();
   let tokens = token::TokenDb::new(&grammar);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
