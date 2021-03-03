@@ -1,7 +1,7 @@
 use identifier_case::snake_to_pascal;
 use syntax_gen::{gen, TokenKind};
 
-const CONTENT: [(&str, &str); 6] = [
+const SPECIAL: [(&str, &str); 6] = [
   ("Ident", "an identifier"),
   ("DecLit", "an integer literal"),
   ("HexLit", "a hexadecimal integer literal"),
@@ -10,8 +10,8 @@ const CONTENT: [(&str, &str); 6] = [
   ("Pragma", "a pragma"),
 ];
 
-fn get_kind(name: &str) -> (TokenKind, String) {
-  if let Some(desc) = CONTENT
+fn get_token(name: &str) -> (TokenKind, String) {
+  if let Some(desc) = SPECIAL
     .iter()
     .find_map(|&(n, desc)| (n == name).then(|| desc))
   {
@@ -36,5 +36,5 @@ fn get_kind(name: &str) -> (TokenKind, String) {
 }
 
 fn main() {
-  gen("C0", include_str!("c0.ungram"), get_kind).unwrap();
+  gen("C0", include_str!("c0.ungram"), get_token).unwrap();
 }
