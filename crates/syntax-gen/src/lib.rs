@@ -1,4 +1,6 @@
-//! Generates the Rust code for the `syntax` crate.
+//! Generates opinionated Rust code from an [ungrammar][1].
+//!
+//! [1]: https://github.com/rust-analyzer/ungrammar
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -25,13 +27,28 @@ enum Kind {
 
 /// Generates Rust code from the `ungrammar` of the `lang` and writes it to
 /// `src/kind.rs` and `src/ast.rs`.
-pub fn gen<F>(lang: &str, ungrammar: &str, get_kind: F) -> std::io::Result<()>
+///
+/// `get_token` will be called for each token in the ungrammar, and should
+/// return `(kind, name`), where `kind` is what kind of token this is (a
+/// [`TokenKind`]) and `name` is the name of the token, to be used as an enum
+/// variant in the generated `SyntaxKind`.
+///
+/// The generated Rust files will depend on `rowan` and `event-parse`. The files
+/// will be formatted with rustfmt.
+///
+/// `src/kind.rs` will contain definitions for the language's `SyntaxKind` and
+/// associated types, using all the different tokens extracted from the
+/// `ungrammar` and processed with `get_token`.
+///
+/// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
+/// for `lang`, based on the `ungrammar`.
+pub fn gen<F>(lang: &str, ungrammar: &str, get_token: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
 {
   let lang = ident(lang);
   let grammar: Grammar = ungrammar.parse().unwrap();
-  let tokens = token::TokenDb::new(&grammar, get_kind);
+  let tokens = token::TokenDb::new(&grammar, get_token);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
   let mut syntax_kinds = Vec::new();

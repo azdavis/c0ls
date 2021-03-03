@@ -8,7 +8,7 @@ pub(crate) struct TokenDb {
   pub(crate) special: FxHashMap<Token, (String, &'static str)>,
 }
 
-/// What kind of token this is.
+/// A token kind.
 #[derive(Debug)]
 pub enum TokenKind {
   /// Punctuation, like `{` or `}` or `++`
@@ -20,7 +20,7 @@ pub enum TokenKind {
 }
 
 impl TokenDb {
-  pub(crate) fn new<F>(grammar: &Grammar, get_kind: F) -> Self
+  pub(crate) fn new<F>(grammar: &Grammar, get_token: F) -> Self
   where
     F: Fn(&str) -> (TokenKind, String),
   {
@@ -28,7 +28,7 @@ impl TokenDb {
     let mut keywords = FxHashMap::default();
     let mut special = FxHashMap::default();
     for token in grammar.tokens() {
-      let (kind, name) = get_kind(grammar[token].name.as_ref());
+      let (kind, name) = get_token(grammar[token].name.as_ref());
       match kind {
         TokenKind::Punctuation => {
           assert!(punctuation.insert(token, name).is_none());
