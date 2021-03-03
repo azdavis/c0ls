@@ -36,5 +36,5 @@ fn get_kind(name: &str) -> (TokenKind, String) {
 }
 
 fn main() {
-  gen(include_str!("c0.ungram"), get_kind).unwrap();
+  gen("C0", include_str!("c0.ungram"), get_kind).unwrap();
 }

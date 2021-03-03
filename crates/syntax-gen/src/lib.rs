@@ -23,13 +23,14 @@ enum Kind {
   Alt,
 }
 
-/// Generates Rust code from the given `ungrammar` and writes it to
-/// `src/kind.rs` and `src/ast.rs`
-pub fn gen<F>(s: &str, get_kind: F) -> std::io::Result<()>
+/// Generates Rust code from the `ungrammar` of the `lang` and writes it to
+/// `src/kind.rs` and `src/ast.rs`.
+pub fn gen<F>(lang: &str, ungrammar: &str, get_kind: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
 {
-  let grammar: Grammar = s.parse().unwrap();
+  let lang = ident(lang);
+  let grammar: Grammar = ungrammar.parse().unwrap();
   let tokens = token::TokenDb::new(&grammar, get_kind);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
@@ -155,9 +156,9 @@ where
     }
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub enum C0 {}
+    pub enum #lang {}
 
-    impl rowan::Language for C0 {
+    impl rowan::Language for #lang {
       type Kind = SyntaxKind;
 
       fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
@@ -170,9 +171,9 @@ where
       }
     }
 
-    pub type SyntaxNode = rowan::SyntaxNode<C0>;
-    pub type SyntaxToken = rowan::SyntaxToken<C0>;
-    pub type SyntaxElement = rowan::SyntaxElement<C0>;
+    pub type SyntaxNode = rowan::SyntaxNode<#lang>;
+    pub type SyntaxToken = rowan::SyntaxToken<#lang>;
+    pub type SyntaxElement = rowan::SyntaxElement<#lang>;
   };
   let ast = quote! {
     #![allow(clippy::iter_nth_zero)]
