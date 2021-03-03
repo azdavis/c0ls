@@ -42,6 +42,10 @@ enum Kind {
 ///
 /// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
 /// for `lang`, based on the `grammar`.
+///
+/// Returns `Err` if the files could not be written. Panics if certain
+/// properties about `grammar` do not hold. (Read the source/panic messages to
+/// find out what they are.)
 pub fn gen<F>(lang: &str, grammar: Grammar, get_token: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
