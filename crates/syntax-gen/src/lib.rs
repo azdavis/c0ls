@@ -9,9 +9,10 @@ mod seq;
 mod token;
 mod util;
 
-use crate::util::{ident, sort_tokens, Cx};
+use crate::util::{ident, Cx};
 use proc_macro2::Literal;
 use quote::quote;
+use std::cmp::Reverse;
 use ungrammar::{Grammar, Rule};
 
 enum Kind {
@@ -53,12 +54,28 @@ pub fn gen() -> Gen {
     types.push(ty);
   }
   let Cx { grammar, tokens } = cx;
-  let keywords = sort_tokens(&grammar, tokens.keywords);
+  let keywords = {
+    let mut xs: Vec<_> = tokens
+      .keywords
+      .into_iter()
+      .map(|(tok, s)| (grammar[tok].name.as_str(), ident(&s)))
+      .collect();
+    xs.sort_unstable_by_key(|&(name, _)| (Reverse(name.len()), name));
+    xs
+  };
   let keyword_arms = keywords.iter().map(|(name, kind)| {
     let bs = Literal::byte_string(name.as_bytes());
     quote! { #bs => Self::#kind }
   });
-  let punctuation = sort_tokens(&grammar, tokens.punctuation);
+  let punctuation = {
+    let mut xs: Vec<_> = tokens
+      .punctuation
+      .into_iter()
+      .map(|(tok, s)| (grammar[tok].name.as_str(), ident(&s)))
+      .collect();
+    xs.sort_unstable_by_key(|&(name, _)| (Reverse(name.len()), name));
+    xs
+  };
   let punctuation_len = punctuation.len();
   let punctuation_elements = punctuation.iter().map(|(name, kind)| {
     let bs = Literal::byte_string(name.as_bytes());
