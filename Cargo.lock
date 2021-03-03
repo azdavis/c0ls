@@ -476,7 +476,9 @@ dependencies = [
 name = "syntax"
 version = "0.1.0"
 dependencies = [
+ "char-name",
  "event-parse",
+ "identifier-case",
  "rowan",
  "syntax-gen",
 ]
@@ -485,7 +487,6 @@ dependencies = [
 name = "syntax-gen"
 version = "0.1.0"
 dependencies = [
- "char-name",
  "identifier-case",
  "proc-macro2",
  "quote",

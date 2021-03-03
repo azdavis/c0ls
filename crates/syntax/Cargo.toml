@@ -14,4 +14,6 @@ event-parse = { path = "../event-parse" }
 rowan = "0.12"
 
 [build-dependencies]
+char-name = { path = "../char-name" }
+identifier-case = { path = "../identifier-case" }
 syntax-gen = { path = "../syntax-gen" }

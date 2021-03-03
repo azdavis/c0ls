@@ -9,6 +9,8 @@ mod seq;
 mod token;
 mod util;
 
+pub use token::TokenKind;
+
 use crate::util::{ident, Cx};
 use proc_macro2::Literal;
 use quote::quote;
@@ -30,9 +32,12 @@ pub struct Gen {
 }
 
 /// Returns the generated Rust code.
-pub fn gen(s: &str) -> Gen {
+pub fn gen<F>(s: &str, get_kind: F) -> Gen
+where
+  F: Fn(&str) -> (TokenKind, String),
+{
   let grammar: Grammar = s.parse().unwrap();
-  let tokens = token::TokenDb::new(&grammar);
+  let tokens = token::TokenDb::new(&grammar, get_kind);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
   let mut syntax_kinds = Vec::new();

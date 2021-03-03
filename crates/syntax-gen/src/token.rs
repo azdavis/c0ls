@@ -1,4 +1,3 @@
-use identifier_case::snake_to_pascal;
 use rustc_hash::FxHashMap;
 use ungrammar::{Grammar, Token};
 
@@ -10,6 +9,7 @@ pub(crate) struct TokenDb {
 }
 
 /// What kind of token this is.
+#[derive(Debug)]
 pub enum TokenKind {
   /// Punctuation, like `{` or `}` or `++`
   Punctuation,
@@ -19,33 +19,11 @@ pub enum TokenKind {
   Special(&'static str),
 }
 
-fn get_kind(name: &str) -> (TokenKind, String) {
-  if let Some(desc) = CONTENT
-    .iter()
-    .find_map(|&(n, desc)| (n == name).then(|| desc))
-  {
-    (TokenKind::Special(desc), name.to_owned())
-  } else if name == "->" {
-    (TokenKind::Punctuation, "Arrow".to_owned())
-  } else if name.chars().any(|c| c.is_ascii_alphabetic()) {
-    let mut ins = snake_to_pascal(name);
-    ins.push_str("Kw");
-    (TokenKind::Keyword, ins)
-  } else {
-    let mut ins = String::new();
-    for c in name.chars() {
-      let s = match char_name::get(c) {
-        Some(x) => x,
-        None => panic!("don't know the name for {}", c),
-      };
-      ins.push_str(s);
-    }
-    (TokenKind::Punctuation, ins)
-  }
-}
-
 impl TokenDb {
-  pub(crate) fn new(grammar: &Grammar) -> Self {
+  pub(crate) fn new<F>(grammar: &Grammar, get_kind: F) -> Self
+  where
+    F: Fn(&str) -> (TokenKind, String),
+  {
     let mut punctuation = FxHashMap::default();
     let mut keywords = FxHashMap::default();
     let mut special = FxHashMap::default();
@@ -82,12 +60,3 @@ impl TokenDb {
     }
   }
 }
-
-const CONTENT: [(&str, &str); 6] = [
-  ("Ident", "an identifier"),
-  ("DecLit", "an integer literal"),
-  ("HexLit", "a hexadecimal integer literal"),
-  ("StringLit", "a string literal"),
-  ("CharLit", "a char literal"),
-  ("Pragma", "a pragma"),
-];

@@ -10,7 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-char-name = { path = "../char-name" }
 identifier-case = { path = "../identifier-case" }
 proc-macro2 = "1"
 quote = "1"
