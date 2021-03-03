@@ -25,7 +25,7 @@ A more full-featured and well-supported alternative is [available][1].
 - `rustc` + `cargo` https://rustup.rs
 - `node` + `npm` https://nodejs.org
 
-### Get the repo
+### Get this repo
 
 Probably with a `git clone` or a ZIP download.
 
@@ -38,7 +38,7 @@ Probably with a `git clone` or a ZIP download.
 
 ### Try it in VScode
 
-1. Open the project root in VSCode.
+1. Open the repo root in VSCode.
 2. Go to the Run tab (play button with bug).
 3. Select 'extension' at the top.
 4. Press the green play button.
