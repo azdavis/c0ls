@@ -20,6 +20,9 @@ splitting up a project into distinct 'crates' (packages) that can then depend on
 each other. The bulk of the code in the project is thus in the `crates/`
 subdirectory, but some code lives elsewhere as well.
 
+A decent number of utility crates, whose functionality is not specific to C0,
+used to be in this repository, but they were moved [elsewhere][].
+
 ### `crates/syntax`
 
 Types for working with C0 syntax trees: tokens, expressions, statements, etc.
@@ -29,11 +32,6 @@ Most of the code here is generated.
 These types preserve location information, which is helpful for things like
 knowing where to put the error message or knowing where something is defined.
 
-### `crates/syntax-gen`
-
-Generates most of the code for the `syntax` crate, with the help of a C0
-[ungrammar][].
-
 ### `crates/lex`
 
 The lexer, which takes in a string of C0 code and produces a flat list of
@@ -41,20 +39,6 @@ tokens.
 
 The lexer also handles parsing `#use` pragmas, since the syntax of library
 literals would be tricky to handle elsewhere.
-
-### `crates/event-parse`
-
-A generic framework for writing event-based parsers. Such parsers are ones that
-take as input a flat list of tokens, and produce as output a flat list of
-events. Events describe how to build a structured syntax tree from the flat list
-of tokens:
-
-- Start a tree node
-- Consume some tokens
-- Finish the node
-
-This also lets us handle trivia (whitespace, comments) in one place rather than
-all over the parser.
 
 ### `crates/parse`
 
@@ -106,31 +90,6 @@ queries to an `analysis::Db`, and replies with its responses.
 
 An experimental C0 code formatter. Throws away all comments, so currently nigh
 unusable.
-
-### `crates/uri-db`
-
-A database of URIs. Allows us to turn a URI (heap-allocated, expensive to pass
-around) into a cheap, integer-sized ID, and also convert that ID back into a
-URI.
-
-### `crates/identifier-case`
-
-Conversions between various identifier cases, like `snake_case` and
-`PascalCase`.
-
-### `crates/text-pos`
-
-Allows translating between byte indices and line-and-character positions in a
-string.
-
-### `crates/topo-sort`
-
-Generic topological sorting. We feed in the `#use`s of all the files to this to
-know what order to process the files in.
-
-### `crates/unwrap-or`
-
-Utility crate providing the macro form of `Option::unwrap_or`.
 
 ### `.cargo`
 
@@ -209,3 +168,4 @@ for tiny projects.
 [rowan]: https://github.com/rust-analyzer/rowan
 [salsa]: https://github.com/salsa-rs/salsa
 [ungrammar]: https://github.com/rust-analyzer/ungrammar
+[elsewhere]: https://github.com/azdavis/language-server-util
