@@ -25,29 +25,28 @@ enum Kind {
   Alt,
 }
 
-/// Generates Rust code from the `ungrammar` of the `lang` and writes it to
+/// Generates Rust code from the `grammar` of the `lang` and writes it to
 /// `src/kind.rs` and `src/ast.rs`.
 ///
-/// `get_token` will be called for each token in the ungrammar, and should
-/// return `(kind, name`), where `kind` is what kind of token this is (a
-/// [`TokenKind`]) and `name` is the name of the token, to be used as an enum
-/// variant in the generated `SyntaxKind`.
+/// `get_token` will be called for each token in `grammar`, and should return
+/// `(kind, name`), where `kind` is what kind of token this is (a [`TokenKind`])
+/// and `name` is the name of the token, to be used as an enum variant in the
+/// generated `SyntaxKind`.
 ///
 /// The generated Rust files will depend on `rowan` and `event-parse`. The files
 /// will be formatted with rustfmt.
 ///
 /// `src/kind.rs` will contain definitions for the language's `SyntaxKind` and
-/// associated types, using all the different tokens extracted from the
-/// `ungrammar` and processed with `get_token`.
+/// associated types, using all the different tokens extracted from `grammar`
+/// and processed with `get_token`.
 ///
 /// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
-/// for `lang`, based on the `ungrammar`.
-pub fn gen<F>(lang: &str, ungrammar: &str, get_token: F) -> std::io::Result<()>
+/// for `lang`, based on the `grammar`.
+pub fn gen<F>(lang: &str, grammar: Grammar, get_token: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
 {
   let lang = ident(lang);
-  let grammar: Grammar = ungrammar.parse().unwrap();
   let tokens = token::TokenDb::new(&grammar, get_token);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();

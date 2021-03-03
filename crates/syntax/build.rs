@@ -36,5 +36,5 @@ fn get_token(name: &str) -> (TokenKind, String) {
 }
 
 fn main() {
-  gen("C0", include_str!("c0.ungram"), get_token).unwrap();
+  gen("C0", include_str!("c0.ungram").parse().unwrap(), get_token).unwrap();
 }
