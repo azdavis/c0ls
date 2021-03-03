@@ -27,7 +27,11 @@ impl TokenDb {
       } else {
         let mut ins = String::new();
         for c in name.chars() {
-          ins.push_str(char_name(c));
+          let s = match char_name::get(c) {
+            Some(x) => x,
+            None => panic!("don't know the name for {}", c),
+          };
+          ins.push_str(s);
         }
         (&mut punctuation, ins)
       };
@@ -62,33 +66,3 @@ pub const CONTENT: [(&str, &str); 6] = [
   ("CharLit", "a char literal"),
   ("Pragma", "a pragma"),
 ];
-
-fn char_name(c: char) -> &'static str {
-  match c {
-    '-' => "Minus",
-    ',' => "Comma",
-    ';' => "Semicolon",
-    ':' => "Colon",
-    '!' => "Bang",
-    '?' => "Question",
-    '.' => "Dot",
-    '(' => "LRound",
-    ')' => "RRound",
-    '[' => "LSquare",
-    ']' => "RSquare",
-    '{' => "LCurly",
-    '}' => "RCurly",
-    '*' => "Star",
-    '/' => "Slash",
-    '&' => "And",
-    '%' => "Percent",
-    '^' => "Carat",
-    '+' => "Plus",
-    '<' => "Lt",
-    '=' => "Eq",
-    '>' => "Gt",
-    '|' => "Bar",
-    '~' => "Tilde",
-    _ => panic!("don't know the name for {}", c),
-  }
-}
