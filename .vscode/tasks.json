@@ -6,6 +6,7 @@
       "group": "build",
       "type": "shell",
       "command": "cargo xtask mk-vscode-ext",
+      "problemMatcher": [],
       "presentation": {
         "reveal": "silent"
       }
