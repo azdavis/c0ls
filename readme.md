@@ -36,7 +36,7 @@ Probably with a `git clone` or a ZIP download.
 
 [1]: https://github.com/CalLavicka/c0-vscode-extension
 
-### Try it in VScode
+### Try it in VSCode
 
 1. Open the repo root in VSCode.
 2. Go to the Run tab (play button with bug).
