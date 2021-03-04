@@ -25,11 +25,7 @@ fn get_token(name: &str) -> (TokenKind, String) {
   } else {
     let mut ins = String::new();
     for c in name.chars() {
-      let s = match char_name::get(c) {
-        Some(x) => x,
-        None => panic!("don't know the name for {}", c),
-      };
-      ins.push_str(s);
+      ins.push_str(char_name::get(c));
     }
     (TokenKind::Punctuation, ins)
   }

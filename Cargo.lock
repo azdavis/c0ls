@@ -80,7 +80,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "char-name"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 
 [[package]]
 name = "countme"
@@ -131,7 +131,7 @@ dependencies = [
 [[package]]
 name = "event-parse"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 dependencies = [
  "drop_bomb",
 ]
@@ -187,7 +187,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "identifier-case"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 
 [[package]]
 name = "idna"
@@ -483,7 +483,7 @@ dependencies = [
 [[package]]
 name = "syntax-gen"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 dependencies = [
  "identifier-case",
  "proc-macro2",
@@ -504,7 +504,7 @@ dependencies = [
 [[package]]
 name = "text-pos"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 dependencies = [
  "text-size",
 ]
@@ -542,7 +542,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "topo-sort"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 
 [[package]]
 name = "ungrammar"
@@ -577,12 +577,12 @@ checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
 [[package]]
 name = "unwrap-or"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 
 [[package]]
 name = "uri-db"
 version = "0.1.0"
-source = "git+https://github.com/azdavis/language-server-util.git#dd61cd067285e3abc637d21fe56011761b06f82d"
+source = "git+https://github.com/azdavis/language-server-util.git#0d23c43c2d05dec3d82752561e46744f16ed03d2"
 dependencies = [
  "rustc-hash",
  "url",
