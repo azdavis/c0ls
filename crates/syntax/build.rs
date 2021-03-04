@@ -11,23 +11,21 @@ const SPECIAL: [(&str, &str); 6] = [
 ];
 
 fn get_token(name: &str) -> (TokenKind, String) {
-  if let Some(desc) = SPECIAL
-    .iter()
-    .find_map(|&(n, desc)| (n == name).then(|| desc))
+  if let Some(desc) = SPECIAL.iter().find_map(|&(n, d)| (n == name).then(|| d))
   {
     (TokenKind::Special(desc), name.to_owned())
   } else if name == "->" {
     (TokenKind::Punctuation, "Arrow".to_owned())
   } else if name.chars().any(|c| c.is_ascii_alphabetic()) {
-    let mut ins = snake_to_pascal(name);
-    ins.push_str("Kw");
-    (TokenKind::Keyword, ins)
+    let mut ret = snake_to_pascal(name);
+    ret.push_str("Kw");
+    (TokenKind::Keyword, ret)
   } else {
-    let mut ins = String::new();
+    let mut ret = String::new();
     for c in name.chars() {
-      ins.push_str(char_name::get(c));
+      ret.push_str(char_name::get(c));
     }
-    (TokenKind::Punctuation, ins)
+    (TokenKind::Punctuation, ret)
   }
 }
 
