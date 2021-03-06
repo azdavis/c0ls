@@ -1,8 +1,8 @@
 use crate::expr::get as get_expr;
-use crate::ptr::AstPtr;
 use crate::simp::get as get_simp;
 use crate::util::Cx;
 use syntax::ast::{BlockStmt, Stmt};
+use syntax::AstPtr;
 
 pub(crate) fn get_block(cx: &mut Cx, stmt: BlockStmt) -> hir::StmtId {
   get(cx, Some(Stmt::BlockStmt(stmt)))

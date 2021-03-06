@@ -1,9 +1,9 @@
 use crate::expr::get as get_expr;
-use crate::ptr::AstPtr;
 use crate::ty::get as get_ty;
 use crate::util::Cx;
 use hir::{AssignOp, IncDec, MathOp, Name};
 use syntax::ast::{AsgnOpKind, IncDecKind, Simp};
+use syntax::AstPtr;
 
 pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<hir::SimpId> {
   let ptr = AstPtr::new(&simp);

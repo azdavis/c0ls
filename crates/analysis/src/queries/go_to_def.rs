@@ -1,12 +1,12 @@
 use crate::db::Db;
 use crate::types::Location;
 use crate::util::get_token;
-use lower::AstPtr;
 use rustc_hash::FxHashMap;
 use statics::{ItemData, TyData};
 use syntax::ast::{
   Cast as _, Expr, Param, Simp, SimpOpt, SimpStmt, Syntax as _, Ty,
 };
+use syntax::AstPtr;
 use syntax::{SyntaxKind, SyntaxToken};
 use text_pos::Position;
 use uri_db::Uri;

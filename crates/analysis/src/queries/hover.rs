@@ -1,8 +1,8 @@
 use crate::db::Db;
 use crate::types::{CodeBlock, Hover};
 use crate::util::get_token;
-use lower::AstPtr;
 use syntax::ast::{Cast as _, Expr, Syntax as _, Ty};
+use syntax::AstPtr;
 use text_pos::Position;
 use uri_db::Uri;
 
