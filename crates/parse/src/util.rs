@@ -10,16 +10,16 @@ where
   }
 }
 
-pub(crate) fn comma_sep<F>(p: &mut Parser<'_, SK>, end: SK, wrap: SK, f: F)
+pub(crate) fn comma_sep<F>(p: &mut Parser<'_, SK>, wrap: SK, f: F)
 where
   F: FnMut(&mut Parser<'_, SK>),
 {
-  if p.at(end) {
+  if p.at(SK::RRound) {
     p.bump();
     return;
   }
   many_sep(p, SK::Comma, wrap, f);
-  p.eat(end);
+  p.eat(SK::RRound);
 }
 
 fn many_sep<F>(p: &mut Parser<'_, SK>, sep: SK, wrap: SK, mut f: F)

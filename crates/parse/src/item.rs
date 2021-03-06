@@ -63,7 +63,7 @@ fn fn_tail(p: &mut Parser<'_, SK>, ty_hd_exited: Exited) {
   let ty_exited = ty_tl(p, ty_hd_exited);
   p.eat(SK::Ident);
   p.eat(SK::LRound);
-  comma_sep(p, SK::RRound, SK::Param, |p| {
+  comma_sep(p, SK::Param, |p| {
     ty(p);
     p.eat(SK::Ident);
   });

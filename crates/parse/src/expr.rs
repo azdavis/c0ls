@@ -40,7 +40,7 @@ fn expr_atom(p: &mut Parser<'_, SK>) -> Option<Exited> {
     p.bump();
     if p.at(SK::LRound) {
       p.bump();
-      comma_sep(p, SK::RRound, SK::Arg, expr);
+      comma_sep(p, SK::Arg, expr);
       Some(p.exit(entered, SK::CallExpr))
     } else {
       Some(p.exit(entered, SK::IdentExpr))
