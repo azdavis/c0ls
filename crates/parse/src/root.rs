@@ -1,5 +1,5 @@
 use crate::item::item;
-use syntax::event_parse::Parser;
+use event_parse::Parser;
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn root(p: &mut Parser<'_, SK>) {

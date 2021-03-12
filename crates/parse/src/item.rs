@@ -1,7 +1,7 @@
 use crate::stmt::stmt_block;
 use crate::ty::{ty, ty_hd_opt, ty_opt, ty_tl};
 use crate::util::comma_sep;
-use syntax::event_parse::{Exited, Parser};
+use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn item(p: &mut Parser<'_, SK>) {

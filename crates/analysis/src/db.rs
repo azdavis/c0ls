@@ -139,7 +139,7 @@ fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
 
 fn get_syntax_data(contents: String) -> SyntaxData {
   let lexed = lex::get(&contents);
-  let parsed = parse::get(lexed.tokens);
+  let parsed = parse::get(&lexed.tokens);
   let lowered = lower::get(parsed.root.clone());
   let positions = PositionDb::new(&contents);
   // satisfy borrowck

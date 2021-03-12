@@ -12,8 +12,8 @@
 
 use std::convert::TryInto;
 use std::fmt;
-use syntax::event_parse::Token;
 use syntax::rowan::{TextRange, TextSize};
+use syntax::token::Token;
 use syntax::{SyntaxKind as SK, Use, UseKind};
 
 /// A lexed input.

@@ -4,10 +4,11 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+use event_parse::{Parser, Sink};
 use std::fmt;
 use syntax::ast::{Cast as _, Root};
-use syntax::event_parse::{Parser, Sink, Token};
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
+use syntax::token::Token;
 use syntax::{SyntaxKind as SK, SyntaxNode};
 
 mod expr;
@@ -58,7 +59,7 @@ impl fmt::Display for Expected {
 }
 
 /// Returns a parse of the tokens.
-pub fn get(tokens: Vec<Token<'_, SK>>) -> Parse {
+pub fn get(tokens: &[Token<'_, SK>]) -> Parse {
   let mut p = Parser::new(tokens);
   root::root(&mut p);
   let mut sink = BuilderSink::default();

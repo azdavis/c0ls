@@ -10,7 +10,7 @@ fn check(inp: &str, out: &str) {
 
 fn get_root(s: &str) -> Root {
   let lexed = lex::get(s);
-  let parsed = parse::get(lexed.tokens);
+  let parsed = parse::get(&lexed.tokens);
   assert!(lexed.errors.is_empty());
   assert!(parsed.errors.is_empty());
   parsed.root

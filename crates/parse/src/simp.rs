@@ -1,6 +1,6 @@
 use crate::expr::{expr, expr_opt};
 use crate::ty::ty_opt;
-use syntax::event_parse::{Exited, Parser};
+use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn simp_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {

@@ -1,4 +1,4 @@
-use syntax::event_parse::{Exited, Parser};
+use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F)

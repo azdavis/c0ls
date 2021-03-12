@@ -11,3 +11,4 @@ test = false
 
 [dependencies]
 syntax = { path = "../syntax" }
+event-parse = { git = "https://github.com/azdavis/language-server-util.git" }

@@ -1,6 +1,6 @@
 use crate::ty::ty;
 use crate::util::{comma_sep, must};
-use syntax::event_parse::{Exited, Parser};
+use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn expr(p: &mut Parser<'_, SK>) {

@@ -1,7 +1,7 @@
 use crate::expr::{expr, expr_opt};
 use crate::simp::simp_opt;
 use crate::util::must;
-use syntax::event_parse::{Exited, Parser};
+use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn stmt_block(p: &mut Parser<'_, SK>) -> Exited {
