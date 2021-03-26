@@ -33,7 +33,7 @@ fn ck_test_data() -> Result<()> {
   Ok(())
 }
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
   let mut args = Arguments::from_env();
   if args.contains(["-h", "--help"]) {
     show_help();
@@ -75,14 +75,4 @@ fn run() -> Result<()> {
     s => bail!("unknown subcommand: {}", s),
   }
   Ok(())
-}
-
-fn main() {
-  match run() {
-    Ok(()) => {}
-    Err(e) => {
-      eprintln!("{}", e);
-      std::process::exit(1);
-    }
-  }
 }
