@@ -4,13 +4,6 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-use event_parse::{Parser, Sink};
-use std::fmt;
-use syntax::ast::{Cast as _, Root};
-use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
-use syntax::token::Token;
-use syntax::{SyntaxKind as SK, SyntaxNode};
-
 mod expr;
 mod item;
 mod root;
@@ -18,6 +11,13 @@ mod simp;
 mod stmt;
 mod ty;
 mod util;
+
+use event_parse::{Parser, Sink};
+use std::fmt;
+use syntax::ast::{Cast as _, Root};
+use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
+use syntax::token::Token;
+use syntax::{SyntaxKind as SK, SyntaxNode};
 
 /// The result of a parse.
 #[derive(Debug)]
