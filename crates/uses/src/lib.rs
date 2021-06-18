@@ -26,8 +26,8 @@ pub fn get(uris: &UriDb, id: UriId, uses: Vec<syntax::Use>) -> Uses {
   for u in uses {
     let range = u.range;
     match get_one(uris, id, &u.path, u.kind) {
-      Ok(kind) => ret.uses.push(Use { range, kind }),
-      Err(kind) => ret.errors.push(Error { range, kind }),
+      Ok(kind) => ret.uses.push(Use { kind, range }),
+      Err(kind) => ret.errors.push(Error { kind, range }),
     }
   }
   ret

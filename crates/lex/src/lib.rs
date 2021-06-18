@@ -243,7 +243,7 @@ fn go(cx: &mut Cx, bs: &[u8]) -> SK {
     } else {
       advance_while(cx, bs, u8::is_ascii_digit);
       let digits = std::str::from_utf8(&bs[start..cx.i]).unwrap();
-      let too_large = match u32::from_str_radix(digits, 10) {
+      let too_large = match digits.parse::<u32>() {
         Ok(n) => n > MAX,
         Err(_) => true,
       };
