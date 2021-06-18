@@ -2,7 +2,7 @@ use crate::ty::get as get_ty;
 use crate::util::Cx;
 use hir::{BinOp, MathOp, UnOp};
 use syntax::ast::{BinOpKind, Expr, UnOpKind};
-use syntax::AstPtr;
+use ast_ptr::AstPtr;
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, expr: Option<Expr>) -> hir::ExprId {

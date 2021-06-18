@@ -1,6 +1,6 @@
 use crate::db::SyntaxData;
 use syntax::rowan::TokenAtOffset;
-use syntax::{ast::Syntax as _, SyntaxKind, SyntaxToken};
+use syntax::{SyntaxKind, SyntaxToken};
 use text_pos::Position;
 
 pub(crate) fn get_token(
@@ -8,7 +8,7 @@ pub(crate) fn get_token(
   pos: Position,
 ) -> Option<SyntaxToken> {
   let idx = syntax_data.positions.text_size(pos);
-  let ret = match syntax_data.ast_root.syntax().token_at_offset(idx) {
+  let ret = match syntax_data.ast_root.as_ref().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,
     TokenAtOffset::Between(t1, t2) => {

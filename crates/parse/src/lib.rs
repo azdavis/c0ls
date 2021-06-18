@@ -13,8 +13,9 @@ mod ty;
 mod util;
 
 use event_parse::{Parser, Sink};
+use std::convert::TryFrom;
 use std::fmt;
-use syntax::ast::{Cast as _, Root};
+use syntax::ast::Root;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
 use syntax::token::Token;
 use syntax::{SyntaxKind as SK, SyntaxNode};
@@ -64,9 +65,8 @@ pub fn get(tokens: &[Token<'_, SK>]) -> Parse {
   root::root(&mut p);
   let mut sink = BuilderSink::default();
   p.finish(&mut sink);
-  let node = SyntaxNode::new_root(sink.builder.finish());
   Parse {
-    root: Root::cast(node.into()).unwrap(),
+    root: Root::try_from(SyntaxNode::new_root(sink.builder.finish())).unwrap(),
     errors: sink.errors,
   }
 }

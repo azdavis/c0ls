@@ -4,10 +4,8 @@
 
 pub mod ast;
 mod kind;
-mod ptr;
 
 pub use kind::*;
-pub use ptr::AstPtr;
 pub use rowan;
 pub use token;
 

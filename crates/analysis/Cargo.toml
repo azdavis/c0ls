@@ -9,6 +9,7 @@ publish = false
 doctest = false
 
 [dependencies]
+ast-ptr = { git = "https://github.com/azdavis/language-server-util.git" }
 fmt = { path = "../fmt" }
 hir = { path = "../hir" }
 lex = { path = "../lex" }

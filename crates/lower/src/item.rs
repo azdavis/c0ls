@@ -1,9 +1,9 @@
 use crate::stmt::get_block;
 use crate::ty::get as get_ty;
 use crate::util::{Cx, PragmaError};
+use ast_ptr::AstPtr;
 use hir::Name;
-use syntax::ast::{FnTail, Item, Syntax as _};
-use syntax::AstPtr;
+use syntax::ast::{FnTail, Item};
 
 pub(crate) fn get(
   cx: &mut Cx,
@@ -54,7 +54,7 @@ pub(crate) fn get(
     Item::PragmaItem(item) => {
       if !*pragma_ok {
         cx.errors.push(PragmaError {
-          range: item.syntax().text_range(),
+          range: item.as_ref().text_range(),
         });
       }
       return None;
