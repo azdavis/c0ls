@@ -1,9 +1,6 @@
 [workspace]
 members = ["crates/*", "xtask"]
 
-[profile.dev]
-split-debuginfo = "unpacked"
-
 [profile.release]
 codegen-units = 1
 lto = "fat"
