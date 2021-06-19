@@ -1,9 +1,9 @@
 use crate::stmt::get_block;
 use crate::ty::get as get_ty;
 use crate::util::{Cx, PragmaError};
-use ast_ptr::AstPtr;
 use hir::Name;
 use syntax::ast::{FnTail, Item};
+use syntax::AstPtr;
 
 pub(crate) fn get(
   cx: &mut Cx,

@@ -10,7 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-ast-ptr = { git = "https://github.com/azdavis/language-server-util.git" }
 hir = { path = "../hir" }
 rustc-hash = "1"
 syntax = { path = "../syntax" }

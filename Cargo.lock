@@ -15,7 +15,6 @@ dependencies = [
 name = "analysis"
 version = "0.1.0"
 dependencies = [
- "ast-ptr",
  "fmt",
  "hir",
  "lex",
@@ -255,7 +254,6 @@ dependencies = [
 name = "lower"
 version = "0.1.0"
 dependencies = [
- "ast-ptr",
  "hir",
  "rustc-hash",
  "syntax",

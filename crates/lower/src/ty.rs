@@ -1,6 +1,6 @@
 use crate::util::Cx;
-use ast_ptr::AstPtr;
 use syntax::ast::Ty;
+use syntax::AstPtr;
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<Ty>) -> hir::TyId {

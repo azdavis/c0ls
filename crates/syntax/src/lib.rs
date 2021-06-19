@@ -5,6 +5,7 @@
 pub mod ast;
 mod kind;
 
+pub use ast_ptr::AstPtr;
 pub use kind::*;
 pub use rowan;
 pub use token;

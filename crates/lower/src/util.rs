@@ -1,12 +1,12 @@
 //! inspired by rust-analyzer
 
-use ast_ptr::AstPtr;
 use hir::la_arena::ArenaMap;
 use hir::{Arenas, ExprId, ItemId, SimpId, StmtId, TyId};
 use rustc_hash::FxHashMap;
 use std::fmt;
 use syntax::ast::{Expr, Item, Simp, Stmt, Ty};
 use syntax::rowan::TextRange;
+use syntax::AstPtr;
 
 /// Pointers between the AST and the HIR.
 ///
