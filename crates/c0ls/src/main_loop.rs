@@ -46,7 +46,7 @@ pub(crate) fn run(conn: &Connection, init: InitializeParams) {
       }
       Message::Response(res) => log::warn!("ignoring response: {:?}", res),
       Message::Notification(notif) => {
-        match handle_notif(&conn, &mut db, Notif::new(notif)) {
+        match handle_notif(conn, &mut db, Notif::new(notif)) {
           Ok(notif) => log::warn!("ignoring notification: {}", notif.method()),
           Err(Handled) => {}
         }

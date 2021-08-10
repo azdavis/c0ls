@@ -36,7 +36,7 @@ fn get_prec(cx: &mut Cx, min_prec: u8, expr: Expr) -> Option<()> {
       if UN_OP_PREC < min_prec {
         cx.push("(");
       }
-      cx.push(&expr.op()?.kind.to_str());
+      cx.push(expr.op()?.kind.to_str());
       get_prec(cx, UN_OP_PREC, expr.expr()?)?;
       if UN_OP_PREC < min_prec {
         cx.push(")");

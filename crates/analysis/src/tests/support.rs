@@ -78,19 +78,19 @@ fn check_one(
   }
   for struct_use in want.struct_uses.iter() {
     let want = *want.struct_defs.get(&struct_use.0).unwrap();
-    check_def(&db, &uri, want, struct_use.1.start);
+    check_def(db, &uri, want, struct_use.1.start);
   }
   for fn_use in want.fn_uses.iter() {
     let want = *want.fn_defs.get(&fn_use.0).unwrap();
-    check_def(&db, &uri, want, fn_use.1.start);
+    check_def(db, &uri, want, fn_use.1.start);
   }
   for type_def_use in want.type_def_uses.iter() {
     let want = *want.type_def_defs.get(&type_def_use.0).unwrap();
-    check_def(&db, &uri, want, type_def_use.1.start);
+    check_def(db, &uri, want, type_def_use.1.start);
   }
   for var_use in want.var_uses.iter() {
     let want = *want.var_defs.get(&var_use.0).unwrap();
-    check_def(&db, &uri, want, var_use.1.start);
+    check_def(db, &uri, want, var_use.1.start);
   }
 }
 
