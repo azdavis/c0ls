@@ -3,7 +3,6 @@ use crate::types::Location;
 use crate::util::get_token;
 use rustc_hash::FxHashMap;
 use statics::{ItemData, TyData};
-use std::convert::TryFrom;
 use syntax::ast::{Expr, Param, Simp, SimpOpt, SimpStmt, Ty};
 use syntax::AstPtr;
 use syntax::{SyntaxKind, SyntaxToken};

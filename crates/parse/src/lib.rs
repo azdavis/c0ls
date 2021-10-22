@@ -13,7 +13,6 @@ mod ty;
 mod util;
 
 use event_parse::{Parser, Sink};
-use std::convert::TryFrom;
 use std::fmt;
 use syntax::ast::Root;
 use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};

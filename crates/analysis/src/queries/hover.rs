@@ -1,7 +1,6 @@
 use crate::db::Db;
 use crate::types::{CodeBlock, Hover};
 use crate::util::get_token;
-use std::convert::TryFrom;
 use syntax::ast::{Expr, Ty};
 use syntax::AstPtr;
 use text_pos::Position;
