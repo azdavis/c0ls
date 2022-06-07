@@ -2,7 +2,7 @@ use crate::db::{Db, DbKind, SemanticData, SyntaxData};
 use crate::types::Diagnostic;
 use lower::Ptrs;
 use statics::{Id, TyDb};
-use syntax::ast::Root;
+use syntax::ast::{AstNode, Root};
 use syntax::rowan::TextRange;
 use text_pos::{Position, Range};
 use uri_db::{Uri, UriId};
@@ -100,12 +100,12 @@ fn get_syntax_diagnostics(
 }
 
 fn get_text_range(ptrs: &Ptrs, ast_root: &Root, id: Id) -> TextRange {
-  let root = ast_root.as_ref().clone();
+  let root = ast_root.syntax().clone();
   match id {
-    Id::Expr(id) => ptrs.expr_back[id].to_node(root).as_ref().text_range(),
-    Id::Ty(id) => ptrs.ty_back[id].to_node(root).as_ref().text_range(),
-    Id::Stmt(id) => ptrs.stmt_back[id].to_node(root).as_ref().text_range(),
-    Id::Simp(id) => ptrs.simp_back[id].to_node(root).as_ref().text_range(),
-    Id::Item(id) => ptrs.item_back[id].to_node(root).as_ref().text_range(),
+    Id::Expr(id) => ptrs.expr_back[id].to_node(&root).syntax().text_range(),
+    Id::Ty(id) => ptrs.ty_back[id].to_node(&root).syntax().text_range(),
+    Id::Stmt(id) => ptrs.stmt_back[id].to_node(&root).syntax().text_range(),
+    Id::Simp(id) => ptrs.simp_back[id].to_node(&root).syntax().text_range(),
+    Id::Item(id) => ptrs.item_back[id].to_node(&root).syntax().text_range(),
   }
 }

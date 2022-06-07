@@ -13,7 +13,7 @@ impl Req {
     R: lsp_types::request::Request,
     F: FnOnce(RequestId, R::Params) -> R::Result,
   {
-    match self.0.extract::<R::Params>(R::METHOD) {
+    match self.0.clone().extract::<R::Params>(R::METHOD) {
       Ok((id, params)) => {
         let result = f(id.clone(), params);
         let val = serde_json::to_value(&result).expect("couldn't make JSON");
@@ -23,7 +23,7 @@ impl Req {
           error: None,
         })
       }
-      Err(req) => Ok(Self::new(req)),
+      Err(_) => Ok(self),
     }
   }
 
@@ -48,12 +48,12 @@ impl Notif {
     N: lsp_types::notification::Notification,
     F: FnOnce(N::Params),
   {
-    match self.0.extract::<N::Params>(N::METHOD) {
+    match self.0.clone().extract::<N::Params>(N::METHOD) {
       Ok(params) => {
         f(params);
         Err(Handled)
       }
-      Err(notif) => Ok(Self::new(notif)),
+      Err(_) => Ok(self),
     }
   }
 

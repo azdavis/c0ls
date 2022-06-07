@@ -3,8 +3,9 @@ use crate::types::Location;
 use crate::util::get_token;
 use rustc_hash::FxHashMap;
 use statics::{ItemData, TyData};
-use syntax::ast::{Expr, Param, Simp, SimpOpt, SimpStmt, Ty};
-use syntax::AstPtr;
+use syntax::ast::{
+  AstNode as _, AstPtr, Expr, Param, Simp, SimpOpt, SimpStmt, Ty,
+};
 use syntax::{SyntaxKind, SyntaxToken};
 use text_pos::Position;
 use uri_db::Uri;
@@ -18,23 +19,19 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
     return None;
   }
   let semantic_data = &done.semantic_data[&id];
-  if let Ok(expr) = Expr::try_from(tok.parent()) {
+  let parent = tok.parent()?;
+  if let Some(expr) = Expr::cast(parent.clone()) {
     let expr = syntax_data.ptrs.expr[&AstPtr::new(&expr)];
     match syntax_data.hir_root.arenas.expr[expr] {
       hir::Expr::Name(ref name) => {
-        let mut node = tok.parent().parent()?;
+        let mut node = parent.parent()?;
         loop {
-          let declares = SimpStmt::try_from(node.clone())
-            .ok()
+          let declares = SimpStmt::cast(node.clone())
             .and_then(|x| simp_def(x.simp()?))
             .or_else(|| {
-              SimpOpt::try_from(node.clone())
-                .ok()
-                .and_then(|x| simp_def(x.simp()?))
+              SimpOpt::cast(node.clone()).and_then(|x| simp_def(x.simp()?))
             })
-            .or_else(|| {
-              Param::try_from(node.clone()).ok().and_then(|x| x.ident())
-            })
+            .or_else(|| Param::cast(node.clone()).and_then(|x| x.ident()))
             .map_or(false, |tok| name == tok.text());
           if declares {
             break;
@@ -62,7 +59,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
       }
       _ => None,
     }
-  } else if let Ok(ty) = Ty::try_from(tok.parent()) {
+  } else if let Some(ty) = Ty::cast(parent) {
     let ty = syntax_data.ptrs.ty[&AstPtr::new(&ty)];
     match syntax_data.hir_root.arenas.ty[ty] {
       hir::Ty::Struct(ref name) => {
@@ -97,8 +94,8 @@ fn get_item_loc<T>(
     uri: db.uris[uri].clone(),
     range: def_syntax_data.positions.range(
       def_syntax_data.ptrs.item_back[item]
-        .to_node(def_syntax_data.ast_root.as_ref().clone())
-        .as_ref()
+        .to_node(def_syntax_data.ast_root.syntax())
+        .syntax()
         .text_range(),
     ),
   })

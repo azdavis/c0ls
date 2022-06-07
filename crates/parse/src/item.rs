@@ -23,7 +23,7 @@ pub(crate) fn item(p: &mut Parser<'_, SK>) {
         let ty = match ty_opt(p) {
           Some(x) => x,
           None => {
-            p.error();
+            p.error("a type");
             break;
           }
         };
@@ -55,7 +55,7 @@ pub(crate) fn item(p: &mut Parser<'_, SK>) {
   } else if let Some(exited) = ty_hd_opt(p) {
     fn_tail(p, exited);
   } else {
-    p.error()
+    p.error("an item")
   }
 }
 
@@ -78,6 +78,6 @@ fn fn_tail(p: &mut Parser<'_, SK>, ty_hd_exited: Exited) {
     stmt_block(p);
     p.exit(entered, SK::FnItem);
   } else {
-    p.error();
+    p.error("a function tail");
   }
 }

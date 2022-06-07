@@ -1,8 +1,7 @@
 use crate::ty::get as get_ty;
 use crate::util::Cx;
 use hir::{BinOp, MathOp, UnOp};
-use syntax::ast::{BinOpKind, Expr, UnOpKind};
-use syntax::AstPtr;
+use syntax::ast::{AstPtr, BinOpKind, Expr, UnOpKind};
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, expr: Option<Expr>) -> hir::ExprId {
@@ -11,7 +10,7 @@ pub(crate) fn get(cx: &mut Cx, expr: Option<Expr>) -> hir::ExprId {
   });
   let ret = cx.arenas.expr.alloc(data);
   if let Some(ptr) = ptr {
-    cx.ptrs.expr.insert(ptr, ret);
+    cx.ptrs.expr.insert(ptr.clone(), ret);
     cx.ptrs.expr_back.insert(ret, ptr);
   }
   ret

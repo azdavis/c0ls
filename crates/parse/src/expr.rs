@@ -4,7 +4,7 @@ use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn expr(p: &mut Parser<'_, SK>) {
-  must(p, expr_opt)
+  must(p, expr_opt, "an expression")
 }
 
 pub(crate) fn expr_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
@@ -69,10 +69,10 @@ fn expr_atom(p: &mut Parser<'_, SK>) -> Option<Exited> {
 fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
   let mut exited =
     if p.at(SK::Bang) || p.at(SK::Tilde) || p.at(SK::Minus) || p.at(SK::Star) {
-      assert!(!(UN_OP_PREC <= min_prec));
+      assert!(UN_OP_PREC > min_prec);
       let entered = p.enter();
       p.bump();
-      must(p, |p| expr_prec(p, UN_OP_PREC - 1));
+      must(p, |p| expr_prec(p, UN_OP_PREC - 1), "an expression");
       p.exit(entered, SK::UnOpExpr)
     } else {
       expr_atom(p)?
@@ -84,7 +84,7 @@ fn expr_prec(p: &mut Parser<'_, SK>, min_prec: u8) -> Option<Exited> {
       }
       let entered = p.precede(exited);
       p.bump();
-      must(p, |p| expr_prec(p, prec));
+      must(p, |p| expr_prec(p, prec), "an expression");
       p.exit(entered, SK::BinOpExpr)
     } else if p.at(SK::Question) {
       if min_prec != 0 {

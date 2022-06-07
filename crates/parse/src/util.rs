@@ -1,12 +1,12 @@
 use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F)
+pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F, s: &'static str)
 where
   F: FnOnce(&mut Parser<'_, SK>) -> Option<Exited>,
 {
   if f(p).is_none() {
-    p.error();
+    p.error(s);
   }
 }
 

@@ -3,7 +3,7 @@ use event_parse::{Exited, Parser};
 use syntax::SyntaxKind as SK;
 
 pub(crate) fn ty(p: &mut Parser<'_, SK>) {
-  must(p, ty_opt)
+  must(p, ty_opt, "a type")
 }
 
 pub(crate) fn ty_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {

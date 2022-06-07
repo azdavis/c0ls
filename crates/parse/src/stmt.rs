@@ -13,7 +13,7 @@ pub(crate) fn stmt_block(p: &mut Parser<'_, SK>) -> Exited {
       break;
     }
     if stmt_opt(p).is_none() {
-      p.error();
+      p.error("a statement");
       break;
     }
   }
@@ -21,7 +21,7 @@ pub(crate) fn stmt_block(p: &mut Parser<'_, SK>) -> Exited {
 }
 
 fn stmt(p: &mut Parser<'_, SK>) {
-  must(p, stmt_opt)
+  must(p, stmt_opt, "a statement")
 }
 
 fn stmt_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {

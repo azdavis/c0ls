@@ -1,8 +1,7 @@
 use crate::expr::get as get_expr;
 use crate::simp::get as get_simp;
 use crate::util::Cx;
-use syntax::ast::{BlockStmt, Stmt};
-use syntax::AstPtr;
+use syntax::ast::{AstPtr, BlockStmt, Stmt};
 
 pub(crate) fn get_block(cx: &mut Cx, stmt: BlockStmt) -> hir::StmtId {
   get(cx, Some(Stmt::BlockStmt(stmt)))
@@ -14,7 +13,7 @@ fn get(cx: &mut Cx, stmt: Option<Stmt>) -> hir::StmtId {
   });
   let ret = cx.arenas.stmt.alloc(data);
   if let Some(ptr) = ptr {
-    cx.ptrs.stmt.insert(ptr, ret);
+    cx.ptrs.stmt.insert(ptr.clone(), ret);
     cx.ptrs.stmt_back.insert(ret, ptr);
   }
   ret

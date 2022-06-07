@@ -2,8 +2,7 @@ use crate::stmt::get_block;
 use crate::ty::get as get_ty;
 use crate::util::{Cx, PragmaError};
 use hir::Name;
-use syntax::ast::{FnTail, Item};
-use syntax::AstPtr;
+use syntax::ast::{AstNode, AstPtr, FnTail, Item};
 
 pub(crate) fn get(
   cx: &mut Cx,
@@ -54,14 +53,14 @@ pub(crate) fn get(
     Item::PragmaItem(item) => {
       if !*pragma_ok {
         cx.errors.push(PragmaError {
-          range: item.as_ref().text_range(),
+          range: item.syntax().text_range(),
         });
       }
       return None;
     }
   };
   let ret = cx.arenas.item.alloc(data);
-  cx.ptrs.item.insert(ptr, ret);
+  cx.ptrs.item.insert(ptr.clone(), ret);
   cx.ptrs.item_back.insert(ret, ptr);
   Some(ret)
 }

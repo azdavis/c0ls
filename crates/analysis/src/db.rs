@@ -8,7 +8,7 @@ use lower::Ptrs;
 use rustc_hash::FxHashMap;
 use statics::{Cx, Env, FileId};
 use std::hash::BuildHasherDefault;
-use syntax::ast::Root as AstRoot;
+use syntax::ast::{AstNode, Root as AstRoot};
 use syntax::rowan::TextRange;
 use syntax::SyntaxNode;
 use text_pos::{Position, PositionDb};
@@ -114,7 +114,7 @@ impl Db {
   /// Returns the parse tree of the file at the given URI.
   pub fn syntax(&self, uri: &Uri) -> Option<SyntaxNode> {
     let id = self.uris.get_id(uri)?;
-    Some(self.syntax_data[&id].ast_root.as_ref().clone())
+    Some(self.syntax_data[&id].ast_root.syntax().clone())
   }
 
   /// Returns all diagnostics of every file.

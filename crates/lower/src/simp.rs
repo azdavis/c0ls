@@ -2,8 +2,7 @@ use crate::expr::get as get_expr;
 use crate::ty::get as get_ty;
 use crate::util::Cx;
 use hir::{AssignOp, IncDec, MathOp, Name};
-use syntax::ast::{AsgnOpKind, IncDecKind, Simp};
-use syntax::AstPtr;
+use syntax::ast::{AsgnOpKind, AstPtr, IncDecKind, Simp};
 
 pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<hir::SimpId> {
   let ptr = AstPtr::new(&simp);
@@ -36,7 +35,7 @@ pub(crate) fn get(cx: &mut Cx, simp: Simp) -> Option<hir::SimpId> {
     }
   };
   let ret = cx.arenas.simp.alloc(data);
-  cx.ptrs.simp.insert(ptr, ret);
+  cx.ptrs.simp.insert(ptr.clone(), ret);
   cx.ptrs.simp_back.insert(ret, ptr);
   Some(ret)
 }

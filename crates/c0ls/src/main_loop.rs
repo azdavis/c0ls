@@ -84,7 +84,7 @@ fn handle_notif(
       log::info!("watched files changed");
       db.update_files(params.changes.into_iter().filter_map(|change| {
         match change.typ {
-          FileChangeType::Created | FileChangeType::Changed => {
+          FileChangeType::CREATED | FileChangeType::CHANGED => {
             let path = change.uri.path();
             match read_to_string(path) {
               Ok(contents) => Some(Update::Create(change.uri, contents)),
@@ -94,7 +94,8 @@ fn handle_notif(
               }
             }
           }
-          FileChangeType::Deleted => Some(Update::Delete(change.uri)),
+          FileChangeType::DELETED => Some(Update::Delete(change.uri)),
+          _ => None,
         }
       }));
       send_all_diagnostics(conn, db);
@@ -173,7 +174,7 @@ fn show_error(conn: &Connection, message: String) {
   conn
     .sender
     .send(mk_notif::<ShowMessage>(ShowMessageParams {
-      typ: MessageType::Error,
+      typ: MessageType::ERROR,
       message,
     }))
     .expect("couldn't show error")

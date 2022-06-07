@@ -6,7 +6,7 @@ use anyhow::{bail, Result};
 use pico_args::Arguments;
 use std::path::Path;
 use walkdir::WalkDir;
-use xshell::{cmd, cp, mkdir_p, pushd};
+use xshell::{cmd, Shell};
 
 #[inline]
 fn show_help() {
@@ -21,13 +21,13 @@ fn finish_args(args: Arguments) -> Result<()> {
   Ok(())
 }
 
-fn ck_test_data() -> Result<()> {
+fn ck_test_data(sh: &Shell) -> Result<()> {
   for &cr in ["analysis", "fmt"].iter() {
     let tests = format!("crates/{}/src/tests", cr);
     for entry in WalkDir::new(&format!("{}/data", tests)) {
       let entry = entry?;
       let name = entry.path().file_name().unwrap();
-      cmd!("git grep -q {name} -- {tests}/mod.rs").run()?;
+      cmd!(sh, "git grep -q {name} -- {tests}/mod.rs").run()?;
     }
   }
   Ok(())
@@ -46,31 +46,32 @@ fn main() -> Result<()> {
       return Ok(());
     }
   };
-  let _d = pushd(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
+  let sh = Shell::new()?;
+  let _d = sh.push_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap());
   match subcommand.as_str() {
     "ci" => {
       finish_args(args)?;
-      ck_test_data()?;
+      ck_test_data(&sh)?;
       // run this first to generate code
-      cmd!("cargo test --no-run").run()?;
-      cmd!("cargo fmt -- --check").run()?;
-      cmd!("cargo clippy").run()?;
-      cmd!("cargo test").run()?;
+      cmd!(sh, "cargo test --no-run").run()?;
+      cmd!(sh, "cargo fmt -- --check").run()?;
+      cmd!(sh, "cargo clippy").run()?;
+      cmd!(sh, "cargo test").run()?;
     }
     "ck-test-data" => {
       finish_args(args)?;
-      ck_test_data()?
+      ck_test_data(&sh)?
     }
     "mk-vscode-ext" => {
       finish_args(args)?;
-      cmd!("cargo build -p c0ls").run()?;
-      mkdir_p("extensions/vscode/out")?;
-      cp("target/debug/c0ls", "extensions/vscode/out/c0ls")?;
-      let _d = pushd("extensions/vscode")?;
+      cmd!(sh, "cargo build -p c0ls").run()?;
+      sh.create_dir("extensions/vscode/out")?;
+      sh.copy_file("target/debug/c0ls", "extensions/vscode/out/c0ls")?;
+      let _d = sh.push_dir("extensions/vscode");
       if std::fs::metadata("node_modules").is_err() {
-        cmd!("npm install").run()?;
+        cmd!(sh, "npm install").run()?;
       }
-      cmd!("npm run build").run()?;
+      cmd!(sh, "npm run build").run()?;
     }
     s => bail!("unknown subcommand: {}", s),
   }

@@ -82,7 +82,7 @@ impl CrateFrom<analysis::Diagnostic> for lsp_types::Diagnostic {
   fn from(val: analysis::Diagnostic) -> Self {
     Self {
       range: CrateFrom::from(val.range),
-      severity: Some(DiagnosticSeverity::Error),
+      severity: Some(DiagnosticSeverity::ERROR),
       code: None,
       code_description: None,
       source: Some("c0ls".to_owned()),

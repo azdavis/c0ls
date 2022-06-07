@@ -12,12 +12,11 @@ mod stmt;
 mod ty;
 mod util;
 
-use event_parse::{Parser, Sink};
+use event_parse::Parser;
 use std::fmt;
-use syntax::ast::Root;
-use syntax::rowan::{GreenNodeBuilder, TextRange, TextSize};
+use syntax::ast::{AstNode as _, Root};
 use syntax::token::Token;
-use syntax::{SyntaxKind as SK, SyntaxNode};
+use syntax::SyntaxKind as SK;
 
 /// The result of a parse.
 #[derive(Debug)]
@@ -29,13 +28,7 @@ pub struct Parse {
 }
 
 /// A parse error.
-#[derive(Debug)]
-pub struct Error {
-  /// The range of the unexpected token.
-  pub range: TextRange,
-  /// The tokens that would have been allowed.
-  pub expected: Expected,
-}
+pub type Error = event_parse::rowan_sink::Error<SK>;
 
 /// A list of expected tokens.
 #[derive(Debug)]
@@ -62,41 +55,11 @@ impl fmt::Display for Expected {
 pub fn get(tokens: &[Token<'_, SK>]) -> Parse {
   let mut p = Parser::new(tokens);
   root::root(&mut p);
-  let mut sink = BuilderSink::default();
+  let mut sink = event_parse::rowan_sink::RowanSink::default();
   p.finish(&mut sink);
+  let (root, errors) = sink.finish();
   Parse {
-    root: Root::try_from(SyntaxNode::new_root(sink.builder.finish())).unwrap(),
-    errors: sink.errors,
-  }
-}
-
-#[derive(Default)]
-struct BuilderSink {
-  builder: GreenNodeBuilder<'static>,
-  range: Option<TextRange>,
-  errors: Vec<Error>,
-}
-
-impl Sink<SK> for BuilderSink {
-  fn enter(&mut self, kind: SK) {
-    self.builder.start_node(kind.into());
-  }
-
-  fn token(&mut self, token: Token<'_, SK>) {
-    self.builder.token(token.kind.into(), token.text);
-    let start = self.range.as_ref().map_or(0.into(), |range| range.end());
-    let end = start + TextSize::of(token.text);
-    self.range = Some(TextRange::new(start, end));
-  }
-
-  fn exit(&mut self) {
-    self.builder.finish_node();
-  }
-
-  fn error(&mut self, kinds: Vec<SK>) {
-    self.errors.push(Error {
-      range: self.range.expect("error with no tokens"),
-      expected: Expected { kinds },
-    });
+    root: Root::cast(root).unwrap(),
+    errors,
   }
 }

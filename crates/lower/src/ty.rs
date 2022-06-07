@@ -1,6 +1,5 @@
 use crate::util::Cx;
-use syntax::ast::Ty;
-use syntax::AstPtr;
+use syntax::ast::{AstPtr, Ty};
 use unwrap_or::unwrap_or;
 
 pub(crate) fn get(cx: &mut Cx, ty: Option<Ty>) -> hir::TyId {
@@ -9,7 +8,7 @@ pub(crate) fn get(cx: &mut Cx, ty: Option<Ty>) -> hir::TyId {
   });
   let ret = cx.arenas.ty.alloc(data);
   if let Some(ptr) = ptr {
-    cx.ptrs.ty_back.insert(ret, ptr);
+    cx.ptrs.ty_back.insert(ret, ptr.clone());
     cx.ptrs.ty.insert(ptr, ret);
   }
   ret
