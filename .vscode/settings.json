@@ -4,10 +4,8 @@
     "*.h0": "c"
   },
   "files.exclude": {
-    "compiler": true,
     "extensions/vscode/node_modules": true,
     "extensions/vscode/out": true,
-    "pdf": true,
     "target": true
   },
   "rust-analyzer.checkOnSave.command": "clippy"
