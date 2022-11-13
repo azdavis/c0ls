@@ -1,12 +1,13 @@
 use crate::util::must;
-use event_parse::{Exited, Parser};
+use crate::{ErrorKind, Parser};
+use event_parse::Exited;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn ty(p: &mut Parser<'_, SK>) {
-  must(p, ty_opt, "a type")
+pub(crate) fn ty(p: &mut Parser<'_>) {
+  must(p, ty_opt, ErrorKind::Ty)
 }
 
-pub(crate) fn ty_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+pub(crate) fn ty_opt(p: &mut Parser<'_>) -> Option<Exited> {
   ty_hd_opt(p).map(|e| ty_tl(p, e))
 }
 
@@ -18,7 +19,7 @@ const PRIM: [(SK, SK); 5] = [
   (SK::VoidKw, SK::VoidTy),
 ];
 
-pub(crate) fn ty_hd_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+pub(crate) fn ty_hd_opt(p: &mut Parser<'_>) -> Option<Exited> {
   for &(tok, node) in PRIM.iter() {
     if p.at(tok) {
       let entered = p.enter();
@@ -41,7 +42,7 @@ pub(crate) fn ty_hd_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
   }
 }
 
-pub(crate) fn ty_tl(p: &mut Parser<'_, SK>, mut exited: Exited) -> Exited {
+pub(crate) fn ty_tl(p: &mut Parser<'_>, mut exited: Exited) -> Exited {
   loop {
     if p.at(SK::Star) {
       let entered = p.precede(exited);

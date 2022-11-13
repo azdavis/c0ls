@@ -64,8 +64,10 @@ impl Db {
           let text_range = positions
             .unwrap_or_else(|| PositionDb::new(&contents))
             .text_range(range);
-          let range = std::ops::Range::<usize>::from(text_range);
-          contents.replace_range(range, &edit.text);
+          if let Some(text_range) = text_range {
+            let range = std::ops::Range::<usize>::from(text_range);
+            contents.replace_range(range, &edit.text);
+          }
         }
       }
       positions = None;

@@ -42,7 +42,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Location> {
         }
         Some(Location {
           uri: uri.clone(),
-          range: syntax_data.positions.range(node.text_range()),
+          range: syntax_data.positions.range(node.text_range())?,
         })
       }
       hir::Expr::Call(ref name, _) => {
@@ -90,13 +90,12 @@ fn get_item_loc<T>(
 ) -> Option<Location> {
   let (uri, item) = items.get(name)?.id()?;
   let def_syntax_data = &db.syntax_data[&uri];
+  let text_range = def_syntax_data.ptrs.item_back[item]
+    .to_node(def_syntax_data.ast_root.syntax())
+    .syntax()
+    .text_range();
   Some(Location {
     uri: db.uris[uri].clone(),
-    range: def_syntax_data.positions.range(
-      def_syntax_data.ptrs.item_back[item]
-        .to_node(def_syntax_data.ast_root.syntax())
-        .syntax()
-        .text_range(),
-    ),
+    range: def_syntax_data.positions.range(text_range)?,
   })
 }

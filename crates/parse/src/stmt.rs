@@ -1,10 +1,11 @@
 use crate::expr::{expr, expr_opt};
 use crate::simp::simp_opt;
 use crate::util::must;
-use event_parse::{Exited, Parser};
+use crate::{ErrorKind, Parser};
+use event_parse::Exited;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn stmt_block(p: &mut Parser<'_, SK>) -> Exited {
+pub(crate) fn stmt_block(p: &mut Parser<'_>) -> Exited {
   let entered = p.enter();
   p.eat(SK::LCurly);
   loop {
@@ -13,18 +14,18 @@ pub(crate) fn stmt_block(p: &mut Parser<'_, SK>) -> Exited {
       break;
     }
     if stmt_opt(p).is_none() {
-      p.error("a statement");
+      p.error(ErrorKind::Stmt);
       break;
     }
   }
   p.exit(entered, SK::BlockStmt)
 }
 
-fn stmt(p: &mut Parser<'_, SK>) {
-  must(p, stmt_opt, "a statement")
+fn stmt(p: &mut Parser<'_>) {
+  must(p, stmt_opt, ErrorKind::Stmt)
 }
 
-fn stmt_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+fn stmt_opt(p: &mut Parser<'_>) -> Option<Exited> {
   if p.at(SK::IfKw) {
     let entered = p.enter();
     p.bump();

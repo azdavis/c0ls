@@ -55,9 +55,11 @@ fn get_diagnostics(
         get_text_range(&syntax_data.ptrs, &syntax_data.ast_root, x.id);
       (range, x.kind.display(tys).to_string())
     }))
-    .map(|(rng, message)| Diagnostic {
-      range: syntax_data.positions.range(rng),
-      message,
+    .filter_map(|(rng, message)| {
+      Some(Diagnostic {
+        range: syntax_data.positions.range(rng)?,
+        message,
+      })
     })
     .collect()
 }
@@ -68,9 +70,11 @@ fn get_diagnostics_cycle_error(
   witness: UriId,
 ) -> Vec<Diagnostic> {
   let mut ret: Vec<_> = get_syntax_diagnostics(syntax_data)
-    .map(|(rng, message)| Diagnostic {
-      range: syntax_data.positions.range(rng),
-      message,
+    .filter_map(|(rng, message)| {
+      Some(Diagnostic {
+        range: syntax_data.positions.range(rng)?,
+        message,
+      })
     })
     .collect();
   if id == witness {
@@ -94,7 +98,7 @@ fn get_syntax_diagnostics(
     .errors
     .parse
     .iter()
-    .map(|x| (x.range, x.expected.to_string()));
+    .map(|x| (x.range, x.kind.to_string()));
   let lower = sd.errors.lower.iter().map(|x| (x.range, x.to_string()));
   lex.chain(parse).chain(lower)
 }

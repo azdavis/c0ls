@@ -1,9 +1,10 @@
 use crate::expr::{expr, expr_opt};
 use crate::ty::ty_opt;
-use event_parse::{Exited, Parser};
+use crate::Parser;
+use event_parse::Exited;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn simp_opt(p: &mut Parser<'_, SK>) -> Option<Exited> {
+pub(crate) fn simp_opt(p: &mut Parser<'_>) -> Option<Exited> {
   let could_be_ty = if p.at(SK::Ident) {
     match p.peek_n(1).map(|tok| tok.kind) {
       // `foo bar;`

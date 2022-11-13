@@ -8,7 +8,7 @@ pub(crate) fn get_token(
   syntax_data: &SyntaxData,
   pos: Position,
 ) -> Option<SyntaxToken> {
-  let idx = syntax_data.positions.text_size(pos);
+  let idx = syntax_data.positions.text_size(pos)?;
   let ret = match syntax_data.ast_root.syntax().token_at_offset(idx) {
     TokenAtOffset::None => return None,
     TokenAtOffset::Single(t) => t,

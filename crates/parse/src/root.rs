@@ -1,8 +1,8 @@
 use crate::item::item;
-use event_parse::Parser;
+use crate::Parser;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn root(p: &mut Parser<'_, SK>) {
+pub(crate) fn root(p: &mut Parser<'_>) {
   let entered = p.enter();
   while p.peek().is_some() {
     item(p);

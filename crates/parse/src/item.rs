@@ -1,10 +1,11 @@
 use crate::stmt::stmt_block;
 use crate::ty::{ty, ty_hd_opt, ty_opt, ty_tl};
 use crate::util::comma_sep;
-use event_parse::{Exited, Parser};
+use crate::{ErrorKind, Parser};
+use event_parse::Exited;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn item(p: &mut Parser<'_, SK>) {
+pub(crate) fn item(p: &mut Parser<'_>) {
   if p.at(SK::StructKw) {
     let entered = p.enter();
     p.bump();
@@ -23,7 +24,7 @@ pub(crate) fn item(p: &mut Parser<'_, SK>) {
         let ty = match ty_opt(p) {
           Some(x) => x,
           None => {
-            p.error("a type");
+            p.error(ErrorKind::Ty);
             break;
           }
         };
@@ -55,11 +56,11 @@ pub(crate) fn item(p: &mut Parser<'_, SK>) {
   } else if let Some(exited) = ty_hd_opt(p) {
     fn_tail(p, exited);
   } else {
-    p.error("an item")
+    p.error(ErrorKind::Item)
   }
 }
 
-fn fn_tail(p: &mut Parser<'_, SK>, ty_hd_exited: Exited) {
+fn fn_tail(p: &mut Parser<'_>, ty_hd_exited: Exited) {
   let ty_exited = ty_tl(p, ty_hd_exited);
   p.eat(SK::Ident);
   p.eat(SK::LRound);
@@ -78,6 +79,6 @@ fn fn_tail(p: &mut Parser<'_, SK>, ty_hd_exited: Exited) {
     stmt_block(p);
     p.exit(entered, SK::FnItem);
   } else {
-    p.error("a function tail");
+    p.error(ErrorKind::FnTail);
   }
 }

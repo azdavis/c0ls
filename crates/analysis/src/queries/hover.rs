@@ -29,13 +29,15 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
           .display(&done.cx.tys)
           .to_string(),
       };
+      let text_range = expr_node.syntax().text_range();
       return Some(Hover {
         contents: CodeBlock::new(contents),
-        range: syntax_data.positions.range(expr_node.syntax().text_range()),
+        range: syntax_data.positions.range(text_range)?,
       });
     }
     if let Some(ty_node) = Ty::cast(node.clone()) {
       let ty = *syntax_data.ptrs.ty.get(&AstPtr::new(&ty_node))?;
+      let text_range = ty_node.syntax().text_range();
       return Some(Hover {
         contents: CodeBlock::new(
           semantic_data
@@ -45,7 +47,7 @@ pub(crate) fn get(db: &Db, uri: &Uri, pos: Position) -> Option<Hover> {
             .display(&done.cx.tys)
             .to_string(),
         ),
-        range: syntax_data.positions.range(ty_node.syntax().text_range()),
+        range: syntax_data.positions.range(text_range)?,
       });
     }
     node = node.parent()?;

@@ -1,18 +1,19 @@
-use event_parse::{Exited, Parser};
+use crate::{ErrorKind, Parser};
+use event_parse::Exited;
 use syntax::SyntaxKind as SK;
 
-pub(crate) fn must<F>(p: &mut Parser<'_, SK>, f: F, s: &'static str)
+pub(crate) fn must<F>(p: &mut Parser<'_>, f: F, ek: ErrorKind)
 where
-  F: FnOnce(&mut Parser<'_, SK>) -> Option<Exited>,
+  F: FnOnce(&mut Parser<'_>) -> Option<Exited>,
 {
   if f(p).is_none() {
-    p.error(s);
+    p.error(ek);
   }
 }
 
-pub(crate) fn comma_sep<F>(p: &mut Parser<'_, SK>, wrap: SK, f: F)
+pub(crate) fn comma_sep<F>(p: &mut Parser<'_>, wrap: SK, f: F)
 where
-  F: FnMut(&mut Parser<'_, SK>),
+  F: FnMut(&mut Parser<'_>),
 {
   if p.at(SK::RRound) {
     p.bump();
@@ -22,9 +23,9 @@ where
   p.eat(SK::RRound);
 }
 
-fn many_sep<F>(p: &mut Parser<'_, SK>, sep: SK, wrap: SK, mut f: F)
+fn many_sep<F>(p: &mut Parser<'_>, sep: SK, wrap: SK, mut f: F)
 where
-  F: FnMut(&mut Parser<'_, SK>),
+  F: FnMut(&mut Parser<'_>),
 {
   loop {
     let entered = p.enter();

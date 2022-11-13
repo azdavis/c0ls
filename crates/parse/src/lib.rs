@@ -12,7 +12,6 @@ mod stmt;
 mod ty;
 mod util;
 
-use event_parse::Parser;
 use std::fmt;
 use syntax::ast::{AstNode as _, Root};
 use syntax::token::Token;
@@ -28,26 +27,39 @@ pub struct Parse {
 }
 
 /// A parse error.
-pub type Error = event_parse::rowan_sink::Error<SK>;
+pub type Error = event_parse::rowan_sink::Error<ErrorKind>;
 
-/// A list of expected tokens.
+/// A kind of error.
 #[derive(Debug)]
-pub struct Expected {
-  /// The token kinds.
-  pub kinds: Vec<SK>,
+#[allow(missing_docs)]
+pub enum ErrorKind {
+  Kind(SK),
+  Exp,
+  Item,
+  FnTail,
+  Stmt,
+  Ty,
 }
 
-impl fmt::Display for Expected {
+impl event_parse::Expected<SK> for ErrorKind {
+  fn expected(kind: SK) -> Self {
+    ErrorKind::Kind(kind)
+  }
+}
+
+pub(crate) type Parser<'a> = event_parse::Parser<'a, SK, ErrorKind>;
+
+impl fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut iter = self.kinds.iter();
-    write!(f, "expected any of ")?;
-    if let Some(kind) = iter.next() {
-      write!(f, "{}", kind.token_desc().unwrap_or("<non-token>"))?;
+    f.write_str("expected ")?;
+    match self {
+      ErrorKind::Kind(kind) => kind.fmt(f),
+      ErrorKind::Exp => f.write_str("an expression"),
+      ErrorKind::Item => f.write_str("an item"),
+      ErrorKind::FnTail => f.write_str("a function tail"),
+      ErrorKind::Stmt => f.write_str("a statement"),
+      ErrorKind::Ty => f.write_str("a type"),
     }
-    for kind in iter {
-      write!(f, ", {}", kind.token_desc().unwrap_or("<non-token>"))?;
-    }
-    Ok(())
   }
 }
 
